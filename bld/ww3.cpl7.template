@@ -1,0 +1,43 @@
+#! /bin/csh -f
+
+if !(-d $CASEBUILD) mkdir $CASEBUILD
+
+cat >! $CASEBUILD/ww3.buildnml.csh << EOF
+#! /bin/csh -f 
+
+set exedir = \$RUNDIR; cd \$exedir
+
+cp /ptmp/tcraig/ww3_data/restart.ww3.111202 ./restart.ww3
+cp /ptmp/tcraig/ww3_data/wind.ww3.111202 ./wind.ww3
+cp /ptmp/tcraig/ww3_data/G4L1.mod_def.ww3.111202 ./mod_def.ww3
+
+EOF
+
+
+cat >! $CASEBUILD/ww3.buildexe.csh << EOF
+#! /bin/csh -f 
+
+set objdir = \$OBJROOT/wav/obj; cd \$objdir
+set comp = 'unknown'
+if (\$COMP_INTERFACE == 'MCT' ) set comp = mct
+if (\$COMP_INTERFACE == 'ESMF') set comp = esmf
+
+#------------------------------------------------------------------------------
+# Filepath: List of source code directories (in order of importance).
+#------------------------------------------------------------------------------
+
+\cat >! Filepath << EOF1
+\$CASEROOT/SourceMods/src.ww3
+\$CODEROOT/wav/ww3/src/source
+\$CODEROOT/wav/ww3/src/cpl_share
+\$CODEROOT/wav/ww3/src/cpl_\$comp
+EOF1
+
+#------------------------------------------------------------------------------
+# run make
+#------------------------------------------------------------------------------
+
+gmake complib -j \$GMAKE_J MODEL=ww3 COMPLIB=\$LIBROOT/libwav.a -f \$CASETOOLS/Makefile MACFILE=\$CASEROOT/Macros.\$MACH || exit 2
+
+EOF
+

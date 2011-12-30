@@ -91,7 +91,7 @@
 !  7. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3ODATMD, ONLY: NDSE, NDST, NAPROC, IAPROC, NAPERR
       USE W3TIMEMD, ONLY: DSEC21
 !/

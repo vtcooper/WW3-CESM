@@ -572,7 +572,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
 !
       USE W3TIMEMD, ONLY: DSEC21
 !
@@ -1093,7 +1093,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NK2, NTH, NSPEC, SIG, DSIP, ECOS, ESIN, &
                           EC2, ESC, ES2, FACHFA, MAPWN, FLCTH, FLCK,  &
                           CTMAX

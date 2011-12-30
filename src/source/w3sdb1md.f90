@@ -126,7 +126,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !/
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NTH, NSPEC, SDBC1, SDBC2, FDONLY
       USE W3ODATMD, ONLY: NDST
 !/

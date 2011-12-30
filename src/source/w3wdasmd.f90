@@ -178,7 +178,7 @@
 !     can thus be included in the parameter list, and no explcit links
 !     to other WAVEWATCH III routines will be needed within the
 !     data assimilation routines ( with the possible exception of the
-!     CONSTANTS module ), If there is a reason to terminate the code,
+!     W3CONSTANTS module ), If there is a reason to terminate the code,
 !     pass an error code out of the routine and use EXTCDE to stop
 !     the WAVEWATCH III run altogether. Check the system documentation
 !     on how to ad your routines to the compile and link system.

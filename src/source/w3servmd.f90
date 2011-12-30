@@ -677,6 +677,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
+      use shr_sys_mod
       IMPLICIT NONE
 !
       INCLUDE "mpif.h"
@@ -693,6 +694,7 @@
 !/
 !/ Test if MPI needs to be closed
 !/
+      CALL shr_sys_abort('WW3 EXTCDE abort')
       CALL MPI_INITIALIZED ( RUN, IERR_MPI )
       IF ( RUN ) THEN
           CALL MPI_BARRIER ( MPI_COMM_WORLD, IERR_MPI )

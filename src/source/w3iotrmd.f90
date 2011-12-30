@@ -156,7 +156,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
 !/
       USE W3GDATMD, ONLY: W3SETG
       USE W3WDATMD, ONLY: W3SETW

@@ -157,7 +157,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
 !
       USE W3GDATMD, ONLY: W3SETG
       USE W3WDATMD, ONLY: W3SETW
@@ -195,7 +195,7 @@
 !/ ------------------------------------------------------------------- /
 !/ Local parameters
 !/
-      INTEGER                 :: IFILE, IERR, I, J, IX, IY,           &
+      INTEGER                 :: IFILE, IERR, I, J, IX, IY,&
                                  ISEA, IP, ISP, NPTS, ISOUT, IS, IGRD
       REAL, ALLOCATABLE       :: TMPSPC(:,:)
       LOGICAL                 :: FLOK

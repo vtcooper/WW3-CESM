@@ -275,7 +275,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
 !/
       USE W3GDATMD, ONLY: W3SETG
       USE W3WDATMD, ONLY: W3SETW, W3DIMW
@@ -291,7 +291,8 @@
 !/
       USE W3GDATMD, ONLY: NX, NY, NSEA, NSEAL, MAPSTA, MAPST2, MAPFS, &
                           GLOBAL, ZB, TRNX, TRNY, DMIN, DTCFL, DTMAX, &
-                          FLCK, NK, NTH, NSPEC, SIG, GNAME
+                          FLCK, NK, NTH, NSPEC, SIG, GNAME,           &
+                          X0, Y0, SX, SY
       USE W3WDATMD, ONLY: TIME, TLEV, TICE, WLV, UST, USTDIR, VA
       USE W3ODATMD, ONLY: NDSO, NDSE, NDST, SCREEN, NDS, NTPROC,      &
                           NAPROC, IAPROC, NAPLOG, NAPOUT, NAPERR,     &
@@ -439,8 +440,8 @@
       IFT    = LEN_TRIM(TFILE)
       J      = LEN_TRIM(FNMPRE)
 !
-      IF ( OUTPTS(IMOD)%IAPROC .EQ. OUTPTS(IMOD)%NAPLOG )             &
-          OPEN (MDS(1),FILE=FNMPRE(:J)//LFILE(:IFL),ERR=888,IOSTAT=IERR)
+!MV      IF ( OUTPTS(IMOD)%IAPROC .EQ. OUTPTS(IMOD)%NAPLOG )             &
+!MV          OPEN (MDS(1),FILE=FNMPRE(:J)//LFILE(:IFL),ERR=888,IOSTAT=IERR)
 !
       IF ( MDS(3).NE.MDS(1) .AND. MDS(3).NE.MDS(4) ) THEN
           INQUIRE (MDS(3),OPENED=OPENED)
@@ -803,7 +804,9 @@
 !
       IF ( IAPROC .EQ. NAPLOG ) THEN
 !
-          WRITE (NDSO,970) GNAME
+          WRITE (NDSO,970)GNAME
+          WRITE (NDSO,*) '   Xaxis X0,SX : ',X0,SX
+          WRITE (NDSO,*) '   Yaxis Y0,SY : ',Y0,SY
           IF (   FLLEV    ) WRITE (NDSO,971) 'Prescribed'
           IF (.NOT. FLLEV ) WRITE (NDSO,971) 'No'
           IF (   FLCUR    ) WRITE (NDSO,972) 'Prescribed'

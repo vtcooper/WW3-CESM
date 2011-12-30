@@ -412,7 +412,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NTH, SIG, NX, NY, NSEA, NSEAL,          &
                           MAPSTA, MAPFS
       USE W3ADATMD, ONLY: CG, DW, UA, UD, AS, CX, CY, SP => SPPNT

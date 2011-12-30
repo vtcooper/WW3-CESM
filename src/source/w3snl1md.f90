@@ -214,7 +214,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !/
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NTH, NSPEC, SIG, FACHFE,                &
                           KDCON, KDMN, SNLC1, SNLS1, SNLS2, SNLS3
       USE W3ADATMD, ONLY: NFR, NFRHGH, NFRCHG, NSPECX, NSPECY,        &
@@ -433,7 +433,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NTH, NSPEC, DTH, XFR, SIG, LAM
       USE W3ADATMD, ONLY: W3DMNL
       USE W3ADATMD, ONLY: NFR, NFRHGH, NFRCHG, NSPECX, NSPECY,        &

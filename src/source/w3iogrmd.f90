@@ -183,7 +183,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD
       USE W3ADATMD, ONLY: MPI_COMM_WAVE
       USE W3ODATMD

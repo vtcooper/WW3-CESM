@@ -292,7 +292,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
 !/
       USE W3GDATMD
       USE W3WDATMD
@@ -548,10 +548,10 @@
                IF ( FLFRST ) ASF = 1.
                CALL W3UWND ( FLFRST, VGX, VGY )
             ELSE IF ( FLFRST ) THEN
-              U10    = 0.01
-              U10D   = 0.
-              UST    = 0.05
-              USTDIR = 0.05
+!MV              U10    = 0.01
+!MV              U10D   = 0.
+!MV              UST    = 0.05
+!MV              USTDIR = 0.05
             END IF
 !
           IF ( FLIWND .AND. LOCAL ) CALL W3UINI ( VA )
@@ -913,11 +913,12 @@
 !
                   IF ( DTTST .EQ. 0. ) THEN
                       IF ( J .EQ. 1 ) THEN
-                          IF ( IAPROC .EQ. NAPFLD ) THEN
-                              IF ( FLGMPI(1) ) CALL MPI_WAITALL  &
-                                 ( NRQGO, IRQGO, STATIO, IERR_MPI )
-                              FLGMPI(1) = .FALSE.
-                              CALL W3IOGO                             &
+!MV BUG                  IF ( IAPROC .EQ. NAPFLD ) THEN
+                         IF ( FLGMPI(1) ) CALL MPI_WAITALL  &
+                              ( NRQGO, IRQGO, STATIO, IERR_MPI )
+                         IF ( IAPROC .EQ. NAPFLD ) THEN
+                            FLGMPI(1) = .FALSE.
+                            CALL W3IOGO                             &
                                  ( 'WRITE', NDS(7), ITEST, IMOD )
                             END IF
                         ELSE IF ( J .EQ. 2 ) THEN

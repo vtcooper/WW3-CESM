@@ -167,7 +167,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NTH, NSPEC, SIG, DTH, DDEN, WWNMEANP, &
                           WWNMEANPTAIL, FTE, FTF, SSTXFTF, SSTXFTWN,&
                           SSTXFTFTAIL, SSWELLF ,SSWELLFPAR
@@ -371,7 +371,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NK, NTH, NSPEC, XFR, DDEN, SIG, SIG2, TH,   &
                           ESIN, ECOS, EC2, ZZWND, AALPHA, BBETA, ZZALP,&
                           TTAUWSHELTER, SSWELLF, SSWELLFPAR, &
@@ -720,7 +720,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS, ONLY: TPIINV, RADE
+      USE W3CONSTANTS, ONLY: TPIINV, RADE
       USE W3ODATMD,  ONLY: NDSE
       USE W3SERVMD,  ONLY: EXTCDE
       USE W3GDATMD,  ONLY: SIG, NK, NTH, TTAUWSHELTER, SSWELLFPAR, &
@@ -839,7 +839,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: ZZWND, AALPHA, ZZ0MAX
       IMPLICIT NONE
       INTEGER, PARAMETER      :: NITER=10
@@ -954,7 +954,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: AALPHA, BBETA, ZZALP, XFR, FACHFE, ZZ0MAX
 !
       IMPLICIT NONE
@@ -1097,7 +1097,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: AALPHA, BBETA, ZZALP, XFR, FACHFE,  &
                           TTAUWSHELTER, ZZ0MAX
 !
@@ -1254,7 +1254,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       IMPLICIT NONE
       INTEGER, PARAMETER      :: NITER=100
       REAL   , PARAMETER      :: XM=0.50, EPS1=0.00001
@@ -1349,7 +1349,7 @@
 !
 ! 10. Source code :
 !-----------------------------------------------------------------------------!
-      USE CONSTANTS, ONLY: GRAV
+      USE W3CONSTANTS, ONLY: GRAV
       USE W3GDATMD,  ONLY: ZZWND
       IMPLICIT NONE
       REAL, intent(in) :: WINDSPEED,TAUW
@@ -1453,7 +1453,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD, ONLY: NSPEC, NTH, NK, SSDSBR, DDELTA1, DDELTA2,   &
                           SSDSC1, SSDSC2, SSDSC3, SSDSC4, SSDSC5, SSDSC6,    &
                           SIG, SSDSP, SSDSLF, ECOS, ESIN, DTH, DSIP,  &
@@ -1640,7 +1640,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3ODATMD, ONLY: NDST
       USE W3GDATMD, ONLY: SSWELLFPAR!
 !/

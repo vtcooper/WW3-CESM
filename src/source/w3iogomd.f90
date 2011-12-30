@@ -194,7 +194,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3GDATMD
       USE W3WDATMD, ONLY: UST, FPIS
       USE W3ADATMD, ONLY: CG, WN, DW, HS, WLM, TMN, THM, THS, FP0,    &
@@ -712,8 +712,11 @@
       USE W3ODATMD, ONLY: NOGRD, IDOUT, UNDEF, NDST, NDSE, FLOGRD,    &
                           IPASS => IPASS1, WRITE => WRITE1, FNMPRE,   &
                           NOSWLL, NOEXTR
+      USE W3ODATMD, ONLY: NDSO
 !/
       USE W3SERVMD, ONLY: EXTCDE
+      USE W3CESMMD, ONLY : CASENAME
+      USE NETCDF
 !
       IMPLICIT NONE
 !/
@@ -729,11 +732,19 @@
 !/ Local parameters
 !/
       INTEGER                 :: IGRD, IERR, I, J, IX, IY, IO, MOGRD, &
-                                 ISEA, MOSWLL
+                                 ISEA, MOSWLL, NVAL, CNT
       INTEGER, ALLOCATABLE    :: MAPTMP(:,:)
-      REAL                    :: AUX1(NSEA), AUX2(NSEA)
+      REAL   , ALLOCATABLE    :: AUX2D1(:,:),AUX2D2(:,:),AUX2D3(:,:),AUX3DE(:,:,:)
+      REAL                    :: AUX1(NSEA), AUX2(NSEA), AUX3(NSEA), AUXE(NSEA,0:NOSWLL)
+      LOGICAL                 :: WAUX1, WAUX2, WAUX3, WAUXE
       CHARACTER(LEN=30)       :: IDTST, TNAME
       CHARACTER(LEN=10)       :: VERTST
+      CHARACTER(LEN=128)      :: FNAME
+      CHARACTER(LEN=16)       :: FLDSTR1,FLDSTR2,FLDSTR3,FLDSTRE
+      LOGICAL                 :: EXISTS
+      INTEGER                 :: YY,MM,DD
+      INTEGER                 :: VARID1,VARID2,VARID3,VARIDE,NCID,NCLOOP
+      INTEGER                 :: DIMID(3)
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -837,6 +848,14 @@
           MAPTMP = MAPSTA + 8*MAPST2
           WRITE (NDSOG)                                               &
                ((MAPTMP(IY,IX),IX=1,NX),IY=1,NY)
+          do nval = minval(maptmp),maxval(maptmp)
+             cnt = 0
+             do ix = 1,nx
+             do iy = 1,ny
+                if (maptmp(ix,iy) == nval) cnt = cnt + 1
+             enddo
+             enddo
+          enddo
         ELSE
           READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)                    &
                ((MAPTMP(IY,IX),IX=1,NX),IY=1,NY)
@@ -847,6 +866,37 @@
 !
 ! Fields ------------------------------------------------------------- *
 !
+      ALLOCATE ( AUX2D1(NX,NY),AUX2D2(NX,NY),AUX2D3(NX,NY),AUX3DE(NX,NY,0:NOSWLL) )
+      YY =  TIME(1)/10000
+      MM = (TIME(1)-YY*10000)/100
+      DD = (TIME(1)-YY*10000-MM*100)
+      WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
+            YY,'-',MM,'-',DD,'-',TIME(2),'.nc'
+
+      write(ndse,*) 'w3iogo tcx0 ',time(1),time(2),yy,mm,dd
+      write(ndse,*) 'w3iogo tcx1 ',trim(fname)
+
+      INQUIRE(FILE=TRIM(FNAME),EXIST=EXISTS)
+      IF (.NOT.EXISTS) THEN
+         IERR = NF90_CREATE(TRIM(FNAME),NF90_CLOBBER,NCID)
+         CALL HANDLE_ERR(IERR,'CREATE')
+         IERR = NF90_DEF_DIM(NCID,'NX',NX,dimid(1))
+         CALL HANDLE_ERR(IERR,'DEF_DIMID1')
+         IERR = NF90_DEF_DIM(NCID,'NY',NY,dimid(2))
+         CALL HANDLE_ERR(IERR,'DEF_DIMID2')
+         IERR = NF90_DEF_DIM(NCID,'NOSWLL',NOSWLL+1,dimid(3))
+         CALL HANDLE_ERR(IERR,'DEF_DIMID3')
+      ELSE
+         IERR = NF90_OPEN(TRIM(FNAME),NF90_WRITE,NCID)
+         CALL HANDLE_ERR(IERR,'OPEN')
+         IERR = NF90_INQ_DIMID(NCID,'NX',dimid(1))
+         CALL HANDLE_ERR(IERR,'INQ_DIMID1')
+         IERR = NF90_INQ_DIMID(NCID,'NY',dimid(2))
+         CALL HANDLE_ERR(IERR,'INQ_DIMID2')
+         IERR = NF90_INQ_DIMID(NCID,'NOSWLL',dimid(3))
+         CALL HANDLE_ERR(IERR,'INQ_DIMID3')
+      ENDIF
+
       IF ( WRITE ) THEN
           DO ISEA=1, NSEA
             IF ( MAPSTA(MAPSF(ISEA,2),MAPSF(ISEA,1)) .LT. 0 ) THEN
@@ -872,25 +922,46 @@
           IF (.NOT.AINIT) CALL W3DIMA ( IGRD, NDSE, NDST, .TRUE. )
         END IF
 !
+      DO NCLOOP = 1,2
+      IF (NCLOOP == 1) THEN
+        IERR = NF90_REDEF(NCID)
+      ENDIF
+      IF (NCLOOP == 2) THEN
+        IERR = NF90_ENDDEF(NCID)
+      ENDIF
       DO IO=1, NOGRD
         IF ( FLOGRD(IO) ) THEN
 !
             IF ( WRITE ) THEN
+                WAUX1 = .FALSE.
+                WAUX2 = .FALSE.
+                WAUX3 = .FALSE.
+                WAUXE = .FALSE.
 !
                 IF ( IO .EQ.  1 ) THEN
-                    WRITE ( NDSOG ) DW(1:NSEA)
+                    AUX1(1:NSEA) = DW(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'DW'
                   ELSE IF ( IO .EQ.  2 ) THEN
-                    WRITE ( NDSOG ) CX(1:NSEA)
-                    WRITE ( NDSOG ) CY(1:NSEA)
+                    AUX1(1:NSEA) = CX(1:NSEA)
+                    AUX2(1:NSEA) = CY(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'CX'
+                    FLDSTR2 = 'CY'
                   ELSE IF ( IO .EQ.  3 ) THEN
                     DO ISEA=1, NSEA
                       AUX1(ISEA) = UA(ISEA)*COS(UD(ISEA))
                       AUX2(ISEA) = UA(ISEA)*SIN(UD(ISEA))
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'UAX'
+                    FLDSTR2 = 'UAY'
                   ELSE IF ( IO .EQ.  4 ) THEN
-                    WRITE ( NDSOG ) AS(1:NSEA)
+                    AUX1(1:NSEA) = AS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'AS'
                   ELSE IF ( IO .EQ.  5 ) THEN
                     DO ISEA=1, NSEA
                       IX     = MAPSF(ISEA,1)
@@ -905,50 +976,94 @@
                           AUX2(ISEA) = UNDEF
                         END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'ASFX'
+                    FLDSTR2 = 'ASFY'
                   ELSE IF ( IO .EQ.  6 ) THEN
-                    WRITE ( NDSOG ) HS(1:NSEA)
+                    AUX1(1:NSEA) = HS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HS'
                   ELSE IF ( IO .EQ.  7 ) THEN
-                    WRITE ( NDSOG ) WLM(1:NSEA)
+                    AUX1(1:NSEA) = WLM(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'WLM'
                   ELSE IF ( IO .EQ.  8 ) THEN
-                    WRITE ( NDSOG ) TMN(1:NSEA)
+                    AUX1(1:NSEA) = TMN(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'TMN'
                   ELSE IF ( IO .EQ.  9 ) THEN
-                    WRITE ( NDSOG ) THM(1:NSEA)
+                    AUX1(1:NSEA) = THM(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THM'
                   ELSE IF ( IO .EQ. 10 ) THEN
-                    WRITE ( NDSOG ) THS(1:NSEA)
+                    AUX1(1:NSEA) = THS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THS'
                   ELSE IF ( IO .EQ. 11 ) THEN
-                    WRITE ( NDSOG ) FP0(1:NSEA)
+                    AUX1(1:NSEA) = FP0(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'PF0'
                   ELSE IF ( IO .EQ. 12 ) THEN
-                    WRITE ( NDSOG ) THP0(1:NSEA)
+                    AUX1(1:NSEA) = THP0(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THP0'
                   ELSE IF ( IO .EQ. 13 ) THEN
-                    WRITE ( NDSOG ) FP1(1:NSEA)
+                    AUX1(1:NSEA) = FP1(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'PF1'
                   ELSE IF ( IO .EQ. 14 ) THEN
-                    WRITE ( NDSOG ) THP1(1:NSEA)
+                    AUX1(1:NSEA) = THP1(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THP1'
                   ELSE IF ( IO .EQ. 15 ) THEN
-                    WRITE ( NDSOG ) PHS(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PHS(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PHS'
                   ELSE IF ( IO .EQ. 16 ) THEN
-                    WRITE ( NDSOG ) PTP(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PTP(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PTP'
                   ELSE IF ( IO .EQ. 17 ) THEN
-                    WRITE ( NDSOG ) PLP(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PLP(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PLP'
                   ELSE IF ( IO .EQ. 18 ) THEN
-                    WRITE ( NDSOG ) PTH(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PTH(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PTH'
                   ELSE IF ( IO .EQ. 19 ) THEN
-                    WRITE ( NDSOG ) PSI(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PSI(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PSI'
                   ELSE IF ( IO .EQ. 20 ) THEN
-                    WRITE ( NDSOG ) PWS(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PWS(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PWS'
                   ELSE IF ( IO .EQ. 21 ) THEN
-                    WRITE ( NDSOG ) PWST(1:NSEA)
+                    AUX1(1:NSEA) = PWST(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'PWST'
                   ELSE IF ( IO .EQ. 22 ) THEN
-                    WRITE ( NDSOG ) PNR(1:NSEA)
+                    AUX1(1:NSEA) = PNR(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'PNR'
                   ELSE IF ( IO .EQ. 23 ) THEN
-                    WRITE ( NDSOG ) DTDYN(1:NSEA)
+                    AUX1(1:NSEA) = DTDYN(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'DTDYN'
                   ELSE IF ( IO .EQ. 24 ) THEN
-                    WRITE ( NDSOG ) FCUT(1:NSEA)
+                    AUX1(1:NSEA) = FCUT(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'FCUT'
                   ELSE IF ( IO .EQ. 25 ) THEN
-                    WRITE ( NDSOG ) ICE(1:NSEA)
+                    AUX1(1:NSEA) = ICE(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'ICE'
                   ELSE IF ( IO .EQ. 26 ) THEN
-                    WRITE ( NDSOG ) WLV(1:NSEA)
+                    AUX1(1:NSEA) = WLV(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'WLV'
                   ELSE IF ( IO .EQ. 27 ) THEN
                     DO ISEA=1, NSEA
                       IF ( ABA(ISEA) .NE. UNDEF ) THEN
@@ -959,8 +1074,10 @@
                           AUX2(ISEA) = UNDEF
                         END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'ABAX'
+                    FLDSTR2 = 'ABAY'
                   ELSE IF ( IO .EQ. 28 ) THEN
                     DO ISEA=1, NSEA
                       IF ( ABA(ISEA) .NE. UNDEF ) THEN
@@ -971,22 +1088,102 @@
                           AUX2(ISEA) = UNDEF
                         END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'UBAX'
+                    FLDSTR2 = 'UBAY'
                   ELSE IF ( IO .EQ. 29 ) THEN
-                    WRITE ( NDSOG ) SXX(1:NSEA)
-                    WRITE ( NDSOG ) SYY(1:NSEA)
-                    WRITE ( NDSOG ) SXY(1:NSEA)
+                    AUX1(1:NSEA) = SXX(1:NSEA)
+                    AUX2(1:NSEA) = SYY(1:NSEA)
+                    AUX3(1:NSEA) = SXY(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    WAUX3 = .TRUE.
+                    FLDSTR1 = 'SXX'
+                    FLDSTR2 = 'SYY'
+                    FLDSTR3 = 'SXY'
                   ELSE IF ( IO .EQ. 30 ) THEN
-                    WRITE ( NDSOG ) USERO(1:NSEA,1)
+                    AUX1(1:NSEA) = USERO(1:NSEA,1)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'USERO1'
                   ELSE IF ( IO .EQ. 31 ) THEN
-                    WRITE ( NDSOG ) USERO(1:NSEA,2)
+                    AUX1(1:NSEA) = USERO(1:NSEA,2)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'USERO2'
                   ELSE
                     WRITE (NDSE,999)
                     CALL EXTCDE ( 30 )
                   END IF
-!
-              ELSE
+
+                  IF (NCLOOP == 1) THEN
+                    !--- no error checking here in case file/vars exists already ---
+                    IF (WAUX1) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR1),NF90_FLOAT,DIMID(1:2),VARID1)
+                      IERR = NF90_PUT_ATT(NCID,VARID1,"_FillValue",UNDEF)
+                    ENDIF
+                    IF (WAUX2) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR2),NF90_FLOAT,DIMID(1:2),VARID2)
+                      IERR = NF90_PUT_ATT(NCID,VARID2,"_FillValue",UNDEF)
+                    ENDIF
+                    IF (WAUX3) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR3),NF90_FLOAT,DIMID(1:2),VARID3)
+                      IERR = NF90_PUT_ATT(NCID,VARID3,"_FillValue",UNDEF)
+                    ENDIF
+                    IF (WAUXE) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTRE),NF90_FLOAT,DIMID(1:3),VARIDE)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"_FillValue",UNDEF)
+                    ENDIF
+
+                  ELSEIF (NCLOOP == 2) THEN
+
+                    IF (WAUX1) THEN
+                      WRITE ( NDSOG ) AUX1(1:NSEA)
+                      AUX2D1 = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX2D1(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX1(ISEA)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTR1),VARID1)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D1_'//TRIM(FLDSTR1))
+                      IERR = NF90_PUT_VAR(NCID,VARID1,AUX2D1)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D1_'//TRIM(FLDSTR1))
+                    ENDIF
+                    IF (WAUX2) THEN
+                      WRITE ( NDSOG ) AUX2(1:NSEA)
+                      AUX2D2 = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX2D2(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX2(ISEA)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTR2),VARID2)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D2_'//TRIM(FLDSTR2))
+                      IERR = NF90_PUT_VAR(NCID,VARID2,AUX2D2)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D2_'//TRIM(FLDSTR2))
+                    ENDIF
+                    IF (WAUX3) THEN
+                      WRITE ( NDSOG ) AUX3(1:NSEA)
+                      AUX2D3 = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX2D3(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX3(ISEA)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTR3),VARID3)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D3_'//TRIM(FLDSTR3))
+                      IERR = NF90_PUT_VAR(NCID,VARID3,AUX2D3)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D3_'//TRIM(FLDSTR3))
+                    ENDIF
+                    IF (WAUXE) THEN
+                      WRITE ( NDSOG ) AUXE(1:NSEA,0:NOSWLL)
+                      AUX3DE = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX3DE(MAPSF(ISEA,1),MAPSF(ISEA,2),0:NOSWLL) = AUXE(ISEA,0:NOSWLL)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTRE),VARIDE)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D1_'//TRIM(FLDSTRE))
+                      IERR = NF90_PUT_VAR(NCID,VARIDE,AUX3DE)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX3DE_'//TRIM(FLDSTRE))
+                    ENDIF
+
+                  ENDIF  ! NCLOOP
+
+              ELSE   ! WRITE
 !
                 IF ( IO .EQ.  1 ) THEN
                     READ (NDSOG,END=801,ERR=802,IOSTAT=IERR) DW(1:NSEA)
@@ -1077,10 +1274,16 @@
                     CALL EXTCDE ( 30 )
                   END IF
 !
-              END IF
+              END IF   ! WRITE
 !
-          END IF
-        END DO
+          END IF    ! FLOGRD
+        END DO   ! NOGRD
+        END DO   ! NCLOOP
+
+        IERR = NF90_CLOSE(NCID)
+        CALL HANDLE_ERR(IERR,'CLOSE')
+
+        DEALLOCATE(AUX2D1,AUX2D2,AUX2D3,AUX3DE)
 !
       RETURN
 !
@@ -1140,6 +1343,22 @@
 !/ End of W3IOGO ----------------------------------------------------- /
 !/
       END SUBROUTINE W3IOGO
+
+      SUBROUTINE HANDLE_ERR(IERR,STRING)
+!/ Begin  HANDLE_ERR ----------------------------------------------------- /
+      USE W3ODATMD, ONLY: NDSE
+      USE W3SERVMD, ONLY: EXTCDE
+      USE NETCDF
+      IMPLICIT NONE
+      INTEGER         ,INTENT(IN) :: IERR
+      CHARACTER(LEN=*),INTENT(IN) :: STRING
+
+      IF (IERR /= NF90_NOERR) then
+         WRITE(NDSE,*) "*** WAVEWATCH III netCDF error: ",trim(string),':',trim(nf90_strerror(IERR))
+         CALL EXTCDE ( 49 )
+      ENDIF
+!/ End of HANDLE_ERR ----------------------------------------------------- /
+      END SUBROUTINE HANDLE_ERR
 !/
 !/ End of module W3IOGOMD -------------------------------------------- /
 !/

@@ -1,5 +1,5 @@
 !/ ------------------------------------------------------------------- /
-      MODULE CONSTANTS
+      MODULE W3CONSTANTS
 !/
 !/                  +-----------------------------------+
 !/                  | WAVEWATCH III           NOAA/NCEP |
@@ -59,4 +59,4 @@
 !/
 !/ End of module CONSTANTS ------------------------------------------- /
 !/
-      END MODULE CONSTANTS
+      END MODULE W3CONSTANTS

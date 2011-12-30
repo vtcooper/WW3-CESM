@@ -135,7 +135,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !/
-      USE CONSTANTS
+      USE W3CONSTANTS
 !
       USE W3GDATMD, ONLY: NK, NTH, NSPEC
       USE W3ODATMD, ONLY: WSCUT, FLCOMB
@@ -873,7 +873,7 @@
 !/
 !  1. Purpose :
 !
-!     Compute mean parameters per partition.
+!     Compute pean parameters per partition.
 !
 !  3. Parameters :
 !
@@ -903,7 +903,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !
-      USE CONSTANTS
+      USE W3CONSTANTS
       USE W3DISPMD, ONLY: WAVNU1
 !
       USE W3GDATMD, ONLY: NK, NTH, NSPEC, DTH, SIG, DSII, DSIP,       &
@@ -916,7 +916,7 @@
 !/ Parameter list
 !/
       INTEGER, INTENT(IN)     :: NPI, IMO(NSPEC), DIMXP
-      INTEGER, INTENT(OUT)    :: NPO, PMAP(DIMXP)
+      INTEGER, INTENT(OUT)    :: NPO
       REAL, INTENT(IN)        :: ZP(NSPEC), DEPTH, UABS, UDIR, WN(NK)
       REAL, INTENT(OUT)       :: XP(6,0:DIMXP)
 !/
@@ -924,6 +924,7 @@
 !/ Local parameters
 !/
       INTEGER                 :: IK, ITH, ISP, IP, IFPMAX(0:NPI)
+      INTEGER, INTENT(OUT)    :: PMAP(DIMXP)
       REAL                    :: SUMF(0:NK+1,0:NPI), SUMFW(NK,0:NPI), &
                                  SUMFX(NK,0:NPI), SUMFY(NK,0:NPI),    &
                                  SUME(0:NPI), SUMEW(0:NPI),           &

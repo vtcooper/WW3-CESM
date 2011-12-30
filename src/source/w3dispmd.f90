@@ -146,7 +146,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !/
-      USE CONSTANTS, ONLY : GRAV
+      USE W3CONSTANTS, ONLY : GRAV
 !
       IMPLICIT NONE
 !/
@@ -233,7 +233,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !/
-      USE CONSTANTS, ONLY : GRAV
+      USE W3CONSTANTS, ONLY : GRAV
 !
       IMPLICIT NONE
 !/
@@ -389,7 +389,7 @@
 !
 !/ ------------------------------------------------------------------- /
 !/
-      USE CONSTANTS, ONLY : GRAV
+      USE W3CONSTANTS, ONLY : GRAV
 !
       IMPLICIT NONE
 !/

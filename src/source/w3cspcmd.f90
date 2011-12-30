@@ -176,7 +176,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE CONSTANTS
+      USE W3CONSTANTS
 !
       USE W3SERVMD, ONLY: EXTCDE
 !
