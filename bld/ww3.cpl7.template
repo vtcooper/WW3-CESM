@@ -9,7 +9,7 @@ set exedir = \$RUNDIR; cd \$exedir
 
 cp /ptmp/tcraig/ww3_data/restart.ww3.111202 ./restart.ww3
 cp /ptmp/tcraig/ww3_data/wind.ww3.111202 ./wind.ww3
-cp /ptmp/tcraig/ww3_data/G4L1.mod_def.ww3.111202 ./mod_def.ww3
+cp /ptmp/tcraig/ww3_data/G4L1.mod_def.ww3.120220 ./mod_def.ww3
 
 EOF
 

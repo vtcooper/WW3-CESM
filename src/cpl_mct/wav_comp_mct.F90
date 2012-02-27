@@ -709,6 +709,14 @@ CONTAINS
       write(6,*)'time0= ',time0
       write(6,*)'timen= ',timen
       call w3wave ( 1, timen )
+
+!!$      copy ww3 data to coupling datatype
+!!$      do isea=1, nsea
+!!$         w2x_w%rattr(index_w2x_fw_taux,isea) = ??
+!!$         w2x_w%rattr(index_w2x_fw_tauy,isea) = ??
+!!$         w2x_w%rattr(index_w2x_sw_langnum,isea) = ??
+!!$      enddo
+
       !
       ! TODO Put in gptl timer calls
       !
