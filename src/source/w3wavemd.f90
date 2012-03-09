@@ -548,10 +548,10 @@
                IF ( FLFRST ) ASF = 1.
                CALL W3UWND ( FLFRST, VGX, VGY )
             ELSE IF ( FLFRST ) THEN
-!MV              U10    = 0.01
-!MV              U10D   = 0.
-!MV              UST    = 0.05
-!MV              USTDIR = 0.05
+               U10    = 0.01
+               U10D   = 0.
+               UST    = 0.05
+               USTDIR = 0.05
             END IF
 !
           IF ( FLIWND .AND. LOCAL ) CALL W3UINI ( VA )

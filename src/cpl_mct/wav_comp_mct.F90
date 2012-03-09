@@ -150,9 +150,13 @@
 !
 !/ ------------------------------------------------------------------- /
       use w3gdatmd
-      use w3wdatmd, only: time, w3ndat, w3dimw, w3setw, UST, USTDIR
+      use w3wdatmd, only: time, w3ndat, w3dimw, w3setw
       use w3adatmd
       use w3idatmd, only: flags, w3seti, w3ninp 
+      USE W3IDATMD, ONLY: TC0, CX0, CY0, TCN, CXN, CYN
+      USE W3IDATMD, ONLY: TW0, WX0, WY0, DT0, TWN, WXN, WYN, DTN
+      USE W3IDATMD, ONLY: TIN, ICEI
+      USE W3IDATMD, ONLY: TLN, WLEV
       use w3odatmd, only: w3nout, w3seto, naproc, iaproc, napout, naperr,             &
                           nogrd, idout, fnmpre, iostyp
 !/
@@ -201,29 +205,34 @@
       integer,save :: index_w2x_Fw_taux
       integer,save :: index_w2x_Fw_tauy
 
+      integer,save :: stdout
+
       include "mpif.h"
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CONTAINS
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     SUBROUTINE WAV_INIT_MCT( EClock, cdata, x2w, w2x, NLFilename )
-      !/
+
       !/ ------------------------------------------------------------------- /
       !/ Parameter list
       !/
+
       TYPE(ESMF_CLOCK), INTENT(IN)    :: ECLOCK
       TYPE(SEQ_CDATA) , INTENT(INOUT) :: CDATA
       TYPE(MCT_AVECT) , INTENT(INOUT) :: X2W, W2X
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: NLFILENAME ! NAMELIST FILENAME
-      !/
+
       !/ ------------------------------------------------------------------- /
       !/ Local PARAMETER statements
       !/
+
       INTEGER, PARAMETER  :: NHMAX =    200
-      !/
+
       !/ ------------------------------------------------------------------- /
       !/ Local parameters
       !/
+
       integer :: n
       integer :: compid
       integer :: mpi_comm
@@ -233,7 +242,6 @@ CONTAINS
       integer :: dtime_sync        ! integer timestep size
       integer :: start_ymd         ! start date (yyyymmdd)
       integer :: start_tod         ! start time of day (sec)
-      integer :: stdout
 
       character(CL)            :: starttype
       type(mct_gsmap), pointer :: gsmap
@@ -243,11 +251,12 @@ CONTAINS
       integer             :: ndso, ndse, nds(13), ntrace(2), time0(2), &
                              timen(2), odat(30), nh(4), iprt(6)
       integer             :: i,j,npts
-      integer             :: ierr, ierr_mpi
+      integer             :: ierr
       real                :: a(nhmax,4)
       real, allocatable   :: x(:), y(:)
       logical             :: flgrd(nogrd), prtfrm, flt 
-!
+      character(len=*),parameter :: subname = '(wav_init_mct)'
+
       character(len=3)    :: idstr(8), idtst
       character(len=10)   :: pn
       character(len=13)   :: idflds(8)
@@ -255,9 +264,9 @@ CONTAINS
       character(len=23)   :: dtme21
       character(len=30)   :: idotyp(6)
       character(len=10), allocatable :: pnames(:)
-      !/
+
       !/ ------------------------------------------------------------------- /
-      !/
+
       DATA IDFLDS / 'water levels ' , 'currents     ' ,               &
                     'winds        ' , 'ice fields   ' ,               &
                     'mean param.  ' , '1D spectra   ' ,               &
@@ -270,41 +279,41 @@ CONTAINS
                     'Partitioned wave field data   ' /
       DATA IDSTR  / 'LEV', 'CUR', 'WND', 'ICE', 'DT0', 'DT1', 'DT2',  &
                     'MOV' /
-      !
+
       !--------------------------------------------------------------------
       ! Set up data structures
       !--------------------------------------------------------------------
-      !
+
       call w3nmod ( 1, 6, 6 )
       call w3ndat (    6, 6 )
       call w3naux (    6, 6 )
       call w3nout (    6, 6 )
       call w3ninp (    6, 6 )
-      !
+
       call w3setg ( 1, 6, 6 )
       call w3setw ( 1, 6, 6 )
       call w3seta ( 1, 6, 6 )
       call w3seto ( 1, 6, 6 )
       call w3seti ( 1, 6, 6 )
-      !
+
       !--------------------------------------------------------------------
       ! Initialize mpi
       !--------------------------------------------------------------------
-      !
+
       call seq_cdata_setptrs(cdata, id=compid, mpicom=mpi_comm, &
            gsmap=gsmap, dom=dom, infodata=infodata)
 
       call mpi_comm_size(mpi_comm, naproc, ierr)
       call mpi_comm_rank(mpi_comm, iaproc, ierr)
       iaproc = iaproc + 1
-      !
+
       !--------------------------------------------------------------------
       ! IO set-up
       !--------------------------------------------------------------------
-      !
+
       napout = 1
       naperr = 1
-      !
+
       ! 1.b For WAVEWATCH III (See W3INIT) ??? ask adrean if i am missing something
       !
       ! The following units are referenced in module w3initmd
@@ -324,7 +333,7 @@ CONTAINS
       ! NDS(12) ! unit for output for FLOUT(3) flag
       ! NDS(13) ! unit for output for FLOUT(6) flag
       ! NDS(10) ! unit for output for FLOUT(5) flag
-      !
+
       if (iaproc .eq. napout) then
          stdout = shr_file_getunit()
          call shr_file_setio('wav_modelio.nml',stdout)
@@ -345,12 +354,12 @@ CONTAINS
       nds(11) = shr_file_getunit()
       nds(12) = shr_file_getunit()
       nds(13) = shr_file_getunit()
-      !
+
       ndso      =  stdout
       ndse      =  stdout
       ntrace(1) =  nds(3)
       ntrace(2) =  10
-      !
+
       ! Redirect share output to wav log
       call shr_file_getLogUnit (shrlogunit)
       call shr_file_getLogLevel(shrloglev)
@@ -358,24 +367,25 @@ CONTAINS
 
       if ( iaproc .eq. napout ) write (ndso,900)
       call shr_sys_flush(stdout)
-      !
+
       !--------------------------------------------------------------------
       ! Define input fields
       !--------------------------------------------------------------------
-      !
-      ! NOTE: no longer read NDSI (ww3_shel.inp) - input is hard-wired below
-      flags(1:8) = .false.
+
+      flags = .false.
+      flags(1:4) = .true.
+!      flags(2) = .true.
 
       !--------------------------------------------------------------------
       ! Set time frame
       !--------------------------------------------------------------------
-      !
+
       ! TIME0 = from ESMF clock
       ! NOTE - are not setting TIMEN here
 
       if ( iaproc .eq. napout ) write (ndso,930)
       call shr_sys_flush(stdout)
-      !
+
       call seq_timemgr_EClockGetData(EClock, &
            start_ymd=start_ymd, start_tod=start_tod)
 
@@ -389,15 +399,15 @@ CONTAINS
       if ( iaproc .eq. napout ) write (ndso,931) dtme21
       call shr_sys_flush(stdout)
       time = time0
-      !
+
       !--------------------------------------------------------------------
       ! Define output type and fields
       !--------------------------------------------------------------------
-      !
+
       iostyp = 1
       write (ndso,940) 'no dedicated output process, any file system '
       call shr_sys_flush(stdout)
-      !
+
       ! TODO - need to enable restart files in run
       ! Actually will need a new restart flag - since all of the ODAT
       ! should be set to 0 - since they are initializated in w3initmd
@@ -416,7 +426,7 @@ CONTAINS
       ! NPT     Int.   I   Number of output points
       ! X/YPT   R.A.   I   Coordinates of output points.
       ! PNAMES  C.A.   I   Output point names.
-      !
+
       npts = 0
       allocate ( x(1), y(1), pnames(1) )
       pnames(1) = ' '
@@ -482,11 +492,11 @@ CONTAINS
          if ( flt ) write (ndso,1945) 'no fields defined'
       end if
       call shr_sys_flush(stdout)
-      !
+
       !--------------------------------------------------------------------
       ! Wave model initializations
       !--------------------------------------------------------------------
-      !
+
       if ( iaproc .eq. napout ) write (ndso,950)
       if ( iaproc .eq. napout ) write (ndso,951) 'wave model ...'
       call shr_sys_flush(stdout)
@@ -505,12 +515,12 @@ CONTAINS
       dtcfli = real(dtime_sync)      !todo ??? ask adrean
       dtmin  = real(dtime_sync) / 12 !todo ??? ask adrean
 
-      call mpi_barrier ( mpi_comm, ierr_mpi )
-      !
+      call mpi_barrier ( mpi_comm, ierr )
+
       !--------------------------------------------------------------------
       ! cpl7/mct initialization
       !--------------------------------------------------------------------
-      !
+
       ! initialize mct gsmap
 
       call wav_setgsmap_mct(mpi_comm, compid, gsmap)
@@ -524,6 +534,7 @@ CONTAINS
       
       ! set flags in infodata
       ! wav_prognostic is set to .false. for debugging purposes only
+
       call seq_infodata_putdata(infodata, wav_present=.true., &
            wav_prognostic=.true., wav_nx=nx, wav_ny=ny)
 
@@ -583,109 +594,29 @@ CONTAINS
     SUBROUTINE WAV_RUN_MCT(EClock, cdata_w, x2w_w, w2x_w)
 
       ! Parameters
-      !
+
       type(ESMF_Clock)            ,intent(in)    :: EClock
       type(seq_cdata)             ,intent(inout) :: cdata_w
       type(mct_aVect)             ,intent(inout) :: x2w_w
       type(mct_aVect)             ,intent(inout) :: w2x_w
-      !
-      !/
+
+
       !/ ------------------------------------------------------------------- /
       !/ Local parameters
-      !/
-      integer :: time0(2), timen(2), ttime(2), ttt(2), ierr, i, j, ix, iy
+
+      integer :: time0(2), timen(2), ierr, i, j, ix, iy
       integer :: ymd              ! current year-month-day
       integer :: tod              ! current time of day (sec)
       integer :: hh,mm,ss
       integer :: n,jsea,isea
-      integer :: ierr_mpi
-      real    :: uwind, vwind ! This will not work with real*8???
-      real    :: tbot, tocn 
-      !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      ! 7.  Model with input
-      ! 7.a Determine next time interval and input fields
-      ! 7.a.1 Preparation
-      ! 7.a.3 Update time and fields / data
-      !
-      ! W3ADATM (type WDATA)
-      !
-      !      Name      Type  Scope    Description
-      !     ----------------------------------------------------------------
-      !      TIME      I.A.  Public   Valid time for spectra.
-      !      TLEV      I.A.  Public   Valid time for water levels.
-      !      TICE      I.A.  Public   Valid time for ice.
-      !      VA        R.A.  Public   Storage array for spectra.
-      !      WLV       R.A.  Public   Water levels.
-      !      ICE       R.A.  Public   Ice coverage.
-      !      UST       R.A.  Public   Friction velocity (absolute).
-      !      USTDIR    R.A.  Public   Friction velocity direction.
-      !     ----------------------------------------------------------------
-      !
-      ! W3ADATM (type WADATA)
-      !
-      !     Fields of mean wave parameters:
-      !
-      !      Name      Type  Scope    Description
-      !     ----------------------------------------------------------------
-      !      DW        R.A.  Public   Water depths.
-      !      UA        R.A.  Public   Absolute wind speeds.
-      !      UD        R.A.  Public   Absolute wind direction.
-      !      U10       R.A.  Public   Wind speed used.
-      !      U10D      R.A.  Public   Wind direction used.
-      !      AS        R.A.  Public   Stability parameter.
-      !      CX/Y      R.A.  Public   Current components.
-      !      EMN       R.A.  Public   Mean energy.
-      !      FMN       R.A.  Public   Mean frequency.
-      !      WNM       R.A.  Public   Mean wavenumber.
-      !      AMX       R.A.  Public   Spectral maximum.
-      !      CDS       R.A.  Public   Drag coefficient.
-      !      Z0S       R.A.  Public   Roughness parameter.
-      !      HS        R.A.  Public   Wave Height.
-      !      WLM       R.A.  Public   Mean wave length.
-      !      TMN       R.A.  Public   Mean wave period.
-      !      THM       R.A.  Public   Mean wave direction.
-      !      THS       R.A.  Public   Mean directional spread.
-      !      FP0       R.A.  Public   Peak frequency.
-      !      THP0      R.A.  Public   Peak direction.
-      !      FP1       R.A.  Public   Wind sea peak frequency.
-      !      THP1      R.A.  Public   Wind sea peak direction.
-      !      DTDYN     R.A.  Public   Mean dynamic time step (raw).
-      !      FCUT      R.A.  Public   Cut-off frequency for tail.
-      !      ABA       R.A.  Public   Near-bottom rms wave ex. apmplitude.
-      !      ABD       R.A.  Public   Corresponding direction.
-      !      UBA       R.A.  Public   Near-bottom rms wave velocity.
-      !      UBD       R.A.  Public   Corresponding direction.
-      !      Sxx       R.A.  Public   Radiation stresses.
-      !      DDDx      R.A.  Public   Spatial derivatives of the depth.
-      !      DCxDx     R.A.  Public   Spatial dirivatives of the current.
-      !
-      ! Need to have the following loop from n = 1, isea not over 2d
-      ! But need to map to 2d - since that is what is stored here?
-      ! But is this what is used in the computation?
-      ! do not call w3uwnd
+      integer :: mpi_comm
+      integer :: gindex
+      type(mct_aVect) :: x2w0
+      type(mct_gsmap),pointer :: gsmap
+      real :: def_value
 
-!!$      do isea=1, nsea
-!!$         uwind = x2w_w%rattr(index_x2w_sa_u,isea)         
-!!$         vwind = x2w_w%rattr(index_x2w_sa_v,isea)
-!!$         tbot  = x2w_w%rattr(index_x2w_sa_tbot,isea)
-!!$         tocn  = x2w_w%rattr(index_x2w_so_t   ,isea)
-!!$         ua(isea) = sqrt ( uwind**2 + vwind**2 )
-!!$         if ( ua(isea) .gt. 1.e-7) then
-!!$            ud(isea) = mod ( tpi+atan2(vwind,uwind) , tpi )
-!!$         else
-!!$            ud(isea) = 0.
-!!$         end if
-!!$         as(isea)   = tbot - tocn
-!!$         u10 (isea) = max ( ua(isea) , 0.001 )
-!!$         u10d(isea) = ud(isea)
-!!$      end do
-      U10    = 0.01
-      U10D   = 0.
-      UST    = 0.05
-      USTDIR = 0.05
-      !
-      ! 7.b Run the wave model for the given interval
-      !
+      character(len=*),parameter :: subname = '(wav_run_mct)'
+
       call seq_timemgr_EClockGetData( EClock, curr_ymd=ymd, curr_tod=tod )
 
       hh = tod/3600
@@ -706,22 +637,153 @@ CONTAINS
 
       time = time0
 
-      write(6,*)'time0= ',time0
-      write(6,*)'timen= ',timen
+      write(stdout,*)'time0= ',time0
+      write(stdout,*)'timen= ',timen
+
+      !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      ! 7.  Model with input
+      ! 7.a Determine next time interval and input fields
+      ! 7.a.1 Preparation
+      ! 7.a.3 Update time and fields / data
+
+      !--- input fields associated with W3FLDG calls in ww3_shel.ftn
+      !--- these arrays are global, just fill the local cells for use later
+      !--- fill both the lower (0) and upper (N) bound data with the same values
+      !--- fill with special values as default, these should not be used in practice
+      !--- set time for input data to time0 and timen (shouldn't matter)
+
+!      def_value = -1.0e36
+      def_value = 0.0
+
+      if (flags(1)) then
+         TLN  = timen
+         WLEV = def_value   ! ssh
+      endif
+
+      if (flags(2)) then
+         TC0  = time0
+         TCN  = timen
+         CX0  = def_value   ! ocn u current   
+         CXN  = def_value   
+         CY0  = def_value   ! ocn v current
+         CYN  = def_value      
+      endif
+
+      if (flags(3)) then
+         TW0  = time0
+         TWN  = timen
+         WX0  = def_value   ! atm u wind
+         WXN  = def_value      
+         WY0  = def_value   ! atm v wind
+         WYN  = def_value      
+         DT0  = def_value   ! air temp - ocn temp
+         DTN  = def_value
+      endif
+
+      if (flags(4)) then
+         TIN  = timen
+         ICEI = def_value   ! ice frac
+      endif
+
+#if (1 == 0) 
+! tcraig, this is the local fill only, really only need 1d
+      do jsea=1, nseal
+         isea = iaproc + (jsea-1)*naproc
+         IX  = MAPSF(ISEA,1)
+         IY  = MAPSF(ISEA,2)
+
+         if (flags(1)) then
+            WLEV(IX,IY) = 0.0
+         endif
+
+         if (flags(2)) then
+            CX0(IX,IY)  = x2w_w%rattr(index_x2w_so_u,JSEA)
+            CXN(IX,IY)  = CX0(IX,IY)
+            CY0(IX,IY)  = x2w_w%rattr(index_x2w_so_v,JSEA)
+            CYN(IX,IY)  = CY0(IX,IY)
+         endif
+
+         if (flags(3)) then
+            WX0(IX,IY)  = x2w_w%rattr(index_x2w_sa_u,JSEA)
+            WXN(IX,IY)  = WX0(IX,IY)
+            WY0(IX,IY)  = x2w_w%rattr(index_x2w_sa_v,JSEA)
+            WYN(IX,IY)  = WY0(IX,IY)
+            DT0(IX,IY)  = x2w_w%rattr(index_x2w_sa_tbot,JSEA) - x2w_w%rattr(index_x2w_so_t,JSEA)
+            DTN(IX,IY)  = DT0(IX,IY)
+         endif
+
+         if (flags(4)) then
+            ICEI(IX,IY) = x2w_w%rattr(index_x2w_si_ifrac,JSEA)
+         endif
+
+      enddo
+
+#else
+! tcraig, this is the global fill
+      call seq_cdata_setptrs(cdata_w,gsmap=gsmap,mpicom=mpi_comm)
+      call mct_aVect_gather(x2w_w,x2w0,gsmap,0,mpi_comm)
+      call mct_aVect_bcast(x2w0,0,mpi_comm)
+
+! use these loops for global copy
+      gindex = 0
+      do IY = 1,NY
+      do IX = 1,NX
+         gindex = gindex + 1
+! use this loop to do local copy
+!      do jsea=1, nseal
+!         isea = iaproc + (jsea-1)*naproc
+!         IX  = MAPSF(ISEA,1)
+!         IY  = MAPSF(ISEA,2)
+!         gindex = ix + (iy-1)*nx 
+
+         if (flags(1)) then
+            WLEV(IX,IY) = 0.0
+         endif
+
+         if (flags(2)) then
+            CX0(IX,IY)  = x2w0%rattr(index_x2w_so_u,gindex)
+            CXN(IX,IY)  = CX0(IX,IY)
+            CY0(IX,IY)  = x2w0%rattr(index_x2w_so_v,gindex)
+            CYN(IX,IY)  = CY0(IX,IY)
+         endif
+
+         if (flags(3)) then
+            WX0(IX,IY)  = x2w0%rattr(index_x2w_sa_u,gindex)
+            WXN(IX,IY)  = WX0(IX,IY)
+            WY0(IX,IY)  = x2w0%rattr(index_x2w_sa_v,gindex)
+            WYN(IX,IY)  = WY0(IX,IY)
+            DT0(IX,IY)  = x2w0%rattr(index_x2w_sa_tbot,gindex) - x2w0%rattr(index_x2w_so_t,gindex)
+            DTN(IX,IY)  = DT0(IX,IY)
+         endif
+
+         if (flags(4)) then
+            ICEI(IX,IY) = x2w0%rattr(index_x2w_si_ifrac,gindex)
+         endif
+
+      enddo
+      enddo
+
+      call mct_aVect_clean(x2w0)
+#endif
+
+      ! 7.b Run the wave model for the given interval
+
       call w3wave ( 1, timen )
 
-!!$      copy ww3 data to coupling datatype
-!!$      do isea=1, nsea
-!!$         w2x_w%rattr(index_w2x_fw_taux,isea) = ??
-!!$         w2x_w%rattr(index_w2x_fw_tauy,isea) = ??
-!!$         w2x_w%rattr(index_w2x_sw_langnum,isea) = ??
-!!$      enddo
+!      copy ww3 data to coupling datatype
+!      do jsea=1, nseal
+!         isea = iaproc + (jsea-1)*naproc
+!         IX  = MAPSF(ISEA,1)
+!         IY  = MAPSF(ISEA,2)
+!         w2x_w%rattr(index_w2x_fw_taux,jsea) = ??
+!         w2x_w%rattr(index_w2x_fw_tauy,jsea) = ??
+!         w2x_w%rattr(index_w2x_sw_langnum,jsea) = ??
+!      enddo
 
-      !
       ! TODO Put in gptl timer calls
-      !
+
       ! Formats
-      !
+
     END SUBROUTINE WAV_RUN_MCT
     
 !=====================================================================
@@ -729,6 +791,7 @@ CONTAINS
 !=====================================================================
 
     SUBROUTINE WAV_FINAL_MCT
+      character(len=*),parameter :: subname = '(wav_final_mct)'
       ! do nothing now
     END SUBROUTINE WAV_FINAL_MCT
 
@@ -755,7 +818,7 @@ CONTAINS
       !/
       integer, allocatable :: gindex(:)
       integer :: n,jsea,isea,ix,iy
-      integer :: ier   
+      character(len=*),parameter :: subname = '(wav_setgsmap_mct)'
       ! -------------------------------------------------------------------- /
       
       allocate(gindex(nseal))
@@ -784,28 +847,29 @@ CONTAINS
       real(r8) :: lon, lat, mask
       real(r8), pointer  :: data(:)     ! temporary
       integer , pointer  :: idata(:)    ! temporary
-      real(r8), parameter:: radtodeg = 180.0_r8/shr_const_pi
+      real(r8), parameter:: rad2deg = 180.0_r8/shr_const_pi
+      real(r8), parameter:: deg2rad = shr_const_pi/180.0_r8
+      character(len=*),parameter :: subname = '(wav_domain_mct)'
 
-      !
       ! initialize mct domain type
       ! lat/lon in degrees,  area in radians^2, mask is 1 (land), 0 (non-land)
       ! note that in addition land carries around landfrac for the purposes of domain checking
-      ! 
+
       call mct_ggrid_init( ggrid=dom, coordchars=trim(seq_flds_dom_coord), &
            otherchars=trim(seq_flds_dom_other), lsize=lsize )
-      !
+
       ! allocate memory
-      !
+
       allocate(data(lsize))
-      !
+
       ! determine global gridpoint number attribute, globgridnum, which is set automatically by mct
-      !
+
       call mct_gsMap_orderedPoints(gsmap, iaproc-1, idata)
       call mct_gGrid_importIattr(dom,'GlobGridNum',idata,lsize)
-      !
+
       ! determine domain (numbering scheme is: west to east and south to north to south pole)
       ! initialize attribute vector with special value
-      !
+
       data(:) = -9999.0_r8 
       call mct_ggrid_importrattr(dom,"lat"  ,data,lsize) 
       call mct_ggrid_importrattr(dom,"lon"  ,data,lsize) 
@@ -813,11 +877,11 @@ CONTAINS
       call mct_ggrid_importrattr(dom,"aream",data,lsize) 
       data(:) = 0.0_r8     
       call mct_ggrid_importrattr(dom,"mask" ,data,lsize) 
-      !
+
       ! fill in correct values for domain components
       ! note aream will be filled in in the atm-lnd mapper
       ! sx, sy  real  i  grid increments (deg.).        
-      !
+
 
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
@@ -825,7 +889,7 @@ CONTAINS
          iy = mapsf(isea,2) 
          lon = x0 + real(ix-1)*sx 
          data(jsea) = lon
-         !write(6,*)' jsea= ',jsea,' lon is ',data(jsea)
+         !write(stdout,*)' jsea= ',jsea,' lon is ',data(jsea)
       end do
       call mct_ggrid_importrattr(dom,"lon",data,lsize) 
 
@@ -835,7 +899,7 @@ CONTAINS
          iy = mapsf(isea,2) 
          lat = y0 + real(iy-1)*sy 
          data(jsea) = lat
-         !write(6,*)' jsea= ',jsea,' lat is ',data(jsea)
+         !write(stdout,*)' jsea= ',jsea,' lat is ',data(jsea)
       end do
       call mct_ggrid_importrattr(dom,"lat",data,lsize) 
 
@@ -843,10 +907,11 @@ CONTAINS
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
          iy = mapsf(isea,2) 
-         lat = y0 + real(iy-1)*sy 
-         !data(i) = !??? todo - calculate area
+         lat = y0 + real(iy-1)*sy
+         data(jsea) = sx*deg2rad*sy*deg2rad*cos(lat*deg2rad)
+         !write(stdout,*)' jsea= ',jsea,' area is ',data(jsea)
       end do
-      !call mct_ggrid_importrattr(dom,"area",data,lsize) -todo fill this in
+      call mct_ggrid_importrattr(dom,"area",data,lsize)
 
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
@@ -854,7 +919,7 @@ CONTAINS
          iy = mapsf(isea,2) 
          mask = mapsta(iy,ix)
          data(jsea) = mask
-         !write(6,*)' jsea= ',jsea,' mask is ',data(jsea)
+         !write(stdout,*)' jsea= ',jsea,' mask is ',data(jsea)
       end do
       call mct_ggrid_importrattr(dom,"mask",data,lsize) 
       call mct_ggrid_importrattr(dom,"frac",data,lsize) 

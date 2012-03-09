@@ -372,7 +372,7 @@
       IF ( FLWIND ) THEN
           INPUTS(IMOD)%DT0 = 0.
           INPUTS(IMOD)%DTN = 0.
-        END IF
+      END IF
 !
       IF ( FLICE  ) ALLOCATE ( INPUTS(IMOD)%ICEI(NX,NY) )
 !

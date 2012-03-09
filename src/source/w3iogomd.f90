@@ -203,7 +203,7 @@
                           PWST, PNR, USERO
       USE W3ODATMD, ONLY: NDST, UNDEF, IAPROC, NAPROC, ICPRT, DTPRT,  &
                           WSCUT, NOSWLL
-!
+
       IMPLICIT NONE
 !/
 !/ ------------------------------------------------------------------- /
@@ -716,6 +716,7 @@
 !/
       USE W3SERVMD, ONLY: EXTCDE
       USE W3CESMMD, ONLY : CASENAME
+!      use shr_sys_mod
       USE NETCDF
 !
       IMPLICIT NONE
@@ -848,14 +849,6 @@
           MAPTMP = MAPSTA + 8*MAPST2
           WRITE (NDSOG)                                               &
                ((MAPTMP(IY,IX),IX=1,NX),IY=1,NY)
-          do nval = minval(maptmp),maxval(maptmp)
-             cnt = 0
-             do ix = 1,nx
-             do iy = 1,ny
-                if (maptmp(ix,iy) == nval) cnt = cnt + 1
-             enddo
-             enddo
-          enddo
         ELSE
           READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)                    &
                ((MAPTMP(IY,IX),IX=1,NX),IY=1,NY)
@@ -873,8 +866,8 @@
       WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
             YY,'-',MM,'-',DD,'-',TIME(2),'.nc'
 
-      write(ndse,*) 'w3iogo tcx0 ',time(1),time(2),yy,mm,dd
-      write(ndse,*) 'w3iogo tcx1 ',trim(fname)
+!      write(ndse,*) 'w3iogo tcx0 ',time(1),time(2),yy,mm,dd
+!      write(ndse,*) 'w3iogo tcx1 ',trim(fname)
 
       INQUIRE(FILE=TRIM(FNAME),EXIST=EXISTS)
       IF (.NOT.EXISTS) THEN
@@ -930,6 +923,8 @@
         IERR = NF90_ENDDEF(NCID)
       ENDIF
       DO IO=1, NOGRD
+!        write(ndso,*) 'w3iogo fld ',io,nogrd,flogrd(io)
+!        call shr_sys_flush(ndso)
         IF ( FLOGRD(IO) ) THEN
 !
             IF ( WRITE ) THEN
@@ -1137,6 +1132,8 @@
                   ELSEIF (NCLOOP == 2) THEN
 
                     IF (WAUX1) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstr1)
+!                      call shr_sys_flush(ndso)
                       WRITE ( NDSOG ) AUX1(1:NSEA)
                       AUX2D1 = UNDEF
                       DO ISEA=1, NSEA
@@ -1148,6 +1145,8 @@
                       CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D1_'//TRIM(FLDSTR1))
                     ENDIF
                     IF (WAUX2) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstr2)
+!                      call shr_sys_flush(ndso)
                       WRITE ( NDSOG ) AUX2(1:NSEA)
                       AUX2D2 = UNDEF
                       DO ISEA=1, NSEA
@@ -1159,6 +1158,8 @@
                       CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D2_'//TRIM(FLDSTR2))
                     ENDIF
                     IF (WAUX3) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstr3)
+!                      call shr_sys_flush(ndso)
                       WRITE ( NDSOG ) AUX3(1:NSEA)
                       AUX2D3 = UNDEF
                       DO ISEA=1, NSEA
@@ -1170,6 +1171,8 @@
                       CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D3_'//TRIM(FLDSTR3))
                     ENDIF
                     IF (WAUXE) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstre)
+!                      call shr_sys_flush(ndso)
                       WRITE ( NDSOG ) AUXE(1:NSEA,0:NOSWLL)
                       AUX3DE = UNDEF
                       DO ISEA=1, NSEA
