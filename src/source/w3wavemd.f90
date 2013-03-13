@@ -314,6 +314,7 @@
 !/
       USE W3SERVMD
       USE W3TIMEMD
+      use shr_sys_mod, only : shr_sys_flush
 !
       IMPLICIT NONE
 !
@@ -351,6 +352,9 @@
 ! 0.  Initializations
 ! 0.a Set pointers to data structure
 !
+!       write(ndso,*) 'w3wave tcx0'
+!       call shr_sys_flush(ndso)
+
       IF ( IOUTP  .NE. IMOD ) CALL W3SETO ( IMOD, NDSE, NDST )
       IF ( IGRID  .NE. IMOD ) CALL W3SETG ( IMOD, NDSE, NDST )
       IF ( IWDATA .NE. IMOD ) CALL W3SETW ( IMOD, NDSE, NDST )
@@ -476,6 +480,8 @@
 ! 2.  Determine next time from ending and output --------------------- /
 !     time and get corresponding time step.
 !
+!       write(ndso,*) 'w3wave tcx2'
+!       call shr_sys_flush(ndso)
       FLFRST = .TRUE.
       DO
 !
@@ -501,6 +507,9 @@
           ELSE
             IT0    = 1
           END IF
+
+!       write(ndso,*) 'w3wave tcx5'
+!       call shr_sys_flush(ndso)
 !
 ! ==================================================================== /
 ! 3.  Loop over time steps
@@ -509,6 +518,9 @@
 !
         DO IT=IT0, NT
 !
+!       write(ndso,*) 'w3wave tcx6',IT
+!       call shr_sys_flush(ndso)
+
           ITIME  = ITIME + 1
           DTG    = REAL(NINT(DTGA+DTRES+0.0001))
           DTRES  = DTRES + DTGA - DTG
@@ -536,6 +548,8 @@
 ! 3.1 Interpolate winds and currents.
 !     (Initialize wave fields with winds)
 !
+!       write(ndso,*) 'w3wave tcx6a'
+!       call shr_sys_flush(ndso)
           IF ( FLCUR  ) THEN
                CALL W3UCUR ( FLFRST )
                CALL W3DCXY
@@ -558,6 +572,8 @@
 !
 ! 3.2 Update boundary conditions.
 !
+!       write(ndso,*) 'w3wave tcx6b'
+!       call shr_sys_flush(ndso)
           IF ( FLBPI .AND. LOCAL ) THEN
 !
               DO
@@ -584,6 +600,8 @@
 ! 3.3 Update ice coverage (if new ice map).
 !     Need to be run on output nodes too, to update MAPSTx
 !
+!       write(ndso,*) 'w3wave tcx6c'
+!       call shr_sys_flush(ndso)
           IF ( FLICE .AND. DTI0.NE.0. ) THEN
 !
               IF ( TICE(1).GE.0 ) THEN
@@ -608,6 +626,8 @@
 !
 ! 3.4 Transform grid (if new water level).
 !
+!       write(ndso,*) 'w3wave tcx6d'
+!       call shr_sys_flush(ndso)
           IF ( FLLEV .AND. DTL0.NE.0. ) THEN
 !
               IF ( TLEV(1).GE.0 ) THEN
@@ -633,6 +653,8 @@
 !
 ! 3.5 Update maps and dirivatives.
 !
+!       write(ndso,*) 'w3wave tcx6e'
+!       call shr_sys_flush(ndso)
           IF ( FLMAP ) THEN
               CALL W3MAP3
               CALL W3UTRN ( TRNX, TRNY )
@@ -660,6 +682,8 @@
 ! 3.6 Perform Propagation = = = = = = = = = = = = = = = = = = = = = = =
 ! 3.6.1 Preparations
 !
+!       write(ndso,*) 'w3wave tcx6f'
+!       call shr_sys_flush(ndso)
           NTLOC  = 1 + INT( DTG/DTCFLI - 0.001 )
           ITLOCH = ( NTLOC + 1 - MOD(ITIME,2) ) / 2
 !
@@ -688,6 +712,8 @@
 ! 3.6.3 Longitude-latitude
 !       (time step correction in routine)
 !
+       write(ndso,*) 'w3wave tcx6g',FLCX,FLCY
+       call shr_sys_flush(ndso)
           IF ( FLCX .OR. FLCY ) THEN
 !
               IF ( FLCX ) THEN
@@ -703,33 +729,57 @@
                   FACY   = 0.
                 END IF
 !
+       write(ndso,*) 'w3wave tcx6g1',nrqsg1
+       call shr_sys_flush(ndso)
               IF ( NRQSG1 .GT. 0 ) THEN
                   CALL MPI_STARTALL (NRQSG1, IRQSG1(1,1), IERR_MPI)
+       write(ndso,*) 'w3wave tcx6g2',IERR_MPI
+       call shr_sys_flush(ndso)
                   CALL MPI_STARTALL (NRQSG1, IRQSG1(1,2), IERR_MPI)
+       write(ndso,*) 'w3wave tcx6g3',IERR_MPI
+       call shr_sys_flush(ndso)
                 END IF
 !
               DO ISPEC=1, NSPEC
                 IF ( IAPPRO(ISPEC) .EQ. IAPROC ) THEN
+       write(ndso,*) 'w3wave tcx6g4'
+       call shr_sys_flush(ndso)
                     CALL W3GATH ( ISPEC, FIELD )
+       write(ndso,*) 'w3wave tcx6g5'
+       call shr_sys_flush(ndso)
                     CALL W3XYP3 ( ISPEC, FACX, FACY, DTG, MAPSTA, &
                                   MAPFS,  FIELD, VGX, VGY )
+       write(ndso,*) 'w3wave tcx6g6'
+       call shr_sys_flush(ndso)
                      CALL W3SCAT ( ISPEC, MAPSTA, FIELD )
+       write(ndso,*) 'w3wave tcx6g7'
+       call shr_sys_flush(ndso)
                   END IF
                 END DO
 !
               IF ( NRQSG1 .GT. 0 ) THEN
                   ALLOCATE ( STATCO(MPI_STATUS_SIZE,NRQSG1) )
+       write(ndso,*) 'w3wave tcx6g8',nrqsg1
+       call shr_sys_flush(ndso)
                   CALL MPI_WAITALL (NRQSG1, IRQSG1(1,1), STATCO, &
                                     IERR_MPI)
+       write(ndso,*) 'w3wave tcx6g9',IERR_MPI
+       call shr_sys_flush(ndso)
                   CALL MPI_WAITALL (NRQSG1, IRQSG1(1,2), STATCO, &
                                     IERR_MPI)
+       write(ndso,*) 'w3wave tcx6g10',IERR_MPI
+       call shr_sys_flush(ndso)
                   DEALLOCATE ( STATCO )
                 END IF
+       write(ndso,*) 'w3wave tcx6g11'
+       call shr_sys_flush(ndso)
 !
             END IF
 !
 ! 3.6.4 Intra-spectral part 2
 !
+!       write(ndso,*) 'w3wave tcx6h'
+!       call shr_sys_flush(ndso)
           IF ( FLCTH .OR. FLCK ) THEN
               DO ITLOC=ITLOCH+1, NTLOC
                 DO JSEA=1, NSEAL
@@ -751,6 +801,8 @@
 !
 ! 3.7 Calculate and integrate source terms.
 !
+!       write(ndso,*) 'w3wave tcx6i'
+!       call shr_sys_flush(ndso)
           IF ( FLSOU ) THEN
 !
               DO JSEA=1, NSEAL
@@ -788,6 +840,8 @@
 !
   380     CONTINUE
 !
+!       write(ndso,*) 'w3wave tcx7'
+!       call shr_sys_flush(ndso)
           IF (IT.NE.NT) THEN
               DTTST  = DSEC21 ( TIME , TCALC )
               DTG    = DTTST / REAL(NT-IT)
@@ -813,6 +867,9 @@
 ! ==================================================================== /
 !
   400 CONTINUE
+!       write(ndso,*) 'w3wave tcx8'
+!       call shr_sys_flush(ndso)
+
 !
 ! 4.  Perform output to file if requested ---------------------------- /
 ! 4.a Check if time is output time
@@ -1031,6 +1088,8 @@
 !
       DEALLOCATE ( FIELD )
 !
+!       write(ndso,*) 'w3wave tcx9'
+!       call shr_sys_flush(ndso)
       RETURN
 !
 ! Formats

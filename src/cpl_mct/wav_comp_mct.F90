@@ -167,9 +167,16 @@
       use w3timemd
       use w3cesmmd, only : casename
 
-      use esmf_mod
+      use esmf
       use mct_mod 
       use seq_flds_mod
+      use ww3_cpl_indices  , only :  ww3_cpl_indices_set
+      use ww3_cpl_indices  , only :  &
+         index_x2w_Sa_u, index_x2w_Sa_v, index_x2w_Sa_tbot, &
+         index_x2w_Si_ifrac, &
+         index_x2w_So_t, index_x2w_So_u, index_x2w_So_v, index_x2w_So_bldepth, &
+         index_w2x_Sw_lamult, index_w2x_Sw_ustokes, index_w2x_Sw_vstokes, index_w2x_Sw_hstokes
+
       use shr_sys_mod      , only : shr_sys_flush 
       use shr_kind_mod     , only : in=>shr_kind_in, r8=>shr_kind_r8, &
                                     cs=>shr_kind_cs, cl=>shr_kind_cl
@@ -178,6 +185,7 @@
       use seq_infodata_mod , only : seq_infodata_type, seq_infodata_getdata, seq_infodata_putdata, &
                                     seq_infodata_start_type_start, seq_infodata_start_type_cont,   &
                                     seq_infodata_start_type_brnch
+      use seq_comm_mct     , only : seq_comm_inst, seq_comm_name, seq_comm_suffix
       use shr_file_mod     , only : shr_file_setlogunit, shr_file_setloglevel, &
                                     shr_file_getlogunit, shr_file_getloglevel, &
                                     shr_file_getunit, shr_file_setio
@@ -193,19 +201,10 @@
       private :: wav_setgsmap_mct
       private :: wav_domain_mct
 
-      integer,save :: index_x2w_Sa_u
-      integer,save :: index_x2w_Sa_v
-      integer,save :: index_x2w_Sa_tbot
-      integer,save :: index_x2w_So_u
-      integer,save :: index_x2w_So_v
-      integer,save :: index_x2w_So_t
-      integer,save :: index_x2w_Si_ifrac
-
-      integer,save :: index_w2x_Sw_langnum
-      integer,save :: index_w2x_Fw_taux
-      integer,save :: index_w2x_Fw_tauy
-
       integer,save :: stdout
+      integer,save :: inst_index            ! number of current instance (ie. 1)
+      character(len=16),save :: inst_name   ! fullname of current instance (ie. "wav_0001")
+      character(len=16),save :: inst_suffix ! char string associated with instance
 
       include "mpif.h"
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -218,6 +217,7 @@ CONTAINS
       !/ Parameter list
       !/
 
+      implicit none
       TYPE(ESMF_CLOCK), INTENT(IN)    :: ECLOCK
       TYPE(SEQ_CDATA) , INTENT(INOUT) :: CDATA
       TYPE(MCT_AVECT) , INTENT(INOUT) :: X2W, W2X
@@ -302,6 +302,10 @@ CONTAINS
 
       call seq_cdata_setptrs(cdata, id=compid, mpicom=mpi_comm, &
            gsmap=gsmap, dom=dom, infodata=infodata)
+      inst_name   = seq_comm_name(compid)
+      inst_index  = seq_comm_inst(compid)
+      inst_suffix = seq_comm_suffix(compid)
+      call ww3_cpl_indices_set()
 
       call mpi_comm_size(mpi_comm, naproc, ierr)
       call mpi_comm_rank(mpi_comm, iaproc, ierr)
@@ -336,7 +340,7 @@ CONTAINS
 
       if (iaproc .eq. napout) then
          stdout = shr_file_getunit()
-         call shr_file_setio('wav_modelio.nml',stdout)
+         call shr_file_setio('wav_modelio.nml'//trim(inst_suffix),stdout)
       else
          stdout = 6
       endif
@@ -373,8 +377,8 @@ CONTAINS
       !--------------------------------------------------------------------
 
       flags = .false.
-      flags(1:4) = .true.
-!      flags(2) = .true.
+!      flags(1:4) = .true.   !changed by Adrean (lev,curr,wind,ice on)
+      flags(3:4) = .true.   !changed by Adrean (wind,ice on)
 
       !--------------------------------------------------------------------
       ! Set time frame
@@ -437,7 +441,7 @@ CONTAINS
          ! Hardwire gridded output for now 
          odat(1) = 10101
          odat(2) = 0
-         odat(3) = 86400
+         odat(3) = 1800   ! changed by Adrean
          odat(4) = 99990101
          odat(5) = 0
          !DEBUG
@@ -445,37 +449,37 @@ CONTAINS
                                                                           
       ! Output Type 1: fields of mean wave parameters gridded output
 
-      flgrd( 1) = .true. !   1. depth (m)                              
-      flgrd( 2) = .true. !   2. mean current vel (vec, m/s)            
-      flgrd( 3) = .true. !   3. mean wind vel (vec, m/s)               
-      flgrd( 4) = .true. !   4. air-sea temp diff (deg C)              
-      flgrd( 5) = .true. !   5. skin friction vel (scalar, m/s)        
-      flgrd( 6) = .true. !   6. significant wave height (m)            
-      flgrd( 7) = .true. !   7. mean wave length (m)                   
-      flgrd( 8) = .true. !   8. mean wave period (Tn1, s)              
-      flgrd( 9) = .true. !   9. mean wave dir (deg: met conv)          
-      flgrd(10) = .true. !  10. mean dir spread (deg: )                
-      flgrd(11) = .true. !  11. peak freq (Hz)                         
-      flgrd(12) = .true. !  12. peak dir (deg: )                       
-      flgrd(13) = .true. !  13. peak freq of wind-sea part             
-      flgrd(14) = .true. !  14. wind-sea dir (deg: met conv)           
-      flgrd(15) = .false.!  15. wave height of partitions               
-      flgrd(16) = .false.!  16. peak periods of partitions             
-      flgrd(17) = .false.!  17. peak wave length of partitions         
-      flgrd(18) = .false.!  18. mean dir of partitions                 
-      flgrd(19) = .false.!  19. dir spread of partitions               
-      flgrd(20) = .false.!  20. wind-sea frac of partitions             
-      flgrd(21) = .false.!  21. wind-sea frac of entire spec           
-      flgrd(22) = .false.!  22. number of partitions                   
-      flgrd(23) = .true. !  23. average time step (s)                  
-      flgrd(24) = .true. !  24. cut-off freq (Hz)                      
-      flgrd(25) = .true. !  25. ice concentration (frac)               
-      flgrd(26) = .true. !  26. water level (m?)                       
-      flgrd(27) = .false.!  27. near-bottom rms exclusion amp          
-      flgrd(28) = .false.!  28. near-bottom rms orbital vel            
-      flgrd(29) = .false.!  29. radiation stresses                     
-      flgrd(30) = .false.!  30. user defined (1)                       
-      flgrd(31) = .false.!  31. user defined (2)                       
+      flgrd( 1) = .false. !   1. depth (m)                              
+      flgrd( 2) = .false. !   2. mean current vel (vec, m/s)            
+      flgrd( 3) = .true.  !   3. mean wind vel (vec, m/s)               
+      flgrd( 4) = .true.  !   4. air-sea temp diff (deg C)              
+      flgrd( 5) = .true.  !   5. skin friction vel (scalar, m/s)        
+      flgrd( 6) = .true.  !   6. significant wave height (m)            
+      flgrd( 7) = .false. !   7. mean wave length (m)                   
+      flgrd( 8) = .true.  !   8. mean wave period (Tn1, s)              
+      flgrd( 9) = .true.  !   9. mean wave dir (deg: met conv)          
+      flgrd(10) = .false. !  10. mean dir spread (deg: )                
+      flgrd(11) = .false. !  11. peak freq (Hz)                         
+      flgrd(12) = .false. !  12. peak dir (deg: )                       
+      flgrd(13) = .false. !  13. peak freq of wind-sea part             
+      flgrd(14) = .false. !  14. wind-sea dir (deg: met conv)           
+      flgrd(15) = .false. !  15. wave height of partitions               
+      flgrd(16) = .false. !  16. peak periods of partitions             
+      flgrd(17) = .false. !  17. peak wave length of partitions         
+      flgrd(18) = .false. !  18. mean dir of partitions                 
+      flgrd(19) = .false. !  19. dir spread of partitions               
+      flgrd(20) = .false. !  20. wind-sea frac of partitions             
+      flgrd(21) = .false. !  21. wind-sea frac of entire spec           
+      flgrd(22) = .false. !  22. number of partitions                   
+      flgrd(23) = .false. !  23. average time step (s)                  
+      flgrd(24) = .false. !  24. cut-off freq (Hz)                      
+      flgrd(25) = .true.  !  25. ice concentration (frac)               
+      flgrd(26) = .false. !  26. water level (m?)                       
+      flgrd(27) = .false. !  27. near-bottom rms exclusion amp          
+      flgrd(28) = .false. !  28. near-bottom rms orbital vel            
+      flgrd(29) = .false. !  29. radiation stresses                     
+      flgrd(30) = .false. !  30. user defined (1)                       
+      flgrd(31) = .false. !  31. user defined (2)                       
 
       if ( iaproc .eq. napout ) then
          flt = .true.
@@ -511,9 +515,9 @@ CONTAINS
       ! is this a problem with any things being set in w3init?
       call seq_timemgr_eclockgetdata(eclock, dtime=dtime_sync )      
       dtmax  = real(dtime_sync)
-      dtcfl  = real(dtime_sync) / 3. !todo ??? ask adrean
-      dtcfli = real(dtime_sync)      !todo ??? ask adrean
-      dtmin  = real(dtime_sync) / 12 !todo ??? ask adrean
+      dtcfl  = real(dtime_sync) / 2. !checked by adrean
+      dtcfli = real(dtime_sync)      !checked by adrean
+      dtmin  = real(dtime_sync) / 12 !checked by adrean
 
       call mpi_barrier ( mpi_comm, ierr )
 
@@ -546,18 +550,6 @@ CONTAINS
       call mct_avect_init(x2w, rlist=seq_flds_x2w_fields, lsize=lsize)
       call mct_avect_zero(x2w)
 
-      index_x2w_Sa_u       = mct_avect_indexRA(x2w,'Sa_u'      ,perrWith='quiet')
-      index_x2w_Sa_v       = mct_avect_indexRA(x2w,'Sa_v'      ,perrWith='quiet')
-      index_x2w_Sa_tbot    = mct_avect_indexRA(x2w,'Sa_tbot'   ,perrWith='quiet')
-      index_x2w_So_u       = mct_avect_indexRA(x2w,'So_u'      ,perrWith='quiet')
-      index_x2w_So_v       = mct_avect_indexRA(x2w,'So_v'      ,perrWith='quiet')
-      index_x2w_So_t       = mct_avect_indexRA(x2w,'So_t'      ,perrWith='quiet')
-      index_x2w_Si_ifrac   = mct_avect_indexRA(x2w,'Si_ifrac'  ,perrWith='quiet')
-
-      index_w2x_Sw_langnum = mct_avect_indexRA(w2x,'Sw_langnum',perrWith='quiet')
-      index_w2x_Fw_taux    = mct_avect_indexRA(w2x,'Fw_taux'   ,perrWith='quiet')
-      index_w2x_Fw_tauy    = mct_avect_indexRA(w2x,'Fw_tauy'   ,perrWith='quiet')
-      
       ! add call to gptl timer
 
       ! end redirection of share output to wav log
@@ -595,6 +587,7 @@ CONTAINS
 
       ! Parameters
 
+      implicit none
       type(ESMF_Clock)            ,intent(in)    :: EClock
       type(seq_cdata)             ,intent(inout) :: cdata_w
       type(mct_aVect)             ,intent(inout) :: x2w_w
@@ -611,11 +604,22 @@ CONTAINS
       integer :: n,jsea,isea
       integer :: mpi_comm
       integer :: gindex
+      integer(IN)   :: shrlogunit, shrloglev ! original log unit and level
       type(mct_aVect) :: x2w0
       type(mct_gsmap),pointer :: gsmap
       real :: def_value
 
       character(len=*),parameter :: subname = '(wav_run_mct)'
+
+      !----------------------------------------------------------------------------
+      ! Reset shr logging to my log file
+      !----------------------------------------------------------------------------
+      call shr_file_getLogUnit (shrlogunit)
+      call shr_file_getLogLevel(shrloglev)
+      call shr_file_setLogUnit (stdout)
+
+!      write(stdout,*) 'wrm tcx1'
+!      call shr_sys_flush(stdout)
 
       call seq_timemgr_EClockGetData( EClock, curr_ymd=ymd, curr_tod=tod )
 
@@ -655,6 +659,9 @@ CONTAINS
 !      def_value = -1.0e36
       def_value = 0.0
 
+!      write(stdout,*) 'wrm tcx5'
+!      call shr_sys_flush(stdout)
+
       if (flags(1)) then
          TLN  = timen
          WLEV = def_value   ! ssh
@@ -684,6 +691,9 @@ CONTAINS
          TIN  = timen
          ICEI = def_value   ! ice frac
       endif
+
+!      write(stdout,*) 'wrm tcx6'
+!      call shr_sys_flush(stdout)
 
 #if (1 == 0) 
 ! tcraig, this is the local fill only, really only need 1d
@@ -768,6 +778,12 @@ CONTAINS
 
       ! 7.b Run the wave model for the given interval
 
+!      write(stdout,*) 'wrm tcx7'
+!      call shr_sys_flush(stdout)
+!      call mpi_barrier(mpi_comm,ierr)
+!      write(stdout,*) 'wrm tcx7a'
+!      call shr_sys_flush(stdout)
+
       call w3wave ( 1, timen )
 
 !      copy ww3 data to coupling datatype
@@ -775,10 +791,24 @@ CONTAINS
 !         isea = iaproc + (jsea-1)*naproc
 !         IX  = MAPSF(ISEA,1)
 !         IY  = MAPSF(ISEA,2)
-!         w2x_w%rattr(index_w2x_fw_taux,jsea) = ??
-!         w2x_w%rattr(index_w2x_fw_tauy,jsea) = ??
-!         w2x_w%rattr(index_w2x_sw_langnum,jsea) = ??
+!         w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ??
+!         w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = ??
+!         w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = ??
+!         w2x_w%rattr(index_w2x_Sw_hstokes,jsea) = ??
 !      enddo
+
+!      write(stdout,*) 'wrm tcx8'
+!      call shr_sys_flush(stdout)
+
+      !----------------------------------------------------------------------------
+      ! Reset shr logging to original values
+      !----------------------------------------------------------------------------
+      call shr_file_setLogUnit (shrlogunit)
+      call shr_file_setLogLevel(shrloglev)
+      call shr_sys_flush(stdout)
+
+!      write(stdout,*) 'wrm tcx9'
+!      call shr_sys_flush(stdout)
 
       ! TODO Put in gptl timer calls
 
@@ -790,9 +820,20 @@ CONTAINS
 !=====================================================================
 !=====================================================================
 
-    SUBROUTINE WAV_FINAL_MCT
+    SUBROUTINE WAV_FINAL_MCT(EClock, cdata_w, x2w_w, w2x_w)
+
+      ! Parameters
+
+      implicit none
+      type(ESMF_Clock)            ,intent(in)    :: EClock
+      type(seq_cdata)             ,intent(inout) :: cdata_w
+      type(mct_aVect)             ,intent(inout) :: x2w_w
+      type(mct_aVect)             ,intent(inout) :: w2x_w
+
       character(len=*),parameter :: subname = '(wav_final_mct)'
+
       ! do nothing now
+
     END SUBROUTINE WAV_FINAL_MCT
 
 !=====================================================================
@@ -839,6 +880,7 @@ CONTAINS
 
     subroutine wav_domain_mct(lsize, gsmap, dom)
 
+      implicit none
       integer        , intent(in)   :: lsize
       type(mct_gsmap), intent(in)   :: gsmap
       type(mct_ggrid), intent(inout):: dom  

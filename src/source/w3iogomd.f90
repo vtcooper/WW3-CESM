@@ -743,7 +743,7 @@
       CHARACTER(LEN=128)      :: FNAME
       CHARACTER(LEN=16)       :: FLDSTR1,FLDSTR2,FLDSTR3,FLDSTRE
       LOGICAL                 :: EXISTS
-      INTEGER                 :: YY,MM,DD
+      INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC
       INTEGER                 :: VARID1,VARID2,VARID3,VARIDE,NCID,NCLOOP
       INTEGER                 :: DIMID(3)
 !/
@@ -863,8 +863,12 @@
       YY =  TIME(1)/10000
       MM = (TIME(1)-YY*10000)/100
       DD = (TIME(1)-YY*10000-MM*100)
+      HH = TIME(2)/10000
+      MN = (TIME(2)-HH*10000)/100
+      SS = (TIME(2)-HH*10000-MN*100) 
+      TOTSEC = HH*3600+MN*60+SS
       WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
-            YY,'-',MM,'-',DD,'-',TIME(2),'.nc'
+            YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
 
 !      write(ndse,*) 'w3iogo tcx0 ',time(1),time(2),yy,mm,dd
 !      write(ndse,*) 'w3iogo tcx1 ',trim(fname)
