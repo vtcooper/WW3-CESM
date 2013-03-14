@@ -870,9 +870,6 @@
       WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
             YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
 
-!      write(ndse,*) 'w3iogo tcx0 ',time(1),time(2),yy,mm,dd
-!      write(ndse,*) 'w3iogo tcx1 ',trim(fname)
-
       INQUIRE(FILE=TRIM(FNAME),EXIST=EXISTS)
       IF (.NOT.EXISTS) THEN
          IERR = NF90_CREATE(TRIM(FNAME),NF90_CLOBBER,NCID)

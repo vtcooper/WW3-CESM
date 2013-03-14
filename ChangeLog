@@ -2,6 +2,15 @@
 ww3 ChangeLog
 ================================================================================
 Originator: tcraig
+Date: 14 Mar 2013
+Model: cpl7
+Version: ww3_130314
+One-line summary:  remove debug write statements
+
+M       src/source/w3iogomd.f90
+M       src/source/w3wavemd.f90
+================================================================================
+Originator: tcraig
 Date: 13 Mar 2013
 Model: cpl7
 Version: ww3_130313
