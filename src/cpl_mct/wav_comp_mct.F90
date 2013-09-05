@@ -218,7 +218,7 @@ CONTAINS
       !/
 
       implicit none
-      TYPE(ESMF_CLOCK), INTENT(IN)    :: ECLOCK
+      TYPE(ESMF_CLOCK), INTENT(INOUT) :: ECLOCK
       TYPE(SEQ_CDATA) , INTENT(INOUT) :: CDATA
       TYPE(MCT_AVECT) , INTENT(INOUT) :: X2W, W2X
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: NLFILENAME ! NAMELIST FILENAME
@@ -588,7 +588,7 @@ CONTAINS
       ! Parameters
 
       implicit none
-      type(ESMF_Clock)            ,intent(in)    :: EClock
+      type(ESMF_Clock)            ,intent(inout) :: EClock
       type(seq_cdata)             ,intent(inout) :: cdata_w
       type(mct_aVect)             ,intent(inout) :: x2w_w
       type(mct_aVect)             ,intent(inout) :: w2x_w
@@ -825,7 +825,7 @@ CONTAINS
       ! Parameters
 
       implicit none
-      type(ESMF_Clock)            ,intent(in)    :: EClock
+      type(ESMF_Clock)            ,intent(inout) :: EClock
       type(seq_cdata)             ,intent(inout) :: cdata_w
       type(mct_aVect)             ,intent(inout) :: x2w_w
       type(mct_aVect)             ,intent(inout) :: w2x_w

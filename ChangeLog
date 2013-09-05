@@ -2,6 +2,14 @@
 ww3 ChangeLog
 ================================================================================
 Originator: tcraig
+Date: 05 Sep 2013
+Model: cpl7
+Version: ww3_130905
+One-line summary:  modify coupling interface intents
+	
+M       src/cpl_mct/wav_comp_mct.F90
+================================================================================
+Originator: tcraig
 Date: 14 Mar 2013
 Model: cpl7
 Version: ww3_130314
