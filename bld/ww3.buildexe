@@ -1,26 +1,42 @@
-#! /bin/csh -f
+#! /usr/bin/env perl
+use strict;
 
-cd $OBJROOT/wav/obj
+if ($#ARGV == -1) {
+    die " ERROR datm.buildexe: must specify a caseroot input argument";
+}
+my ($CASEROOT) = @ARGV;
+chdir "${CASEROOT}";
 
-set comp = 'unknown'
-if ($COMP_INTERFACE == 'MCT' ) set comp = mct
-if ($COMP_INTERFACE == 'ESMF') set comp = esmf
+my $CASEROOT		= `./xmlquery CASEROOT       -value`;
+my $CASETOOLS		= `./xmlquery CASETOOLS      -value`;
+my $CODEROOT		= `./xmlquery CODEROOT       -value`;
+my $COMP_INTERFACE	= `./xmlquery COMP_INTERFACE -value`;
+my $MACH		= `./xmlquery MACH           -value`;
+my $OBJROOT		= `./xmlquery OBJROOT        -value`;
+my $LIBROOT		= `./xmlquery LIBROOT        -value`;
+my $GMAKE_J		= `./xmlquery GMAKE_J        -value`;
+my $GMAKE		= `./xmlquery GMAKE          -value`;
 
-#------------------------------------------------------------------------------
-# Filepath: List of source code directories (in order of importance).
-#------------------------------------------------------------------------------
+my $comp = 'unknown';
+if ("$COMP_INTERFACE" eq 'MCT' ) {
+    $comp = "mct";
+}
+if ("$COMP_INTERFACE" eq 'ESMF') {
+    $comp = esmf;
+}
 
-\cat >! Filepath << EOF1
-$CASEROOT/SourceMods/src.ww3
-$CODEROOT/wav/ww3/src/source
-$CODEROOT/wav/ww3/src/cpl_share
-$CODEROOT/wav/ww3/src/cpl_$comp
-EOF1
+chdir "$OBJROOT/wav/obj";
 
-#------------------------------------------------------------------------------
-# run make
-#------------------------------------------------------------------------------
+open(file,">Filepath") or die "Could not open file Filepath to write";
+print file "${CASEROOT}/SourceMods/src.ww3\n";
+print file "${CODEROOT}/wav/ww3/src/source\n";
+print file "${CODEROOT}/wav/ww3/src/cpl_share\n";
+print file "${CODEROOT}/wav/ww3/src/cpl_$comp\n";
+close(file);
 
-gmake complib -j $GMAKE_J MODEL=ww3 COMPLIB=$LIBROOT/libwav.a -f $CASETOOLS/Makefile MACFILE=$CASEROOT/Macros.$MACH || exit 2
+my $sysmod = "$GMAKE complib -j $GMAKE_J MODEL=ww3 COMPLIB=$LIBROOT/libwav.a -f $CASETOOLS/Makefile MACFILE=$CASEROOT/Macros.$MACH";
+system($sysmod) == 0 or die "ERROR: $sysmod failed: $?\n";
+
+exit(0);
 
 
