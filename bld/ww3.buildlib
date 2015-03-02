@@ -9,7 +9,7 @@ chdir "${CASEROOT}";
 
 my $CASEROOT		= `./xmlquery CASEROOT       -value`;
 my $CASETOOLS		= `./xmlquery CASETOOLS      -value`;
-my $CODEROOT		= `./xmlquery CODEROOT       -value`;
+my $CCSMROOT		= `./xmlquery CCSMROOT       -value`;
 my $COMP_INTERFACE	= `./xmlquery COMP_INTERFACE -value`;
 my $MACH		= `./xmlquery MACH           -value`;
 my $OBJROOT		= `./xmlquery OBJROOT        -value`;
@@ -29,9 +29,9 @@ chdir "$OBJROOT/wav/obj";
 
 open(file,">Filepath") or die "Could not open file Filepath to write";
 print file "${CASEROOT}/SourceMods/src.ww3\n";
-print file "${CODEROOT}/wav/ww3/src/source\n";
-print file "${CODEROOT}/wav/ww3/src/cpl_share\n";
-print file "${CODEROOT}/wav/ww3/src/cpl_$comp\n";
+print file "${CCSMROOT}/components/ww3/src/source\n";
+print file "${CCSMROOT}/components/ww3/src/cpl_share\n";
+print file "${CCSMROOT}/components/ww3/src/cpl_$comp\n";
 close(file);
 
 my $sysmod = "$GMAKE complib -j $GMAKE_J MODEL=ww3 COMPLIB=$LIBROOT/libwav.a -f $CASETOOLS/Makefile MACFILE=$CASEROOT/Macros.$MACH";
