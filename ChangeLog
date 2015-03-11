@@ -1,6 +1,20 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: mvertens
+Date: 11 Mar 2015
+Model: cpl7
+Version: ww3_150311
+One-line summary:  updates needed for introduction of cime
+	
+A       bld/ww3.buildlib
+A       bld/ww3.buildnml
+	
+D       bld/ww3.buildexe.csh
+D       bld/ww3.buildnml.csh
+D       bld/ww3.cpl7.template
+	
+================================================================================
 Originator: tcraig
 Date: 05 Sep 2013
 Model: cpl7
