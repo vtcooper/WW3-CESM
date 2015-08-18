@@ -57,10 +57,13 @@
 !      WLEV      R.A.  Public   Next water level field.
 !      ICEI      R.A.  Public   Ice concentrations.
 !      IINIT     Log.  Public   Flag for array initialization.
+!      HML       R.A.  Public   Mixed layer depth, QL, 150525
 !      FLLEV     Log.  Public   Flag for water level input.
 !      FLCUR     Log.  Public   Flag for current input.
 !      FLWIND    Log.  Public   Flag for wind input.
 !      FLICE     Log.  Public   Flag for ice input.
+!      FLHML     Log.  Public   Flag for mixed layer depth input.
+!                               QL, 150525
 !      FLAGS     L.A.  Public   Array consolidating the above four
 !                               flags, as well as four additional
 !                               data flags.
@@ -109,10 +112,12 @@
         INTEGER               :: TFN(2,8), TC0(2), TW0(2), TDN(2),    &
                                  TG0(2)
         REAL                  :: GA0, GD0, GAN, GDN
+        ! QL, 150525, HML
         REAL, POINTER         :: WX0(:,:), WY0(:,:), DT0(:,:),        &
                                  WXN(:,:), WYN(:,:), DTN(:,:),        &
                                  CX0(:,:), CY0(:,:), CXN(:,:),        &
-                                 CYN(:,:), WLEV(:,:), ICEI(:,:)
+                                 CYN(:,:), WLEV(:,:), ICEI(:,:),      &
+                                 HML(:,:)
         LOGICAL               :: IINIT
         LOGICAL               :: FLAGS(8)
       END TYPE INPUT
@@ -127,13 +132,16 @@
                                  TW0(:), TWN(:), TIN(:), T0N(:),      &
                                  T1N(:), T2N(:), TDN(:), TG0(:), TGN(:)
       REAL, POINTER           :: GA0, GD0, GAN, GDN
+      ! QL, 150525, HML
       REAL, POINTER           :: WX0(:,:), WY0(:,:), DT0(:,:),        &
                                  WXN(:,:), WYN(:,:), DTN(:,:),        &
                                  CX0(:,:), CY0(:,:), CXN(:,:),        &
-                                 CYN(:,:), WLEV(:,:), ICEI(:,:)
+                                 CYN(:,:), WLEV(:,:), ICEI(:,:),      &
+                                 HML(:,:)
       LOGICAL, POINTER        :: IINIT
       LOGICAL, POINTER        :: FLAGS(:)
-      LOGICAL, POINTER        :: FLLEV, FLCUR, FLWIND, FLICE
+      ! QL, 150525, FLHML
+      LOGICAL, POINTER        :: FLLEV, FLCUR, FLWIND, FLICE, FLHML
 !/
       CONTAINS
 !/ ------------------------------------------------------------------- /
@@ -355,6 +363,8 @@
       FLCUR  => INPUTS(IMOD)%FLAGS(2)
       FLWIND => INPUTS(IMOD)%FLAGS(3)
       FLICE  => INPUTS(IMOD)%FLAGS(4)
+      ! QL, 150525, from coupler, set in wav_comp_mct.F90
+      FLHML  => INPUTS(IMOD)%FLAGS(5)
 !
       IF ( FLLEV  ) ALLOCATE ( INPUTS(IMOD)%WLEV(NX,NY) )
 !
@@ -375,6 +385,8 @@
       END IF
 !
       IF ( FLICE  ) ALLOCATE ( INPUTS(IMOD)%ICEI(NX,NY) )
+! QL, 150525, HML from coupler
+      IF ( FLHML  ) ALLOCATE ( INPUTS(IMOD)%HML(NX,NY) )
 !
       INPUTS(IMOD)%IINIT  = .TRUE.
 !
@@ -527,6 +539,8 @@
       FLCUR  => INPUTS(IMOD)%FLAGS(2)
       FLWIND => INPUTS(IMOD)%FLAGS(3)
       FLICE  => INPUTS(IMOD)%FLAGS(4)
+      ! QL, 150525, HML
+      FLHML  => INPUTS(IMOD)%FLAGS(5)
 !
       IF ( IINIT ) THEN
 !
@@ -552,6 +566,10 @@
 !
           IF ( FLICE  ) THEN
               ICEI   => INPUTS(IMOD)%ICEI
+            END IF
+! QL, 150525, HML
+          IF ( FLHML  ) THEN
+              HML    => INPUTS(IMOD)%HML
             END IF
 !
         END IF

@@ -227,6 +227,8 @@
       USE W3ODATMD, ONLY: NRQRS, NBLKRS, RSBLKS, IRQRS, IRQRSS, VAAUX
 !/
       USE W3SERVMD, ONLY: EXTCDE
+      ! QL, 150629, casename for restart file
+      USE W3CESMMD, ONLY : CASENAME
 !
       IMPLICIT NONE
 !
@@ -252,11 +254,13 @@
       INTEGER, ALLOCATABLE    :: MAPTMP(:,:)
       INTEGER                 :: IERR_MPI, IH, IB, ISEA0, ISEAN, &
                                  NRQ
+      ! QL, 150629, for restart file name
+      INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC
       INTEGER, ALLOCATABLE    :: STAT1(:,:), STAT2(:,:)
       LOGICAL                 :: WRITE, IOSFLG
       CHARACTER(LEN=4)        :: TYPE
       CHARACTER(LEN=10)       :: VERTST
-      CHARACTER(LEN=19)       :: FNAME
+      CHARACTER(LEN=128)      :: FNAME
       CHARACTER(LEN=26)       :: IDTST
       CHARACTER(LEN=30)       :: TNAME
 !/
@@ -313,13 +317,25 @@
       I      = LEN_TRIM(FILEXT)
       J      = LEN_TRIM(FNMPRE)
 !
-      IF ( IFILE.EQ.0 ) THEN
-          FNAME  = 'restart.'//FILEXT(:I)
-        ELSE
-          FNAME  = 'restartN.'//FILEXT(:I)
-          IF ( WRITE .AND. IAPROC.EQ.NAPRST )                         &
-               WRITE (FNAME(8:8),'(I1)') IFILE
-        END IF
+!      IF ( IFILE.EQ.0 ) THEN
+!          FNAME  = 'restart.'//FILEXT(:I)
+!        ELSE
+!          FNAME  = 'restartN.'//FILEXT(:I)
+!          IF ( WRITE .AND. IAPROC.EQ.NAPRST )                         &
+!               WRITE (FNAME(8:8),'(I1)') IFILE
+!        END IF
+
+! QL, 150629, restart file name
+      YY =  TIME(1)/10000
+      MM = (TIME(1)-YY*10000)/100
+      DD = (TIME(1)-YY*10000-MM*100)
+      HH = TIME(2)/10000
+      MN = (TIME(2)-HH*10000)/100
+      SS = (TIME(2)-HH*10000-MN*100) 
+      TOTSEC = HH*3600+MN*60+SS
+      WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
+           trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
+
       IFILE  = IFILE + 1
 !
       IF ( WRITE ) THEN

@@ -157,6 +157,7 @@
       USE W3IDATMD, ONLY: TW0, WX0, WY0, DT0, TWN, WXN, WYN, DTN
       USE W3IDATMD, ONLY: TIN, ICEI
       USE W3IDATMD, ONLY: TLN, WLEV
+      USE W3IDATMD, ONLY: HML   ! QL, 150525, mixing layer depth
       use w3odatmd, only: w3nout, w3seto, naproc, iaproc, napout, naperr,             &
                           nogrd, idout, fnmpre, iostyp
 !/
@@ -205,6 +206,7 @@
       integer,save :: inst_index            ! number of current instance (ie. 1)
       character(len=16),save :: inst_name   ! fullname of current instance (ie. "wav_0001")
       character(len=16),save :: inst_suffix ! char string associated with instance
+      character(CL) :: runtype    ! QL, 150525, run type: initial/continue/branch
 
       include "mpif.h"
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -242,6 +244,10 @@ CONTAINS
       integer :: dtime_sync        ! integer timestep size
       integer :: start_ymd         ! start date (yyyymmdd)
       integer :: start_tod         ! start time of day (sec)
+      ! QL, 150629, calculating restart interval
+      integer :: stop_ymd          ! stop date (yyyymmdd)
+      integer :: stop_tod          ! stop time of day (sec)
+      integer :: time_int          ! restart time interval (sec)
 
       character(CL)            :: starttype
       type(mct_gsmap), pointer :: gsmap
@@ -312,6 +318,26 @@ CONTAINS
       iaproc = iaproc + 1
 
       !--------------------------------------------------------------------
+      ! Initialize run type
+      ! QL, 150525
+      !--------------------------------------------------------------------
+
+      call seq_infodata_GetData( infodata, start_type=starttype)
+
+      if (     trim(starttype) == trim(seq_infodata_start_type_start)) then
+         runtype = "initial"
+         write(stdout,*) 'starttype: initial'
+      else if (trim(starttype) == trim(seq_infodata_start_type_cont) ) then
+         runtype = "continue"
+         write(stdout,*) 'starttype: continue'
+      else if (trim(starttype) == trim(seq_infodata_start_type_brnch)) then
+         runtype = "branch"
+         write(stdout,*) 'starttype: branch'
+      else
+         write(stdout,*) 'wav_comp_mct ERROR: unknown starttype'
+      end if
+
+      !--------------------------------------------------------------------
       ! IO set-up
       !--------------------------------------------------------------------
 
@@ -377,8 +403,11 @@ CONTAINS
       !--------------------------------------------------------------------
 
       flags = .false.
+      ! QL, 150525, flags for passing variables from coupler to ww3,
+      !             lev, curr, wind, ice and mixing layer depth on
+      flags(1:5) = .true.
 !      flags(1:4) = .true.   !changed by Adrean (lev,curr,wind,ice on)
-      flags(3:4) = .true.   !changed by Adrean (wind,ice on)
+!      flags(3:4) = .true.   !changed by Adrean (wind,ice on)
 
       !--------------------------------------------------------------------
       ! Set time frame
@@ -386,19 +415,40 @@ CONTAINS
 
       ! TIME0 = from ESMF clock
       ! NOTE - are not setting TIMEN here
+      ! QL, 150629, TIMEN is set here to calculate the restart time
+      ! interval, hardwired to write restart file at the end of run
 
       if ( iaproc .eq. napout ) write (ndso,930)
       call shr_sys_flush(stdout)
 
-      call seq_timemgr_EClockGetData(EClock, &
-           start_ymd=start_ymd, start_tod=start_tod)
-
+      ! QL, 150525, initial run or restart run
+      ! TODO, currently restart files are written at the end of run
+      ! need to suppot REST_OPTION and REST_N
+      if ( runtype .eq. "initial") then
+         call seq_timemgr_EClockGetData(EClock, &
+              start_ymd=start_ymd, start_tod=start_tod)
+      else      
+         call seq_timemgr_EClockGetData(EClock, &
+              curr_ymd=start_ymd, curr_tod=start_tod)
+      endif
+  
       hh = start_tod/3600
       mm = (start_tod - (hh * 3600))/60
       ss = start_tod - (hh*3600) - (mm*60) 
 
       time0(1) = start_ymd
       time0(2) = hh*10000 + mm*100 + ss
+
+      call seq_timemgr_EClockGetData(EClock, &
+           stop_ymd=stop_ymd, stop_tod=stop_tod)
+  
+      hh = stop_tod/3600
+      mm = (stop_tod - (hh * 3600))/60
+      ss = stop_tod - (hh*3600) - (mm*60) 
+
+      timen(1) = stop_ymd
+      timen(2) = hh*10000 + mm*100 + ss
+
       call stme21 ( time0 , dtme21 )
       if ( iaproc .eq. napout ) write (ndso,931) dtme21
       call shr_sys_flush(stdout)
@@ -408,7 +458,7 @@ CONTAINS
       ! Define output type and fields
       !--------------------------------------------------------------------
 
-      iostyp = 1
+      iostyp = 1        ! gridded field
       write (ndso,940) 'no dedicated output process, any file system '
       call shr_sys_flush(stdout)
 
@@ -437,16 +487,26 @@ CONTAINS
 
       do j=1, 6
          odat(5*(j-1)+3) = 0
-         !DEBUG
-         ! Hardwire gridded output for now 
-         odat(1) = 10101
-         odat(2) = 0
-         odat(3) = 1800   ! changed by Adrean
-         odat(4) = 99990101
-         odat(5) = 0
-         !DEBUG
       end do
-                                                                          
+      ! QL, 150629, calculating restart output interval
+      time_int = dsec21(time0, timen)
+      !DEBUG
+      ! Hardwire gridded output for now
+      ! first output time stamp is now read from file
+      ! QL, 150525, 1-5 for history files, 16-20 for restart files
+      !     150629, restart output interval is set to the total time of run 
+      odat(1) = time(1)     ! YYYYMMDD for first output
+      odat(2) = time(2)     ! HHMMSS for first output
+      odat(3) = 21600        ! output interval in sec ! changed by Adrean
+      odat(4) = 99990101     ! YYYYMMDD for last output
+      odat(5) = 0            ! HHMMSS for last output
+      odat(16) = time(1)    ! YYYYMMDD for first output
+      odat(17) = time(2)    ! HHMMSS for first output
+      odat(18) = time_int     ! output interval in sec
+      odat(19) = 99990101     ! YYYYMMDD for last output
+      odat(20) = 0            ! HHMMSS for last output
+      !DEBUG
+                                                                       
       ! Output Type 1: fields of mean wave parameters gridded output
 
       flgrd( 1) = .false. !   1. depth (m)                              
@@ -480,6 +540,14 @@ CONTAINS
       flgrd(29) = .false. !  29. radiation stresses                     
       flgrd(30) = .false. !  30. user defined (1)                       
       flgrd(31) = .false. !  31. user defined (2)                       
+      ! QL, 150525, new output
+      flgrd(32) = .true.  !  32. Stokes drift at z=0                       
+      flgrd(33) = .true.  !  33. Turbulent Langmuir number (La_t)
+      flgrd(34) = .true.  !  34. Langmuir number (La_Proj)
+      flgrd(35) = .true.  !  35. Angle between wind and LC direction
+      flgrd(36) = .true.  !  36. Depth averaged Stokes drift (0-H_0.2ML)
+      flgrd(37) = .true.  !  37. Langmuir number (La_SL)
+      flgrd(38) = .true.  !  38. Langmuir number (La_SL,Proj)
 
       if ( iaproc .eq. napout ) then
          flt = .true.
@@ -770,6 +838,11 @@ CONTAINS
             ICEI(IX,IY) = x2w0%rattr(index_x2w_si_ifrac,gindex)
          endif
 
+         ! QL, 150525, get mixing layer depth from coupler
+         if (flags(5)) then
+            HML(IX,IY) = max(x2w0%rattr(index_x2w_so_bldepth,gindex), 5.)
+         endif
+
       enddo
       enddo
 
@@ -787,15 +860,28 @@ CONTAINS
       call w3wave ( 1, timen )
 
 !      copy ww3 data to coupling datatype
-!      do jsea=1, nseal
-!         isea = iaproc + (jsea-1)*naproc
-!         IX  = MAPSF(ISEA,1)
-!         IY  = MAPSF(ISEA,2)
-!         w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ??
-!         w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = ??
-!         w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = ??
+      ! QL, 150612, copy enhancement factor, uStokes, vStokes to coupler
+      do jsea=1, nseal
+         isea = iaproc + (jsea-1)*naproc
+         IX  = MAPSF(ISEA,1)
+         IY  = MAPSF(ISEA,2)
+         if (LASLPJ(ISEA) .ne. 1.e30) then
+             ! TODO calculating enhancement factor here
+             ! VR12-MA & VR12-EN
+             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
+                       SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
+             ! VR12-AL 
+             !w2x_w%rattr(index_w2x_Sw_lamult,jsea) = &
+             !          SQRT(1+(3.1*LANGMT(ISEA))**-2+(5.4*LANGMT(ISEA))**-4)
+             w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = USSX(ISEA)
+             w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = USSY(ISEA)
+          else
+             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = 1.
+             w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = 0.
+             w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = 0.
+          endif
 !         w2x_w%rattr(index_w2x_Sw_hstokes,jsea) = ??
-!      enddo
+      enddo
 
 !      write(stdout,*) 'wrm tcx8'
 !      call shr_sys_flush(stdout)

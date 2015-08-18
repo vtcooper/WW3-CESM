@@ -1,8 +1,9 @@
 #! /usr/bin/env perl
 use strict;
 
+# QL, 150629, fixed some typos
 if ($#ARGV == -1) {
-    die " ERROR datm.buildexe: must specify a caseroot input argument";
+    die " ERROR ww3.buildlib: must specify a caseroot input argument";
 }
 my ($CASEROOT) = @ARGV;
 chdir "${CASEROOT}";
@@ -22,7 +23,7 @@ if ("$COMP_INTERFACE" eq 'MCT' ) {
     $comp = "mct";
 }
 if ("$COMP_INTERFACE" eq 'ESMF') {
-    $comp = esmf;
+    $comp = "esmf";
 }
 
 chdir "$OBJROOT/wav/obj";

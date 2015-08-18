@@ -1,5 +1,21 @@
 ================================================================================
-ww3 ChangeLog
+ww3 ChangeLo
+================================================================================
+Originator: mvertens
+Date: 18 Aug 2015
+Model: cpl7
+Version: ww3_150818
+One-line summary:  update from Qing Li from July 2015
+
+M       bld/ww3.buildlib
+M       bld/ww3.buildnml
+M       src/source/w3odatmd.f90
+M       src/source/w3iogomd.f90
+M       src/source/w3initmd.f90
+M       src/source/w3adatmd.f90
+M       src/source/w3iorsmd.f90
+M       src/source/w3idatmd.f90
+M       src/cpl_mct/wav_comp_mct.F90
 ================================================================================
 Originator: mvertens
 Date: 11 Mar 2015
