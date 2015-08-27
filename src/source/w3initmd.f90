@@ -604,14 +604,14 @@
 !
 ! 3.b Compare MAPSTA from grid and restart
 !
-      DO IX=1, NX
-        DO IY=1, NY
-          IF ( ABS(MAPSTA(IY,IX)).EQ.2 .OR.                           &
-               ABS(MAPTST(IY,IX)).EQ.2 ) THEN
-              MAPSTA(IY,IX) = SIGN ( MAPTST(IY,IX) , MAPSTA(IY,IX) )
-            END IF
-          END DO
-        END DO
+!      DO IX=1, NX
+!        DO IY=1, NY
+!          IF ( ABS(MAPSTA(IY,IX)).EQ.2 .OR.                           &
+!               ABS(MAPTST(IY,IX)).EQ.2 ) THEN
+!              MAPSTA(IY,IX) = SIGN ( MAPTST(IY,IX) , MAPSTA(IY,IX) )
+!            END IF
+!          END DO
+!        END DO
 !
 ! 3.c Initialization from wind fields
 !

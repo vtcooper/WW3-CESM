@@ -314,6 +314,9 @@
 !/
       USE W3SERVMD
       USE W3TIMEMD
+
+      ! QL, 150823, flag for restart
+      use w3cesmmd, only : rstwr
       use shr_sys_mod, only : shr_sys_flush
 !
       IMPLICIT NONE
@@ -932,7 +935,8 @@
                             END IF
                         ELSE IF ( J .EQ. 3 ) THEN
                           CALL W3IOTR ( NDS(11), NDS(12), VA, IMOD )
-                        ELSE IF ( J .EQ. 4 ) THEN
+                        ! QL, 150823, add restart flag
+                        ELSE IF ( J .EQ. 4 .AND. RSTWR) THEN
                           CALL W3IORS ('HOT', NDS(6), XXX, ITEST, IMOD )
                         ELSE IF ( J .EQ. 5 ) THEN
                           IF ( IAPROC .EQ. NAPBPT ) THEN
