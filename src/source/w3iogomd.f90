@@ -196,13 +196,30 @@
 !/ ------------------------------------------------------------------- /
       USE W3CONSTANTS
       USE W3GDATMD
-      USE W3WDATMD, ONLY: UST, FPIS
+      ! QL, 150525, USTDIR: ustar direction
+      !             ASF:
+      USE W3WDATMD, ONLY: UST, USTDIR, FPIS, ASF
+      ! QL, 150525, USSX, USSY: surface Stokes drift (SD)
+      !             USSXH, USSYH: surface layer (SL) averaged SD
+      !             LANGMT: La_t
+      !             LAPROJ: La_{Proj}
+      !             LASL: La_{SL}
+      !             LASLPJ: La_{SL,Proj}
+      !             ALPHAL: angle between wind and Langmuir cells (SL
+      !                     averaged)
+      !             ALPHALS: angle between wind and Langmuir cells 
+      !                     (surface)
+      !             UD:
       USE W3ADATMD, ONLY: CG, WN, DW, HS, WLM, TMN, THM, THS, FP0,    &
                           THP0, FP1, THP1, ABA, ABD, UBA, UBD,        &
                           SXX, SYY, SXY, PHS, PTP, PLP, PTH, PSI, PWS,&
-                          PWST, PNR, USERO
+                          PWST, PNR, USERO, USSX, USSY, LANGMT,       &
+                          LAPROJ, ALPHAL, UD, USSXH, USSYH, LASL,     &
+                          LASLPJ, ALPHALS
       USE W3ODATMD, ONLY: NDST, UNDEF, IAPROC, NAPROC, ICPRT, DTPRT,  &
                           WSCUT, NOSWLL
+      ! QL, 150525, HML: mixing layer depth (from coupler)
+      USE W3IDATMD, ONLY: HML
 
       IMPLICIT NONE
 !/
@@ -218,15 +235,25 @@
       INTEGER                 :: IK, ITH, JSEA, ISEA, IX, IY,         &
                                  IKP0(NSEAL), IKP1(NSEAL),            &
                                  ILOW, ICEN, IHGH, I, J
+      ! QL, 150525, FACTOR2
+      !             SWW: angle between wind and waves
+      !             HSL: surface layer depth (=0.2*HML)
       REAL                    :: FXPMC, FACTOR, EBAND, FKD,           &
                                  FP1STR, FP1TST, FPISTR, AABS, UABS,  &
-                                 XL, XH, XL2, XH2, EL, EH, DENOM
+                                 XL, XH, XL2, XH2, EL, EH, DENOM,     &
+                                 FACTOR2, SWW, HSL
+      ! QL, 150525, ETUSSX, ETUSSY, ETUSCX, ETUSCY, ETUSSXH, ETUSSYH
+      !             tmp variables for surface and SL averaged SD
       REAL                    :: ET(NSEAL), EWN(NSEAL), ETR(NSEAL),   &
                                  ETX(NSEAL), ETY(NSEAL), AB(NSEAL),   &
                                  ABX(NSEAL), ABY(NSEAL),              &
                                  EBD(NK,NSEAL), EC(NSEAL),            &
                                  ABR(NSEAL), UBR(NSEAL),              &
-                                 ABXX(NSEAL), ABYY(NSEAL), ABXY(NSEAL)
+                                 ABXX(NSEAL), ABYY(NSEAL),            &
+                                 ABXY(NSEAL), ETUSSX(NSEAL),          &
+                                 ETUSSY(NSEAL), ETUSCX(NSEAL),        &
+                                 ETUSCY(NSEAL), ETUSSXH(NSEAL),       &
+                                 ETUSSYH(NSEAL)
       REAL, SAVE              :: HSMIN = 0.05
 !/
 !/ ------------------------------------------------------------------- /
@@ -251,6 +278,13 @@
       SXX    = 0.
       SYY    = 0.
       SXY    = 0.
+      ! QL, 150525
+      ETUSSX  = 0.
+      ETUSSY  = 0.
+      ETUSCX  = 0.
+      ETUSCY  = 0.
+      ETUSSXH  = 0.
+      ETUSSYH  = 0.
 !
       HS     = UNDEF
       WLM    = UNDEF
@@ -261,6 +295,17 @@
       FP1    = UNDEF
       THP0   = UNDEF
       THP1   = UNDEF
+      ! QL, 150525
+      LANGMT = UNDEF
+      LAPROJ = UNDEF
+      LASL   = UNDEF
+      LASLPJ = UNDEF
+      ALPHAL = UNDEF
+      ALPHALS = UNDEF
+      USSX   = UNDEF
+      USSY   = UNDEF
+      USSXH  = UNDEF
+      USSYH  = UNDEF
 !
 ! 2.  Integral over discrete part of spectrum ------------------------ *
 !
@@ -282,7 +327,7 @@
             AB (JSEA)  = AB (JSEA) + A(ITH,IK,JSEA)
             ABX(JSEA)  = ABX(JSEA) + A(ITH,IK,JSEA)*ECOS(ITH)
             ABY(JSEA)  = ABY(JSEA) + A(ITH,IK,JSEA)*ESIN(ITH)
-          ISEA         = IAPROC + (JSEA-1)*NAPROC
+            ISEA       = IAPROC + (JSEA-1)*NAPROC
             FACTOR     = MAX ( 0.5 , CG(IK,ISEA)/SIG(IK)*WN(IK,ISEA) )
             ABXX(JSEA) = ABXX(JSEA) + ((1.+EC2(ITH))*FACTOR-0.5) *    &
                                      A(ITH,IK,JSEA)
@@ -304,6 +349,19 @@
           ETX(JSEA)    = ETX(JSEA) + ABX(JSEA) * FACTOR
           ETY(JSEA)    = ETY(JSEA) + ABY(JSEA) * FACTOR
           FKD    = MAX ( 0.001 , WN(IK,ISEA) * DW(ISEA) )
+! QL, 150525, get surface layer depth
+          IX    = MAPSF(ISEA,1)
+          IY    = MAPSF(ISEA,2)
+          HSL   = HML(IX,IY)/5.     ! depth over which SD is averaged
+!
+! Directional moments in the last freq. band
+! QL, 150525
+          IF (IK.EQ.NK) THEN
+            FACTOR2       = SIG(IK)**5/(GRAV**2)/DSII(IK)
+            ETUSCX(JSEA)  = ABX(JSEA)*FACTOR*FACTOR2
+            ETUSCY(JSEA)  = ABY(JSEA)*FACTOR*FACTOR2
+            END IF
+
           IF ( FKD .LT. 6. ) THEN
               FKD       = FACTOR / SINH(FKD)**2
               ABR(JSEA) = ABR(JSEA) + AB(JSEA) * FKD
@@ -312,6 +370,33 @@
               UBR(JSEA) = UBR(JSEA) + AB(JSEA) * SIG(IK)**2 * FKD
               UBA(ISEA) = UBA(ISEA) + ABX(JSEA) * SIG(IK)**2 * FKD
               UBD(ISEA) = UBD(ISEA) + ABY(JSEA) * SIG(IK)**2 * FKD
+              ! Surface Stokes Drift, QL, 150525
+              ETUSSX(JSEA)  = ETUSSX(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                   *WN(IK,ISEA)*COSH(2*WN(IK,ISEA)*DW(ISEA))          &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+              ETUSSY(JSEA)  = ETUSSY(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                   *WN(IK,ISEA)*COSH(2*WN(IK,ISEA)*DW(ISEA))          &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+              ! Depth averaged Stokes Drift, QL, 150525
+              ETUSSXH(JSEA)  = ETUSSXH(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                   *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/2./HSL                &
+                   *COSH(2*WN(IK,ISEA)*DW(ISEA))                         &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+              ETUSSYH(JSEA)  = ETUSSYH(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                   *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/2./HSL                &
+                   *COSH(2*WN(IK,ISEA)*DW(ISEA))                         &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+          ELSE ! deep water limit, QL, 150525
+            ! Surface Stokes Drift
+            ETUSSX(JSEA)  = ETUSSX(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                     *2.*WN(IK,ISEA)
+            ETUSSY(JSEA)  = ETUSSY(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                     *2.*WN(IK,ISEA)
+            ! Depth averaged Stokes Drift
+            ETUSSXH(JSEA)  = ETUSSXH(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                     *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/HSL
+            ETUSSYH(JSEA)  = ETUSSYH(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                     *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/HSL
             END IF
           ABXX(JSEA)   = MAX ( 0. , ABXX(JSEA) ) * FACTOR
           ABYY(JSEA)   = MAX ( 0. , ABYY(JSEA) ) * FACTOR
@@ -330,6 +415,10 @@
 !
       DO JSEA=1, NSEAL
         ISEA      = IAPROC + (JSEA-1)*NAPROC
+        ! QL, 150525
+        IX    = MAPSF(ISEA,1)
+        IY    = MAPSF(ISEA,2)
+        HSL   = HML(IX,IY)/5.     ! depth over which SD is averaged
         EBAND     = AB(JSEA) / CG(NK,ISEA)
         ET (JSEA) = ET (JSEA) + FTE  * EBAND
         EWN(JSEA) = EWN(JSEA) + FTWL * EBAND
@@ -339,6 +428,16 @@
         SXX(ISEA) = SXX(ISEA) + FTE * ABXX(JSEA) / CG(NK,ISEA)
         SYY(ISEA) = SYY(ISEA) + FTE * ABYY(JSEA) / CG(NK,ISEA)
         SXY(ISEA) = SXY(ISEA) + FTE * ABXY(JSEA) / CG(NK,ISEA)
+        ! QL, 150525, tail for SD
+        ETUSSX(JSEA)  = ETUSSX(JSEA) + 2*GRAV*ETUSCX(JSEA)/SIG(NK)
+        ETUSSY(JSEA)  = ETUSSY(JSEA) + 2*GRAV*ETUSCY(JSEA)/SIG(NK)
+        ! tail for depth integrated SD
+        ETUSSXH(JSEA)  = ETUSSXH(JSEA) + 2*GRAV*ETUSCX(JSEA)/SIG(NK)   &
+          *(1.-(1.-4.*HSL*WN(NK,ISEA))*EXP(-2.*WN(NK,ISEA)*HSL))       &
+          /6./WN(NK,ISEA)/HSL 
+        ETUSSYH(JSEA)  = ETUSSYH(JSEA) + 2*GRAV*ETUSCY(JSEA)/SIG(NK)   &
+          *(1.-(1.-4.*HSL*WN(NK,ISEA))*EXP(-2.*WN(NK,ISEA)*HSL))       &
+          /6./WN(NK,ISEA)/HSL
         END DO
 !
       SXX    = SXX * DWAT * GRAV
@@ -375,8 +474,46 @@
                 UBD(ISEA) = 0.
               ENDIF
             UBA(ISEA) = UBR(JSEA)
-            USERO(ISEA,1) = HS(ISEA) / MAX ( 0.001 , DW(ISEA) )
-          END IF
+            ! QL, 150525, output Stokes drift and Langmuir numbers
+            !USERO(ISEA,1) = HS(ISEA) / MAX ( 0.001 , DW(ISEA) )
+            !USERO(ISEA,2) = ASF(ISEA)
+            IF (ETUSSX(JSEA) .NE. 0. .OR. ETUSSY(JSEA) .NE. 0.) THEN
+              USSX(ISEA) = ETUSSX(JSEA)
+              USSY(ISEA) = ETUSSY(JSEA)
+              USSXH(ISEA) = ETUSSXH(JSEA)
+              USSYH(ISEA) = ETUSSYH(JSEA)
+              LANGMT(ISEA) = SQRT ( UST(ISEA) * ASF(ISEA)        &
+                        * SQRT ( DAIR / DWAT )                   &
+                        / SQRT ( USSX(ISEA)**2 + USSY(ISEA)**2 ) )
+              ! Calculating Langmuir Number for misaligned wind and waves
+              ! see Van Roekel et al., 2012
+              ! take z1 = 4 * HS
+              ! SWW: angle between Stokes drift and wind
+
+              ! no Stokes depth
+              SWW = ATAN2(USSY(ISEA),USSX(ISEA)) - UD(ISEA)
+              ! ALPHALS: angle between wind and LC direction, Surface
+              ! Stokes drift
+              ALPHALS(ISEA) = ATAN( SIN(SWW) / ( LANGMT(ISEA)**2  &
+                /0.4*LOG( ABS(HML(IX,IY)/4./HS(ISEA)) )+COS(SWW) ) )
+              LAPROJ(ISEA) = LANGMT(ISEA) &
+                * SQRT(ABS(COS(ALPHALS(ISEA))) &
+                / ABS(COS(SWW-ALPHALS(ISEA)))) 
+              ! Stokes depth
+              SWW = ATAN2(USSYH(ISEA),USSXH(ISEA)) - UD(ISEA)
+              ! ALPHAL: angle between wind and LC direction
+              ALPHAL(ISEA) = ATAN(SIN(SWW) / (LANGMT(ISEA)**2  &
+                /0.4*LOG(ABS(HML(IX,IY)/4./HS(ISEA))) + COS(SWW)))
+              LASL(ISEA) = SQRT(UST(ISEA)*ASF(ISEA)         &
+                   * SQRT(DAIR/DWAT)                       &
+                   / SQRT(USSXH(ISEA)**2+USSYH(ISEA)**2))
+              LASLPJ(ISEA) = LASL(ISEA) * SQRT(ABS(COS(ALPHAL(ISEA))) &
+                           / ABS(COS(SWW-ALPHAL(ISEA))))
+              ! user defined output
+              USERO(ISEA,1) = HML(IX,IY)
+              !USERO(ISEA,2) = COS(ALPHAL(ISEA))
+              END IF
+            END IF
         END DO
 !
 ! 3.b Clean-up small values if !/O8 switch selected
@@ -631,6 +768,14 @@
 !         29  Radiation stresses.
 !         30  User defined #1. (requires coding ...)
 !         31  User defined #1. (requires coding ...)
+! QL, 150525
+!         32  Stokes drift at z=0. 
+!         33  Langmuir number.
+!         34  Langmuir number for misaligned wind and wave (La_Proj).
+!         35  Angle between wind and LC direction.
+!         36  Depth integrated Stokes drift (0-H_0.2ML).
+!         37  Langmuir number (La_SL).
+!         38  Langmuir number (La_SL,Proj).
 !
 !     15-20 consist of a set of fields, index 0 = wind sea, index
 !     1:NOSWLL are first NOSWLL swell fields.
@@ -704,11 +849,14 @@
       USE W3ODATMD, ONLY: W3SETO
 !/
       USE W3WDATMD, ONLY: TIME, DINIT, WLV, ICE, UST, USTDIR, ASF
+      ! QL, 150525, USSX, USSY, USSXH, USSYH, LANGMT, LAPROJ, LASL
+      !             LASLPJ, ALPHAL, ALPHALS
       USE W3ADATMD, ONLY: AINIT, DW, UA, UD, AS, CX, CY, HS, WLM,     &
                           TMN, THM, THS, FP0, THP0, FP1, THP1, DTDYN, &
                           FCUT, ABA, ABD, UBA, UBD, SXX, SYY, SXY,    &
                           PHS, PTP, PLP, PTH, PSI, PWS, PWST, PNR,    &
-                          USERO
+                          USERO, USSX, USSY, LANGMT, LAPROJ, ALPHAL,  &
+                          USSXH, USSYH, LASL, LASLPJ,ALPHALS
       USE W3ODATMD, ONLY: NOGRD, IDOUT, UNDEF, NDST, NDSE, FLOGRD,    &
                           IPASS => IPASS1, WRITE => WRITE1, FNMPRE,   &
                           NOSWLL, NOEXTR
@@ -1106,6 +1254,44 @@
                     AUX1(1:NSEA) = USERO(1:NSEA,2)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'USERO2'
+                  ! QL, 150525, new output
+                  ELSE IF ( IO .EQ. 32 ) THEN
+                    AUX1(1:NSEA) = USSX(1:NSEA)
+                    AUX2(1:NSEA) = USSY(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'USSX'
+                    FLDSTR2 = 'USSY'
+                  ELSE IF ( IO .EQ. 33 ) THEN
+                    AUX1(1:NSEA) = LANGMT(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'LANGMT'
+                  ELSE IF ( IO .EQ. 34 ) THEN
+                    AUX1(1:NSEA) = LAPROJ(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'LAPROJ'
+                  ELSE IF ( IO .EQ. 35 ) THEN
+                    AUX1(1:NSEA) = ALPHAL(1:NSEA)
+                    AUX2(1:NSEA) = ALPHALS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'ALPHAL'
+                    FLDSTR2 = 'ALPHALS'
+                  ELSE IF ( IO .EQ. 36 ) THEN
+                    AUX1(1:NSEA) = USSXH(1:NSEA)
+                    AUX2(1:NSEA) = USSYH(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'USSXH'
+                    FLDSTR2 = 'USSYH'
+                  ELSE IF ( IO .EQ. 37 ) THEN
+                    AUX1(1:NSEA) = LASL(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'LASL'
+                  ELSE IF ( IO .EQ. 38 ) THEN
+                    AUX1(1:NSEA) = LASLPJ(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'LASLPJ'
                   ELSE
                     WRITE (NDSE,999)
                     CALL EXTCDE ( 30 )
@@ -1273,6 +1459,34 @@
                   ELSE IF ( IO .EQ. 31 ) THEN
                     READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
                                                        USERO(1:NSEA,2)
+                  ! QL, 150525, new output
+                  ELSE IF ( IO .EQ. 32 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                          USSX(1:NSEA)
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                          USSY(1:NSEA)
+                  ELSE IF ( IO .EQ. 33 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                        LANGMT(1:NSEA)
+                  ELSE IF ( IO .EQ. 34 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                        LAPROJ(1:NSEA)
+                  ELSE IF ( IO .EQ. 35 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                        ALPHAL(1:NSEA)
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                       ALPHALS(1:NSEA)
+                  ELSE IF ( IO .EQ. 36 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                         USSXH(1:NSEA)
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                         USSYH(1:NSEA)
+                  ELSE IF ( IO .EQ. 37 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                          LASL(1:NSEA)
+                  ELSE IF ( IO .EQ. 38 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                        LASLPJ(1:NSEA)
                   ELSE
                     WRITE (NDSE,999)
                     CALL EXTCDE ( 30 )

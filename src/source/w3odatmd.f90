@@ -267,14 +267,17 @@
 !/ Conventional declarations
 !/
       INTEGER                 :: NOUTP = -1, IOUTP = -1, IOSTYP = 1
-      INTEGER, PARAMETER      :: NOGRD = 31
+      ! QL, 150525, 31->38, number of output
+      INTEGER, PARAMETER      :: NOGRD = 38     
       INTEGER, PARAMETER      :: NOSWLL=  2
       INTEGER, PARAMETER      :: NOEXTR=  2
       CHARACTER(LEN=20)       :: IDOUT(NOGRD)
       CHARACTER(LEN=80)       :: FNMPRE = './'
-      REAL                    :: UNDEF  = -999.9
+      ! QL, 150525, -999.9->1.e30, missing value
+      REAL                    :: UNDEF  = 1.e30
       LOGICAL                 :: UNIPTS = .FALSE., UPPROC = .FALSE.
 !
+! QL, 150525, add 7 output variables
       DATA IDOUT  / 'Water depth         ' , 'Current vel.        ' , &
                     'Wind speed          ' , 'Air-sea temp. dif.  ' , &
                     'Friction velocity   ' , 'Wave height         ' , &
@@ -290,7 +293,10 @@
                     'Ice concentration   ' , 'Water level         ' , &
                     'Bottom rms ampl.    ' , 'Bottom rms velocity ' , &
                     'Radiation stresses  ' , 'User defined #1     ' , &
-                    'User defined #2     ' /
+                    'User defined #2     ' , 'Stokes drift at z=0 ' , &
+                    'Langmuir number     ' , 'Langmuir No. Proj   ' , &
+                    'LC-wind angle       ' , 'Dp.Int. Stokes drift' , &
+                    'Langmuir No. SL     ' , 'Langmuir No. SL,Proj' /
 !/
 !/ Data structures
 !/

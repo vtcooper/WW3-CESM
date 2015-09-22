@@ -257,6 +257,8 @@
                                  UA0(:), UAI(:), UD0(:), UDI(:),      &
                                  AS0(:), ASI(:), ATRNX(:,:), ATRNY(:,:)
 !
+        ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
+        !             ALPHAL, ALPHALS
         REAL, POINTER         :: DW(:), UA(:), UD(:), U10(:), U10D(:),&
                                  AS(:), CX(:), CY(:), EMN(:), FMN(:), &
                                  WNM(:), AMX(:), CDS(:), Z0S(:),      &
@@ -264,7 +266,11 @@
                                  THS(:), FP0(:), THP0(:), FP1(:),     &
                                  THP1(:), DTDYN(:), FCUT(:),          &
                                  ABA(:), ABD(:), UBA(:), UBD(:),      &
-                                 SXX(:), SYY(:), SXY(:), USERO(:,:)
+                                 SXX(:), SYY(:), SXY(:), USERO(:,:),  &
+                                 USSX(:), USSY(:), LANGMT(:),         &
+                                 LAPROJ(:), ALPHAL(:), USSXH(:),      &
+                                 USSYH(:), LASL(:), LASLPJ(:),        &
+                                 ALPHALS(:)
         REAL, POINTER         :: PHS(:,:), PTP(:,:), PLP(:,:),        &
                                  PTH(:,:), PSI(:,:), PWS(:,:),        &
                                  PWST(:), PNR(:)
@@ -321,6 +327,8 @@
                                  UA0(:), UAI(:), UD0(:), UDI(:),      &
                                  AS0(:), ASI(:), ATRNX(:,:), ATRNY(:,:)
 !
+      ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
+      !             ALPHAL, ALPHALS
       REAL, POINTER           :: DW(:), UA(:), UD(:), U10(:), U10D(:),&
                                  AS(:), CX(:), CY(:), EMN(:), FMN(:), &
                                  WNM(:), AMX(:), CDS(:), Z0S(:),      &
@@ -328,7 +336,11 @@
                                  THS(:), FP0(:), THP0(:), FP1(:),     &
                                  THP1(:), DTDYN(:), FCUT(:),          &
                                  ABA(:), ABD(:), UBA(:), UBD(:),      &
-                                 SXX(:), SYY(:), SXY(:), USERO(:,:)
+                                 SXX(:), SYY(:), SXY(:), USERO(:,:),  &
+                                 USSX(:), USSY(:), LANGMT(:),         &
+                                 LAPROJ(:), ALPHAL(:), USSXH(:),      &
+                                 USSYH(:), LASL(:), LASLPJ(:),        &
+                                 ALPHALS(:)
       REAL, POINTER           :: PHS(:,:), PTP(:,:), PLP(:,:),        &
                                  PTH(:,:), PSI(:,:), PWS(:,:),        &
                                  PWST(:), PNR(:)
@@ -610,6 +622,8 @@
       NSEALM = 1 + (NSEA-1)/NAPROC
       NXXX   = NSEALM * NAPROC
 !
+      ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
+      !             ALPHAL, ALPHALS
       ALLOCATE ( WADATS(IMOD)%DW(0:NSEA) , WADATS(IMOD)%UA(0:NSEA)  , &
                  WADATS(IMOD)%UD(0:NSEA) , WADATS(IMOD)%U10(NSEA)   , &
                  WADATS(IMOD)%U10D(NSEA) , WADATS(IMOD)%AS(0:NSEA)  , &
@@ -626,7 +640,15 @@
                  WADATS(IMOD)%ABD(NXXX)  , WADATS(IMOD)%UBA(NXXX)   , &
                  WADATS(IMOD)%UBD(NXXX)  , WADATS(IMOD)%SXX(NXXX)   , &
                  WADATS(IMOD)%SYY(NXXX)  , WADATS(IMOD)%SXY(NXXX)   , &
-                 WADATS(IMOD)%USERO(NXXX,NOEXTR) )
+                 WADATS(IMOD)%USSX(NXXX) , WADATS(IMOD)%USSY(NXXX)  , &
+                 WADATS(IMOD)%USSXH(NXXX), WADATS(IMOD)%USSYH(NXXX) , &
+                 WADATS(IMOD)%USERO(NXXX,NOEXTR)                    , &
+                 WADATS(IMOD)%LANGMT(NXXX)                          , &
+                 WADATS(IMOD)%LAPROJ(NXXX)                          , &
+                 WADATS(IMOD)%LASL(NXXX)                            , &
+                 WADATS(IMOD)%LASLPJ(NXXX)                          , &
+                 WADATS(IMOD)%ALPHAL(NXXX)                          , &
+                 WADATS(IMOD)%ALPHALS(NXXX) )
 !
       WADATS(IMOD)%USERO = UNDEF
 !
@@ -1078,6 +1100,18 @@
           SYY    => WADATS(IMOD)%SYY
           SXY    => WADATS(IMOD)%SXY
           USERO  => WADATS(IMOD)%USERO
+          ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
+          !             ALPHAL, ALPHALS
+          USSX   => WADATS(IMOD)%USSX
+          USSY   => WADATS(IMOD)%USSY
+          LANGMT => WADATS(IMOD)%LANGMT
+          LAPROJ => WADATS(IMOD)%LAPROJ
+          LASL   => WADATS(IMOD)%LASL
+          LASLPJ => WADATS(IMOD)%LASLPJ
+          ALPHAL => WADATS(IMOD)%ALPHAL
+          ALPHALS=> WADATS(IMOD)%ALPHALS
+          USSXH  => WADATS(IMOD)%USSXH
+          USSYH  => WADATS(IMOD)%USSYH
 !
           IF ( FL_ALL ) THEN
 !

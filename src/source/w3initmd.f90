@@ -1269,11 +1269,15 @@
       USE W3GDATMD, ONLY: NSEA
       USE W3GDATMD, ONLY: NX, NSPEC, MAPFS
       USE W3WDATMD, ONLY: VA, UST, USTDIR, ASF, FPIS
+      ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, ALPHAL, USSXH,
+      !             USSYH, LASL, LASLPJ, ALPHALS
       USE W3ADATMD, ONLY: MPI_COMM_WAVE, WW3_FIELD_VEC, HS, WLM, &
                           TMN, THM, THS, FP0, THP0, FP1, THP1,   &
                           DTDYN, FCUT, SPPNT, ABA, ABD, UBA, UBD,&
                           SXX, SYY, SXY, USERO, PHS, PTP, PLP,   &
-                          PTH, PSI, PWS, PWST, PNR
+                          PTH, PSI, PWS, PWST, PNR, USSX, USSY,  &
+                          LANGMT, LAPROJ, ALPHAL, USSXH, USSYH,  &
+                          LASL, LASLPJ, ALPHALS
       USE W3ODATMD, ONLY: NDST, IAPROC, NAPROC, NTPROC, FLOUT,   &
                           NOGRD, NAPFLD, NAPPNT, NAPRST, NAPBPT, &
                           NAPTRK
@@ -1318,7 +1322,8 @@
           IF ( NTPROC .EQ. 1 ) THEN
               NRQMAX = 0
             ELSE
-              NRQMAX = 29 + NOEXTR + 6*NOSWLL
+              ! QL, 150525, 29->39, add 10 output
+              NRQMAX = 39 + NOEXTR + 6*NOSWLL
               IF ( IAPROC .EQ. NAPFLD ) THEN
                   IF ( IAPROC .LE. NAPROC ) THEN
                       NRQMAX = NRQMAX * (NAPROC-1)
@@ -1520,6 +1525,61 @@
               CALL MPI_SEND_INIT (USERO(IAPROC,2),1,WW3_FIELD_VEC,&
                        IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
             END IF
+          ! QL, 150525, add output
+          IF ( FLOGRD(32) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (USSX  (IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (USSY  (IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
+          IF ( FLOGRD(33) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (LANGMT(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
+          IF ( FLOGRD(34) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (LAPROJ(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
+          IF ( FLOGRD(35) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (ALPHAL(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (ALPHALS(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
+          IF ( FLOGRD(36) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (USSXH (IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (USSYH (IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
+          IF ( FLOGRD(37) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (LASL(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
+          IF ( FLOGRD(38) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (LASLPJ(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
 !
         ELSE IF ( IAPROC .EQ. NAPFLD ) THEN
 !
@@ -1713,13 +1773,68 @@
                     CALL MPI_RECV_INIT (USERO(I0,2),1,WW3_FIELD_VEC,&
                        IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
                   END IF
+                IF ( FLOGRD(32) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (USSX (I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (USSY (I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
+                IF ( FLOGRD(33) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (LANGMT(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
+                IF ( FLOGRD(34) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (LAPROJ(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
+                IF ( FLOGRD(35) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (ALPHAL(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (ALPHALS(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
+                IF ( FLOGRD(36) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (USSXH (I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (USSYH (I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
+                IF ( FLOGRD(37) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (LASL(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
+                IF ( FLOGRD(38) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (LASLPJ(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
               END IF
             END DO
 !
         END IF
 !
       NRQGO  = IH
-      IT0    = IT0 + ( 29 + NOEXTR + 6*NOSWLL ) * NAPROC
+      ! QL, 150525, 29->39, add 10 output
+      IT0    = IT0 + ( 39 + NOEXTR + 6*NOSWLL ) * NAPROC
 !
       IF ( NRQGO .GT. NRQMAX ) THEN
           WRITE (NDSE,1010)
