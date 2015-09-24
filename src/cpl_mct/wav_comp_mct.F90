@@ -248,7 +248,7 @@ CONTAINS
       ! QL, 150629, calculating restart interval
       integer :: stop_ymd          ! stop date (yyyymmdd)
       integer :: stop_tod          ! stop time of day (sec)
-      integer :: time_int          ! restart time interval (sec)
+      integer :: ix, iy
 
       character(CL)            :: starttype
       type(mct_gsmap), pointer :: gsmap
@@ -628,7 +628,10 @@ CONTAINS
       ! copy enhancement factor, uStokes, vStokes to coupler
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
-         if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+         IX  = MAPSF(ISEA,1)
+         IY  = MAPSF(ISEA,2)
+         !if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+         if (MAPSTA(IY,IX) .eq. 1 .and. LASLPJ(ISEA) .gt. 1.e-4) then
              ! VR12-MA & VR12-EN
              w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
                        SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
@@ -822,6 +825,11 @@ CONTAINS
             ICEI(IX,IY) = x2w_w%rattr(index_x2w_si_ifrac,JSEA)
          endif
 
+         ! QL, 150827, get mixing layer depth from coupler
+         if (flags(5)) then
+            HML(IX,IY) = max(x2w_w%rattr(index_x2w_so_bldepth,JSEA), 5.)
+         endif
+
       enddo
 
 #else
@@ -891,7 +899,10 @@ CONTAINS
       ! QL, 150612, copy enhancement factor, uStokes, vStokes to coupler
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
-         if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+         IX  = MAPSF(ISEA,1)
+         IY  = MAPSF(ISEA,2)
+         !if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+         if (MAPSTA(IY,IX) .eq. 1 .and. LASLPJ(ISEA) .gt. 1.e-4) then
              ! VR12-MA & VR12-EN
              w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
                        SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
@@ -1069,8 +1080,14 @@ CONTAINS
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
-         iy = mapsf(isea,2) 
-         mask = mapsta(iy,ix)
+         iy = mapsf(isea,2)
+         ! QL, 150827, should be 1 for all sea point
+         !mask = mapsta(iy,ix)
+         if (mapsta(iy,ix) .ne. 0) then
+            mask = 1.0_r8
+         else
+            mask = 0.0_r8
+         end if 
          data(jsea) = mask
          !write(stdout,*)' jsea= ',jsea,' mask is ',data(jsea)
       end do
