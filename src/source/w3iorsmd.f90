@@ -229,6 +229,8 @@
       USE W3SERVMD, ONLY: EXTCDE
       ! QL, 150629, casename for restart file
       USE W3CESMMD, ONLY : CASENAME
+      ! QL, 150823, save in restart file
+      USE W3ADATMD, ONLY : LASLPJ, ALPHAL, USSX, USSY
 !
       IMPLICIT NONE
 !
@@ -572,6 +574,30 @@
                           (FPIS(ISEA),ISEA=1+(IPART-1)*NSIZE,         &
                                           MIN(NSEA,IPART*NSIZE))
                     END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1
+                    WRITE (NDSR,REC=NREC)                             &
+                          (LASLPJ(ISEA),ISEA=1+(IPART-1)*NSIZE,       &
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1
+                    WRITE (NDSR,REC=NREC)                             &
+                          (ALPHAL(ISEA),ISEA=1+(IPART-1)*NSIZE,       &
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1
+                    WRITE (NDSR,REC=NREC)                             &
+                          (USSX(ISEA),ISEA=1+(IPART-1)*NSIZE,         &
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1
+                    WRITE (NDSR,REC=NREC)                             &
+                          (USSY(ISEA),ISEA=1+(IPART-1)*NSIZE,         &
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
                 END IF
             END IF
         ELSE
@@ -621,6 +647,30 @@
                 NREC  = NREC + 1
                 READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
                       (FPIS(ISEA),ISEA=1+(IPART-1)*NSIZE,             &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1
+                READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
+                      (LASLPJ(ISEA),ISEA=1+(IPART-1)*NSIZE,           &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1
+                READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
+                      (ALPHAL(ISEA),ISEA=1+(IPART-1)*NSIZE,           &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1
+                READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
+                      (USSX(ISEA),ISEA=1+(IPART-1)*NSIZE,             &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1
+                READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
+                      (USSY(ISEA),ISEA=1+(IPART-1)*NSIZE,             &
                                       MIN(NSEA,IPART*NSIZE))
                 END DO
             ELSE

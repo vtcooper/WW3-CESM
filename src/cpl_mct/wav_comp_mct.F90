@@ -166,7 +166,8 @@
 !/
       use w3iopomd
       use w3timemd
-      use w3cesmmd, only : casename
+      ! QL, 150925, add rstwr and runtype (initial/continue/branch)
+      use w3cesmmd, only : casename, rstwr, runtype
 
       use esmf
       use mct_mod 
@@ -182,7 +183,8 @@
       use shr_kind_mod     , only : in=>shr_kind_in, r8=>shr_kind_r8, &
                                     cs=>shr_kind_cs, cl=>shr_kind_cl
       use seq_cdata_mod    , only : seq_cdata, seq_cdata_setptrs
-      use seq_timemgr_mod  , only : seq_timemgr_eclockgetdata
+      use seq_timemgr_mod  , only : seq_timemgr_eclockgetdata, &
+                                    seq_timemgr_RestartAlarmIsOn
       use seq_infodata_mod , only : seq_infodata_type, seq_infodata_getdata, seq_infodata_putdata, &
                                     seq_infodata_start_type_start, seq_infodata_start_type_cont,   &
                                     seq_infodata_start_type_brnch
@@ -206,14 +208,13 @@
       integer,save :: inst_index            ! number of current instance (ie. 1)
       character(len=16),save :: inst_name   ! fullname of current instance (ie. "wav_0001")
       character(len=16),save :: inst_suffix ! char string associated with instance
-      character(CL) :: runtype    ! QL, 150525, run type: initial/continue/branch
 
       include "mpif.h"
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CONTAINS
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    SUBROUTINE WAV_INIT_MCT( EClock, cdata, x2w, w2x, NLFilename )
+    SUBROUTINE WAV_INIT_MCT( EClock, cdata, x2w_w, w2x_w, NLFilename )
 
       !/ ------------------------------------------------------------------- /
       !/ Parameter list
@@ -222,7 +223,7 @@ CONTAINS
       implicit none
       TYPE(ESMF_CLOCK), INTENT(INOUT) :: ECLOCK
       TYPE(SEQ_CDATA) , INTENT(INOUT) :: CDATA
-      TYPE(MCT_AVECT) , INTENT(INOUT) :: X2W, W2X
+      TYPE(MCT_AVECT) , INTENT(INOUT) :: X2W_W, W2X_W
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: NLFILENAME ! NAMELIST FILENAME
 
       !/ ------------------------------------------------------------------- /
@@ -247,7 +248,7 @@ CONTAINS
       ! QL, 150629, calculating restart interval
       integer :: stop_ymd          ! stop date (yyyymmdd)
       integer :: stop_tod          ! stop time of day (sec)
-      integer :: time_int          ! restart time interval (sec)
+      integer :: ix, iy
 
       character(CL)            :: starttype
       type(mct_gsmap), pointer :: gsmap
@@ -258,6 +259,7 @@ CONTAINS
                              timen(2), odat(30), nh(4), iprt(6)
       integer             :: i,j,npts
       integer             :: ierr
+      integer             :: jsea,isea
       real                :: a(nhmax,4)
       real, allocatable   :: x(:), y(:)
       logical             :: flgrd(nogrd), prtfrm, flt 
@@ -415,15 +417,11 @@ CONTAINS
 
       ! TIME0 = from ESMF clock
       ! NOTE - are not setting TIMEN here
-      ! QL, 150629, TIMEN is set here to calculate the restart time
-      ! interval, hardwired to write restart file at the end of run
 
       if ( iaproc .eq. napout ) write (ndso,930)
       call shr_sys_flush(stdout)
 
       ! QL, 150525, initial run or restart run
-      ! TODO, currently restart files are written at the end of run
-      ! need to suppot REST_OPTION and REST_N
       if ( runtype .eq. "initial") then
          call seq_timemgr_EClockGetData(EClock, &
               start_ymd=start_ymd, start_tod=start_tod)
@@ -488,13 +486,17 @@ CONTAINS
       do j=1, 6
          odat(5*(j-1)+3) = 0
       end do
-      ! QL, 150629, calculating restart output interval
-      time_int = dsec21(time0, timen)
+
+      ! QL, 160823, initialize flag for restart
+      rstwr = .false.
+
+
       !DEBUG
       ! Hardwire gridded output for now
       ! first output time stamp is now read from file
       ! QL, 150525, 1-5 for history files, 16-20 for restart files
       !     150629, restart output interval is set to the total time of run 
+      !     150823, restart is taken over by rstwr
       odat(1) = time(1)     ! YYYYMMDD for first output
       odat(2) = time(2)     ! HHMMSS for first output
       odat(3) = 21600        ! output interval in sec ! changed by Adrean
@@ -502,7 +504,7 @@ CONTAINS
       odat(5) = 0            ! HHMMSS for last output
       odat(16) = time(1)    ! YYYYMMDD for first output
       odat(17) = time(2)    ! HHMMSS for first output
-      odat(18) = time_int     ! output interval in sec
+      odat(18) = 86400       ! output interval in sec
       odat(19) = 99990101     ! YYYYMMDD for last output
       odat(20) = 0            ! HHMMSS for last output
       !DEBUG
@@ -612,13 +614,39 @@ CONTAINS
 
       ! initialize mct attribute vectors
       
-      call mct_avect_init(w2x, rlist=seq_flds_w2x_fields, lsize=lsize)
-      call mct_avect_zero(w2x)
+      call mct_avect_init(w2x_w, rlist=seq_flds_w2x_fields, lsize=lsize)
+      call mct_avect_zero(w2x_w)
       
-      call mct_avect_init(x2w, rlist=seq_flds_x2w_fields, lsize=lsize)
-      call mct_avect_zero(x2w)
+      call mct_avect_init(x2w_w, rlist=seq_flds_x2w_fields, lsize=lsize)
+      call mct_avect_zero(x2w_w)
 
       ! add call to gptl timer
+
+      ! QL, 150823, send initial state to driver
+      ! same with that in wav_run_mct, maybe could be put into a 
+      !  subroutine wav_export
+      ! copy enhancement factor, uStokes, vStokes to coupler
+      do jsea=1, nseal
+         isea = iaproc + (jsea-1)*naproc
+         IX  = MAPSF(ISEA,1)
+         IY  = MAPSF(ISEA,2)
+         !if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+         if (MAPSTA(IY,IX) .eq. 1 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+             ! VR12-MA & VR12-EN
+             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
+                       SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
+             ! VR12-AL 
+             !w2x_w%rattr(index_w2x_Sw_lamult,jsea) = &
+             !          SQRT(1+(3.1*LANGMT(ISEA))**-2+(5.4*LANGMT(ISEA))**-4)
+             w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = USSX(ISEA)
+             w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = USSY(ISEA)
+          else
+             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = 1.
+             w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = 0.
+             w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = 0.
+          endif
+          !w2x_w%rattr(index_w2x_Sw_hstokes,jsea) = ??
+      enddo
 
       ! end redirection of share output to wav log
 
@@ -709,8 +737,11 @@ CONTAINS
 
       time = time0
 
-      write(stdout,*)'time0= ',time0
-      write(stdout,*)'timen= ',timen
+      !write(stdout,*)'time0= ',time0
+      !write(stdout,*)'timen= ',timen
+
+      ! QL, 150823, set flag for writing restart file
+      rstwr = seq_timemgr_RestartAlarmIsOn(EClock)
 
       !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! 7.  Model with input
@@ -794,6 +825,11 @@ CONTAINS
             ICEI(IX,IY) = x2w_w%rattr(index_x2w_si_ifrac,JSEA)
          endif
 
+         ! QL, 150827, get mixing layer depth from coupler
+         if (flags(5)) then
+            HML(IX,IY) = max(x2w_w%rattr(index_x2w_so_bldepth,JSEA), 5.)
+         endif
+
       enddo
 
 #else
@@ -865,8 +901,8 @@ CONTAINS
          isea = iaproc + (jsea-1)*naproc
          IX  = MAPSF(ISEA,1)
          IY  = MAPSF(ISEA,2)
-         if (LASLPJ(ISEA) .ne. 1.e30) then
-             ! TODO calculating enhancement factor here
+         !if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
+         if (MAPSTA(IY,IX) .eq. 1 .and. LASLPJ(ISEA) .gt. 1.e-4) then
              ! VR12-MA & VR12-EN
              w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
                        SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
@@ -1044,8 +1080,14 @@ CONTAINS
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
-         iy = mapsf(isea,2) 
-         mask = mapsta(iy,ix)
+         iy = mapsf(isea,2)
+         ! QL, 150827, should be 1 for all sea point
+         !mask = mapsta(iy,ix)
+         if (mapsta(iy,ix) .ne. 0) then
+            mask = 1.0_r8
+         else
+            mask = 0.0_r8
+         end if 
          data(jsea) = mask
          !write(stdout,*)' jsea= ',jsea,' mask is ',data(jsea)
       end do

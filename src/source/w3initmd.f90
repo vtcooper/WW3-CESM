@@ -601,17 +601,19 @@
               WRITE (NDSO,930) 'full restart.'
             END IF
         END IF
-!
+
+! QL, 150925, do not adjust map using the model definition file
+!             when doing restart       
 ! 3.b Compare MAPSTA from grid and restart
 !
-      DO IX=1, NX
-        DO IY=1, NY
-          IF ( ABS(MAPSTA(IY,IX)).EQ.2 .OR.                           &
-               ABS(MAPTST(IY,IX)).EQ.2 ) THEN
-              MAPSTA(IY,IX) = SIGN ( MAPTST(IY,IX) , MAPSTA(IY,IX) )
-            END IF
-          END DO
-        END DO
+!      DO IX=1, NX
+!        DO IY=1, NY
+!          IF ( ABS(MAPSTA(IY,IX)).EQ.2 .OR.                           &
+!               ABS(MAPTST(IY,IX)).EQ.2 ) THEN
+!              MAPSTA(IY,IX) = SIGN ( MAPTST(IY,IX) , MAPSTA(IY,IX) )
+!            END IF
+!          END DO
+!        END DO
 !
 ! 3.c Initialization from wind fields
 !

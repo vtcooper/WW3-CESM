@@ -289,6 +289,8 @@
       USE W3SNL1MD
       USE W3SBT1MD
       USE W3SDB1MD
+      ! QL, 150925, get runtype (initial or restart)
+      USE W3CESMMD, ONLY : RUNTYPE
 !/
       IMPLICIT NONE
 !/
@@ -359,6 +361,8 @@
 !
       TAUWX=0.
       TAUWY=0.
+      ! QL, 150925, FIRST = .FALSE. in restart run
+      FIRST = FIRST .and. TRIM(RUNTYPE) == 'initial'
       IF ( FIRST ) THEN
           FIRST  = .FALSE.
           LLWS(:) = .TRUE.
