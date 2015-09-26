@@ -230,8 +230,7 @@
       ! QL, 150629, casename for restart file
       USE W3CESMMD, ONLY : CASENAME
       ! QL, 150823, save in restart file
-      USE W3ADATMD, ONLY : LASLPJ, ALPHAL, USSX, USSY, DW, &
-                           MAPX2, MAPY2, MAPAXY
+      USE W3ADATMD, ONLY : LASLPJ, ALPHAL, USSX, USSY
 !
       IMPLICIT NONE
 !
@@ -575,28 +574,6 @@
                           (FPIS(ISEA),ISEA=1+(IPART-1)*NSIZE,         &
                                           MIN(NSEA,IPART*NSIZE))
                     END DO
-                  ! QL, 150823, save more variables 
-                  !DO IX=1, NX
-                  !  NREC  = NREC + 1
-                  !  WRITE (NDSR,REC=NREC)                             &
-                  !        (MAPX2(ISEA),ISEA=1+(IX-1)*NY,IX*NY)        
-                  !  END DO
-                  !DO IX=1, NX
-                  !  NREC  = NREC + 1
-                  !  WRITE (NDSR,REC=NREC)                             &
-                  !        (MAPY2(ISEA),ISEA=1+(IX-1)*NY,IX*NY)        
-                  !  END DO
-                  !DO IX=1, NX
-                  !  NREC  = NREC + 1
-                  !  WRITE (NDSR,REC=NREC)                             &
-                  !        (MAPAXY(ISEA),ISEA=1+(IX-1)*NY,IX*NY)       
-                  !  END DO
-                  !DO IPART=1,NPART
-                  !  NREC  = NREC + 1
-                  !  WRITE (NDSR,REC=NREC)                             &
-                  !        (DW(ISEA),ISEA=1+(IPART-1)*NSIZE,           &
-                  !                        MIN(NSEA,IPART*NSIZE))
-                  !  END DO
                   DO IPART=1,NPART
                     NREC  = NREC + 1
                     WRITE (NDSR,REC=NREC)                             &
@@ -672,28 +649,6 @@
                       (FPIS(ISEA),ISEA=1+(IPART-1)*NSIZE,             &
                                       MIN(NSEA,IPART*NSIZE))
                 END DO
-              ! QL, 150823, read more variables 
-              !DO IX=1, NX
-              !  NREC  = NREC + 1
-              !  READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
-              !        (MAPX2(ISEA),ISEA=1+(IX-1)*NY,IX*NY)            
-              !  END DO
-              !DO IX=1, NX
-              !  NREC  = NREC + 1
-              !  READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
-              !        (MAPY2(ISEA),ISEA=1+(IX-1)*NY,IX*NY)            
-              !  END DO
-              !DO IX=1, NX
-              !  NREC  = NREC + 1
-              !  READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
-              !        (MAPAXY(ISEA),ISEA=1+(IX-1)*NY,IX*NY)           
-              !  END DO
-              !DO IPART=1,NPART
-              !  NREC  = NREC + 1
-              !  READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
-              !        (DW(ISEA),ISEA=1+(IPART-1)*NSIZE,               &
-              !                        MIN(NSEA,IPART*NSIZE))
-              !  END DO
               DO IPART=1,NPART
                 NREC  = NREC + 1
                 READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &

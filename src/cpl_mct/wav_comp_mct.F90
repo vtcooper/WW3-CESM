@@ -166,7 +166,8 @@
 !/
       use w3iopomd
       use w3timemd
-      use w3cesmmd, only : casename, rstwr
+      ! QL, 150925, add rstwr and runtype (initial/continue/branch)
+      use w3cesmmd, only : casename, rstwr, runtype
 
       use esmf
       use mct_mod 
@@ -207,7 +208,6 @@
       integer,save :: inst_index            ! number of current instance (ie. 1)
       character(len=16),save :: inst_name   ! fullname of current instance (ie. "wav_0001")
       character(len=16),save :: inst_suffix ! char string associated with instance
-      character(CL) :: runtype    ! QL, 150525, run type: initial/continue/branch
 
       include "mpif.h"
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -737,8 +737,8 @@ CONTAINS
 
       time = time0
 
-      write(stdout,*)'time0= ',time0
-      write(stdout,*)'timen= ',timen
+      !write(stdout,*)'time0= ',time0
+      !write(stdout,*)'timen= ',timen
 
       ! QL, 150823, set flag for writing restart file
       rstwr = seq_timemgr_RestartAlarmIsOn(EClock)
