@@ -1273,13 +1273,14 @@
       USE W3WDATMD, ONLY: VA, UST, USTDIR, ASF, FPIS
       ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, ALPHAL, USSXH,
       !             USSYH, LASL, LASLPJ, ALPHALS
+      ! QL, 160530, LAMULT
       USE W3ADATMD, ONLY: MPI_COMM_WAVE, WW3_FIELD_VEC, HS, WLM, &
                           TMN, THM, THS, FP0, THP0, FP1, THP1,   &
                           DTDYN, FCUT, SPPNT, ABA, ABD, UBA, UBD,&
                           SXX, SYY, SXY, USERO, PHS, PTP, PLP,   &
                           PTH, PSI, PWS, PWST, PNR, USSX, USSY,  &
                           LANGMT, LAPROJ, ALPHAL, USSXH, USSYH,  &
-                          LASL, LASLPJ, ALPHALS
+                          LASL, LASLPJ, ALPHALS, LAMULT
       USE W3ODATMD, ONLY: NDST, IAPROC, NAPROC, NTPROC, FLOUT,   &
                           NOGRD, NAPFLD, NAPPNT, NAPRST, NAPBPT, &
                           NAPTRK
@@ -1325,7 +1326,8 @@
               NRQMAX = 0
             ELSE
               ! QL, 150525, 29->39, add 10 output
-              NRQMAX = 39 + NOEXTR + 6*NOSWLL
+              ! QL, 160530, 39->40, add LAMULT
+              NRQMAX = 40 + NOEXTR + 6*NOSWLL
               IF ( IAPROC .EQ. NAPFLD ) THEN
                   IF ( IAPROC .LE. NAPROC ) THEN
                       NRQMAX = NRQMAX * (NAPROC-1)
@@ -1582,6 +1584,12 @@
               CALL MPI_SEND_INIT (LASLPJ(IAPROC),1,WW3_FIELD_VEC,&
                        IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
             END IF
+          IF ( FLOGRD(39) ) THEN
+              IH     = IH + 1
+              IT     = IT + 1
+              CALL MPI_SEND_INIT (LAMULT(IAPROC),1,WW3_FIELD_VEC,&
+                       IROOT, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+            END IF
 !
         ELSE IF ( IAPROC .EQ. NAPFLD ) THEN
 !
@@ -1829,6 +1837,12 @@
                     CALL MPI_RECV_INIT (LASLPJ(I0),1,WW3_FIELD_VEC,&
                        IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
                   END IF
+                IF ( FLOGRD(39) ) THEN
+                    IH     = IH + 1
+                    IT     = IT + 1
+                    CALL MPI_RECV_INIT (LAMULT(I0),1,WW3_FIELD_VEC,&
+                       IFROM, IT, MPI_COMM_WAVE, IRQGO(IH), IERR )
+                  END IF
               END IF
             END DO
 !
@@ -1836,7 +1850,8 @@
 !
       NRQGO  = IH
       ! QL, 150525, 29->39, add 10 output
-      IT0    = IT0 + ( 39 + NOEXTR + 6*NOSWLL ) * NAPROC
+      ! QL, 160530, 39->40, add LAMULT
+      IT0    = IT0 + ( 40 + NOEXTR + 6*NOSWLL ) * NAPROC
 !
       IF ( NRQGO .GT. NRQMAX ) THEN
           WRITE (NDSE,1010)
@@ -1853,6 +1868,7 @@
       IROOT  = NAPRST - 1
 !
       IF ( FLOUT(4) ) THEN
+      write(6,*)'1 IMOD, NAPROC, NBLKRS, NSPEC, RSBLKS=',IMOD, NAPROC, NBLKRS, NSPEC, RSBLKS
           ALLOCATE ( OUTPTS(IMOD)%OUT4%IRQRS(2*NSPEC) )
           IRQRS  => OUTPTS(IMOD)%OUT4%IRQRS
 !
@@ -1916,6 +1932,7 @@
               IH     = 0
 !
               IF ( IAPROC .NE. NAPRST ) THEN
+              write(6,*)'2 IMOD, NAPROC, NBLKRS, NSPEC, RSBLKS=',IMOD, NAPROC, NBLKRS, NSPEC, RSBLKS
 !
                   ALLOCATE ( OUTPTS(IMOD)%OUT4%IRQRSS(NBLKRS) )
                   IRQRSS => OUTPTS(IMOD)%OUT4%IRQRSS
@@ -1932,6 +1949,7 @@
                     END DO
 !
                 ELSE
+                  write(6,*)'3 IMOD, NAPROC, NBLKRS, NSPEC, RSBLKS=',IMOD, NAPROC, NBLKRS, NSPEC, RSBLKS
 !
                   ALLOCATE                                       &
                  ( OUTPTS(IMOD)%OUT4%IRQRSS(NAPROC*NBLKRS) ,     &

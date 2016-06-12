@@ -316,7 +316,7 @@
       USE W3TIMEMD
 
       ! QL, 150823, flag for restart
-      use w3cesmmd, only : rstwr
+      use w3cesmmd, only : rstwr, histwr
       use shr_sys_mod, only : shr_sys_flush
 !
       IMPLICIT NONE
@@ -918,7 +918,8 @@
                   DTTST   = DSEC21 ( TIME, TOUT )
 !
                   IF ( DTTST .EQ. 0. ) THEN
-                      IF ( J .EQ. 1 ) THEN
+                      ! QL, 160601, add history file flag
+                      IF ( J .EQ. 1 .AND. HISTWR) THEN
 !MV BUG                  IF ( IAPROC .EQ. NAPFLD ) THEN
                          IF ( FLGMPI(1) ) CALL MPI_WAITALL  &
                               ( NRQGO, IRQGO, STATIO, IERR_MPI )

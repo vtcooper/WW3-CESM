@@ -230,7 +230,8 @@
       ! QL, 150629, casename for restart file
       USE W3CESMMD, ONLY : CASENAME
       ! QL, 150823, save in restart file
-      USE W3ADATMD, ONLY : LASLPJ, ALPHAL, USSX, USSY
+      ! QL, 160530, save LAMULT instead of LASLPJ and ALPHAL
+      USE W3ADATMD, ONLY : LAMULT, USSX, USSY
 !
       IMPLICIT NONE
 !
@@ -577,13 +578,7 @@
                   DO IPART=1,NPART
                     NREC  = NREC + 1
                     WRITE (NDSR,REC=NREC)                             &
-                          (LASLPJ(ISEA),ISEA=1+(IPART-1)*NSIZE,       &
-                                          MIN(NSEA,IPART*NSIZE))
-                    END DO
-                  DO IPART=1,NPART
-                    NREC  = NREC + 1
-                    WRITE (NDSR,REC=NREC)                             &
-                          (ALPHAL(ISEA),ISEA=1+(IPART-1)*NSIZE,       &
+                          (LAMULT(ISEA),ISEA=1+(IPART-1)*NSIZE,       &
                                           MIN(NSEA,IPART*NSIZE))
                     END DO
                   DO IPART=1,NPART
@@ -652,13 +647,7 @@
               DO IPART=1,NPART
                 NREC  = NREC + 1
                 READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
-                      (LASLPJ(ISEA),ISEA=1+(IPART-1)*NSIZE,           &
-                                      MIN(NSEA,IPART*NSIZE))
-                END DO
-              DO IPART=1,NPART
-                NREC  = NREC + 1
-                READ (NDSR,REC=NREC,ERR=802,IOSTAT=IERR)              &
-                      (ALPHAL(ISEA),ISEA=1+(IPART-1)*NSIZE,           &
+                      (LAMULT(ISEA),ISEA=1+(IPART-1)*NSIZE,           &
                                       MIN(NSEA,IPART*NSIZE))
                 END DO
               DO IPART=1,NPART

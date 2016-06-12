@@ -1,6 +1,44 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: qing
+Date: 11 Jun 2016
+Model: ww3
+Version: ww3_160611
+One-line summary: bug fixes for exact restart and uninitialized coupler fields.
+
+	Now the calculation of lamult is moved into WW3. A cap of 5 is
+	applied to lamult (occasionally at some grid point lamult gets
+	very big and causes POP to crash)
+
+	The the 6-hour delay in duplicability is due to the 6-hourly
+	output frequency hard-coded in wav_comp_mct.F90. The variables
+	lamult, as well as ustokes and vstokes, were diagnosed from the
+	wave spectrum before writing out the output file, so they were
+	updated every 6 hours instead of every atmosphere coupling time
+	step, though WW3 was running at a time step whose maximum equals
+	to the atmospheric coupling time step. Now the WW3 output
+	frequency is set to equal to the WW3 coupling frequency, so that
+	lamult can get updated whenever WW3 is talking to the coupler. And
+	another flag listening to seq_timemgr_historyAlarmIsOn(EClock) is
+	added to determine when to write out the output file, so WW3
+	wont generate a large number of output files. (We should
+	probably discuss more on what variables to save for WW3, snapshots
+	vs. time average... )
+
+	After these modifications, the ERS test is running fine
+
+M       cime_config/buildnml
+M       src/source/w3odatmd.f90
+M       src/source/w3cesmmd.f90
+M       src/source/w3iogomd.f90
+M       src/source/w3initmd.f90
+M       src/source/w3wavemd.f90
+M       src/source/w3adatmd.f90
+M       src/source/w3iorsmd.f90
+M       src/cpl_mct/wav_comp_mct.F90
+
+================================================================================
 Originator: jedwards
 Date: 16 Oct 2015
 Model: ww3

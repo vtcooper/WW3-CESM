@@ -167,7 +167,7 @@
       use w3iopomd
       use w3timemd
       ! QL, 150925, add rstwr and runtype (initial/continue/branch)
-      use w3cesmmd, only : casename, rstwr, runtype
+      use w3cesmmd, only : casename, rstwr, runtype, histwr
 
       use esmf
       use mct_mod 
@@ -184,7 +184,8 @@
                                     cs=>shr_kind_cs, cl=>shr_kind_cl
       use seq_cdata_mod    , only : seq_cdata, seq_cdata_setptrs
       use seq_timemgr_mod  , only : seq_timemgr_eclockgetdata, &
-                                    seq_timemgr_RestartAlarmIsOn
+                                    seq_timemgr_RestartAlarmIsOn, &
+                                    seq_timemgr_historyAlarmIsOn
       use seq_infodata_mod , only : seq_infodata_type, seq_infodata_getdata, seq_infodata_putdata, &
                                     seq_infodata_start_type_start, seq_infodata_start_type_cont,   &
                                     seq_infodata_start_type_brnch
@@ -489,17 +490,23 @@ CONTAINS
 
       ! QL, 160823, initialize flag for restart
       rstwr = .false.
+      ! QL, 160601, initialize flag for history file
+      histwr = .false.
 
-
+      ! QL, 160601, get coupling interval
+      call seq_timemgr_eclockgetdata(eclock, dtime=dtime_sync )      
       !DEBUG
       ! Hardwire gridded output for now
       ! first output time stamp is now read from file
       ! QL, 150525, 1-5 for history files, 16-20 for restart files
       !     150629, restart output interval is set to the total time of run 
       !     150823, restart is taken over by rstwr
+      !     160601, output interval is set to coupling interval, so that 
+      !             variables calculated in W3IOGO could be updated at 
+      !             every coupling interval
       odat(1) = time(1)     ! YYYYMMDD for first output
       odat(2) = time(2)     ! HHMMSS for first output
-      odat(3) = 21600        ! output interval in sec ! changed by Adrean
+      odat(3) = dtime_sync  ! output interval in sec ! changed by Adrean
       odat(4) = 99990101     ! YYYYMMDD for last output
       odat(5) = 0            ! HHMMSS for last output
       odat(16) = time(1)    ! YYYYMMDD for first output
@@ -550,6 +557,7 @@ CONTAINS
       flgrd(36) = .true.  !  36. Depth averaged Stokes drift (0-H_0.2ML)
       flgrd(37) = .true.  !  37. Langmuir number (La_SL)
       flgrd(38) = .true.  !  38. Langmuir number (La_SL,Proj)
+      flgrd(39) = .true.  !  39. Enhancement factor with La_SL,Proj
 
       if ( iaproc .eq. napout ) then
          flt = .true.
@@ -583,7 +591,6 @@ CONTAINS
 
       ! overwrite dt values with variables from coupler
       ! is this a problem with any things being set in w3init?
-      call seq_timemgr_eclockgetdata(eclock, dtime=dtime_sync )      
       dtmax  = real(dtime_sync)
       dtcfl  = real(dtime_sync) / 2. !checked by adrean
       dtcfli = real(dtime_sync)      !checked by adrean
@@ -623,28 +630,11 @@ CONTAINS
       ! add call to gptl timer
 
       ! QL, 150823, send initial state to driver
-      ! same with that in wav_run_mct, maybe could be put into a 
-      !  subroutine wav_export
-      ! copy enhancement factor, uStokes, vStokes to coupler
+      ! QL, 160611, initial values for lamult, ustokes and vstokes  
       do jsea=1, nseal
-         isea = iaproc + (jsea-1)*naproc
-         IX  = MAPSF(ISEA,1)
-         IY  = MAPSF(ISEA,2)
-         !if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
-         if (MAPSTA(IY,IX) .eq. 1 .and. LASLPJ(ISEA) .gt. 1.e-4) then
-             ! VR12-MA & VR12-EN
-             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
-                       SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
-             ! VR12-AL 
-             !w2x_w%rattr(index_w2x_Sw_lamult,jsea) = &
-             !          SQRT(1+(3.1*LANGMT(ISEA))**-2+(5.4*LANGMT(ISEA))**-4)
-             w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = USSX(ISEA)
-             w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = USSY(ISEA)
-          else
-             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = 1.
-             w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = 0.
-             w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = 0.
-          endif
+          w2x_w%rattr(index_w2x_Sw_lamult,jsea) = 1.
+          w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = 0.
+          w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = 0.
           !w2x_w%rattr(index_w2x_Sw_hstokes,jsea) = ??
       enddo
 
@@ -742,6 +732,9 @@ CONTAINS
 
       ! QL, 150823, set flag for writing restart file
       rstwr = seq_timemgr_RestartAlarmIsOn(EClock)
+
+      ! QL, 160601, set flag for writing history file
+      histwr = seq_timemgr_historyAlarmIsOn(EClock)
 
       !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! 7.  Model with input
@@ -901,14 +894,9 @@ CONTAINS
          isea = iaproc + (jsea-1)*naproc
          IX  = MAPSF(ISEA,1)
          IY  = MAPSF(ISEA,2)
-         !if (LASLPJ(ISEA) .ne. 1.e30 .and. LASLPJ(ISEA) .gt. 1.e-4) then
-         if (MAPSTA(IY,IX) .eq. 1 .and. LASLPJ(ISEA) .gt. 1.e-4) then
-             ! VR12-MA & VR12-EN
-             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = ABS(COS(ALPHAL(ISEA))) * &
-                       SQRT(1+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4)
-             ! VR12-AL 
-             !w2x_w%rattr(index_w2x_Sw_lamult,jsea) = &
-             !          SQRT(1+(3.1*LANGMT(ISEA))**-2+(5.4*LANGMT(ISEA))**-4)
+         if (MAPSTA(IY,IX) .eq. 1) then
+             ! QL, 160530, LAMULT now calculated in WW3 (w3iogomd.f90)
+             w2x_w%rattr(index_w2x_Sw_lamult,jsea) = LAMULT(ISEA)
              w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = USSX(ISEA)
              w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = USSY(ISEA)
           else

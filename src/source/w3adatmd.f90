@@ -259,6 +259,7 @@
 !
         ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
         !             ALPHAL, ALPHALS
+        ! QL, 160530, LAMULT
         REAL, POINTER         :: DW(:), UA(:), UD(:), U10(:), U10D(:),&
                                  AS(:), CX(:), CY(:), EMN(:), FMN(:), &
                                  WNM(:), AMX(:), CDS(:), Z0S(:),      &
@@ -270,7 +271,7 @@
                                  USSX(:), USSY(:), LANGMT(:),         &
                                  LAPROJ(:), ALPHAL(:), USSXH(:),      &
                                  USSYH(:), LASL(:), LASLPJ(:),        &
-                                 ALPHALS(:)
+                                 ALPHALS(:), LAMULT(:)
         REAL, POINTER         :: PHS(:,:), PTP(:,:), PLP(:,:),        &
                                  PTH(:,:), PSI(:,:), PWS(:,:),        &
                                  PWST(:), PNR(:)
@@ -329,6 +330,7 @@
 !
       ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
       !             ALPHAL, ALPHALS
+      ! QL, 160530, LAMULT
       REAL, POINTER           :: DW(:), UA(:), UD(:), U10(:), U10D(:),&
                                  AS(:), CX(:), CY(:), EMN(:), FMN(:), &
                                  WNM(:), AMX(:), CDS(:), Z0S(:),      &
@@ -340,7 +342,7 @@
                                  USSX(:), USSY(:), LANGMT(:),         &
                                  LAPROJ(:), ALPHAL(:), USSXH(:),      &
                                  USSYH(:), LASL(:), LASLPJ(:),        &
-                                 ALPHALS(:)
+                                 ALPHALS(:), LAMULT(:)
       REAL, POINTER           :: PHS(:,:), PTP(:,:), PLP(:,:),        &
                                  PTH(:,:), PSI(:,:), PWS(:,:),        &
                                  PWST(:), PNR(:)
@@ -624,6 +626,7 @@
 !
       ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
       !             ALPHAL, ALPHALS
+      ! QL, 160530, LAMULT
       ALLOCATE ( WADATS(IMOD)%DW(0:NSEA) , WADATS(IMOD)%UA(0:NSEA)  , &
                  WADATS(IMOD)%UD(0:NSEA) , WADATS(IMOD)%U10(NSEA)   , &
                  WADATS(IMOD)%U10D(NSEA) , WADATS(IMOD)%AS(0:NSEA)  , &
@@ -648,7 +651,8 @@
                  WADATS(IMOD)%LASL(NXXX)                            , &
                  WADATS(IMOD)%LASLPJ(NXXX)                          , &
                  WADATS(IMOD)%ALPHAL(NXXX)                          , &
-                 WADATS(IMOD)%ALPHALS(NXXX) )
+                 WADATS(IMOD)%ALPHALS(NXXX)                         , &
+                 WADATS(IMOD)%LAMULT(NXXX) )
 !
       WADATS(IMOD)%USERO = UNDEF
 !
@@ -1102,6 +1106,7 @@
           USERO  => WADATS(IMOD)%USERO
           ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
           !             ALPHAL, ALPHALS
+          ! QL, 160530, LAMULT
           USSX   => WADATS(IMOD)%USSX
           USSY   => WADATS(IMOD)%USSY
           LANGMT => WADATS(IMOD)%LANGMT
@@ -1112,6 +1117,7 @@
           ALPHALS=> WADATS(IMOD)%ALPHALS
           USSXH  => WADATS(IMOD)%USSXH
           USSYH  => WADATS(IMOD)%USSYH
+          LAMULT => WADATS(IMOD)%LAMULT
 !
           IF ( FL_ALL ) THEN
 !

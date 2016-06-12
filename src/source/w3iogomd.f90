@@ -209,13 +209,14 @@
       !                     averaged)
       !             ALPHALS: angle between wind and Langmuir cells 
       !                     (surface)
-      !             UD:
+      !             UD: wind direction
+      ! QL, 160530, LAMULT: enhancement factor
       USE W3ADATMD, ONLY: CG, WN, DW, HS, WLM, TMN, THM, THS, FP0,    &
                           THP0, FP1, THP1, ABA, ABD, UBA, UBD,        &
                           SXX, SYY, SXY, PHS, PTP, PLP, PTH, PSI, PWS,&
                           PWST, PNR, USERO, USSX, USSY, LANGMT,       &
                           LAPROJ, ALPHAL, UD, USSXH, USSYH, LASL,     &
-                          LASLPJ, ALPHALS
+                          LASLPJ, ALPHALS, LAMULT
       USE W3ODATMD, ONLY: NDST, UNDEF, IAPROC, NAPROC, ICPRT, DTPRT,  &
                           WSCUT, NOSWLL
       ! QL, 150525, HML: mixing layer depth (from coupler)
@@ -302,10 +303,12 @@
       LASLPJ = UNDEF
       ALPHAL = UNDEF
       ALPHALS = UNDEF
-      USSX   = UNDEF
-      USSY   = UNDEF
-      USSXH  = UNDEF
-      USSYH  = UNDEF
+      USSX   = 0.
+      USSY   = 0.
+      USSXH  = 0.
+      USSYH  = 0.
+      ! QL, 160530
+      LAMULT  = 1.
 !
 ! 2.  Integral over discrete part of spectrum ------------------------ *
 !
@@ -495,7 +498,7 @@
               ! ALPHALS: angle between wind and LC direction, Surface
               ! Stokes drift
               ALPHALS(ISEA) = ATAN( SIN(SWW) / ( LANGMT(ISEA)**2  &
-                /0.4*LOG( ABS(HML(IX,IY)/4./HS(ISEA)) )+COS(SWW) ) )
+                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
               LAPROJ(ISEA) = LANGMT(ISEA) &
                 * SQRT(ABS(COS(ALPHALS(ISEA))) &
                 / ABS(COS(SWW-ALPHALS(ISEA)))) 
@@ -503,12 +506,15 @@
               SWW = ATAN2(USSYH(ISEA),USSXH(ISEA)) - UD(ISEA)
               ! ALPHAL: angle between wind and LC direction
               ALPHAL(ISEA) = ATAN(SIN(SWW) / (LANGMT(ISEA)**2  &
-                /0.4*LOG(ABS(HML(IX,IY)/4./HS(ISEA))) + COS(SWW)))
+                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
               LASL(ISEA) = SQRT(UST(ISEA)*ASF(ISEA)         &
                    * SQRT(DAIR/DWAT)                       &
                    / SQRT(USSXH(ISEA)**2+USSYH(ISEA)**2))
               LASLPJ(ISEA) = LASL(ISEA) * SQRT(ABS(COS(ALPHAL(ISEA))) &
                            / ABS(COS(SWW-ALPHAL(ISEA))))
+              ! QL, 160530, LAMULT
+              LAMULT(ISEA) = MIN(5.0, ABS(COS(ALPHAL(ISEA))) * &
+                 SQRT(1.0+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4))
               ! user defined output
               USERO(ISEA,1) = HML(IX,IY)
               !USERO(ISEA,2) = COS(ALPHAL(ISEA))
@@ -776,6 +782,8 @@
 !         36  Depth integrated Stokes drift (0-H_0.2ML).
 !         37  Langmuir number (La_SL).
 !         38  Langmuir number (La_SL,Proj).
+! QL, 160530
+!         39  Enhancement factor with La_SL,Proj.
 !
 !     15-20 consist of a set of fields, index 0 = wind sea, index
 !     1:NOSWLL are first NOSWLL swell fields.
@@ -851,12 +859,13 @@
       USE W3WDATMD, ONLY: TIME, DINIT, WLV, ICE, UST, USTDIR, ASF
       ! QL, 150525, USSX, USSY, USSXH, USSYH, LANGMT, LAPROJ, LASL
       !             LASLPJ, ALPHAL, ALPHALS
+      ! QL, 160530, LAMULT
       USE W3ADATMD, ONLY: AINIT, DW, UA, UD, AS, CX, CY, HS, WLM,     &
                           TMN, THM, THS, FP0, THP0, FP1, THP1, DTDYN, &
                           FCUT, ABA, ABD, UBA, UBD, SXX, SYY, SXY,    &
                           PHS, PTP, PLP, PTH, PSI, PWS, PWST, PNR,    &
                           USERO, USSX, USSY, LANGMT, LAPROJ, ALPHAL,  &
-                          USSXH, USSYH, LASL, LASLPJ,ALPHALS
+                          USSXH, USSYH, LASL, LASLPJ, ALPHALS, LAMULT
       USE W3ODATMD, ONLY: NOGRD, IDOUT, UNDEF, NDST, NDSE, FLOGRD,    &
                           IPASS => IPASS1, WRITE => WRITE1, FNMPRE,   &
                           NOSWLL, NOEXTR
@@ -1292,6 +1301,10 @@
                     AUX1(1:NSEA) = LASLPJ(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'LASLPJ'
+                  ELSE IF ( IO .EQ. 39 ) THEN
+                    AUX1(1:NSEA) = LAMULT(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'LAMULT'
                   ELSE
                     WRITE (NDSE,999)
                     CALL EXTCDE ( 30 )
@@ -1487,6 +1500,10 @@
                   ELSE IF ( IO .EQ. 38 ) THEN
                     READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
                                                         LASLPJ(1:NSEA)
+                  ! QL, 160530, LAMULT
+                  ELSE IF ( IO .EQ. 39 ) THEN
+                    READ (NDSOG,END=801,ERR=802,IOSTAT=IERR)         &
+                                                        LAMULT(1:NSEA)
                   ELSE
                     WRITE (NDSE,999)
                     CALL EXTCDE ( 30 )

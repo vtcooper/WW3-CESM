@@ -268,7 +268,8 @@
 !/
       INTEGER                 :: NOUTP = -1, IOUTP = -1, IOSTYP = 1
       ! QL, 150525, 31->38, number of output
-      INTEGER, PARAMETER      :: NOGRD = 38     
+      ! QL, 160530, 38->39, add LAMULT
+      INTEGER, PARAMETER      :: NOGRD = 39     
       INTEGER, PARAMETER      :: NOSWLL=  2
       INTEGER, PARAMETER      :: NOEXTR=  2
       CHARACTER(LEN=20)       :: IDOUT(NOGRD)
@@ -296,7 +297,8 @@
                     'User defined #2     ' , 'Stokes drift at z=0 ' , &
                     'Langmuir number     ' , 'Langmuir No. Proj   ' , &
                     'LC-wind angle       ' , 'Dp.Int. Stokes drift' , &
-                    'Langmuir No. SL     ' , 'Langmuir No. SL,Proj' /
+                    'Langmuir No. SL     ' , 'Langmuir No. SL,Proj' , &
+                    'Enhancement factor  '/
 !/
 !/ Data structures
 !/

@@ -6,7 +6,8 @@
       private
       character(len=256),public :: casename
       ! QL, 150823, flag for restart
-      logical,public :: rstwr ! true => write restart at end of day
+      logical,public :: rstwr, & ! true => write restart at end of day
+                        histwr  ! true => write history file (snapshot)
       ! QL, 150925, runtype now used by W3SRCE
       character(len=16),public :: runtype
 !/
