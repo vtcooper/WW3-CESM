@@ -514,7 +514,7 @@
                            / ABS(COS(SWW-ALPHAL(ISEA))))
               ! QL, 160530, LAMULT
               LAMULT(ISEA) = MIN(5.0, ABS(COS(ALPHAL(ISEA))) * &
-                 SQRT(1.0+(1.5*LASLPJ(ISEA))**-2+(5.4*LASLPJ(ISEA))**-4))
+                 SQRT(1.0+(1.5*LASLPJ(ISEA))**(-2)+(5.4*LASLPJ(ISEA))**(-4)))
               ! user defined output
               USERO(ISEA,1) = HML(IX,IY)
               !USERO(ISEA,2) = COS(ALPHAL(ISEA))
