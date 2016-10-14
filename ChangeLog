@@ -1,6 +1,15 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: mlevy,jet
+Date: 14 Oct 2016
+Model: ww3
+Version: ww3_161014
+One-line summary: Replace nonstandard Fortran syntax for NAG compiler
+
+M       src/source/w3servmd.f90
+
+================================================================================
 Originator: jedwards
 Date: 24 Aug 2016
 Model: ww3

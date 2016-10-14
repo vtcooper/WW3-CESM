@@ -701,7 +701,8 @@
           CALL MPI_FINALIZE (IERR_MPI )
         END IF
 !
-      CALL EXIT ( IEXIT )
+!      CALL EXIT ( IEXIT )
+        STOP
 !/
 !/ End of EXTCDE ----------------------------------------------------- /
 !/
