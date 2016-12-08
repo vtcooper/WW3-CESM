@@ -216,6 +216,10 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
+      ! CESM specific use statements        
+      use shr_sys_mod, only : shr_sys_abort
+      use w3cesmmd   , only : casename, initfile, runtype, stdout
+
       USE W3GDATMD, ONLY: W3SETG
       USE W3ODATMD, ONLY: W3SETO
 !/
@@ -227,8 +231,7 @@
       USE W3ODATMD, ONLY: NRQRS, NBLKRS, RSBLKS, IRQRS, IRQRSS, VAAUX
 !/
       USE W3SERVMD, ONLY: EXTCDE
-      ! QL, 150629, casename for restart file
-      USE W3CESMMD, ONLY : CASENAME
+
       ! QL, 150823, save in restart file
       ! QL, 160530, save LAMULT instead of LASLPJ and ALPHAL
       USE W3ADATMD, ONLY : LAMULT, USSX, USSY
@@ -266,6 +269,8 @@
       CHARACTER(LEN=128)      :: FNAME
       CHARACTER(LEN=26)       :: IDTST
       CHARACTER(LEN=30)       :: TNAME
+      character(len=128)      :: error_msg
+      logical                 :: exists    ! if file exists or not
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -317,8 +322,8 @@
 !
 ! open file ---------------------------------------------------------- *
 !
-      I      = LEN_TRIM(FILEXT)
-      J      = LEN_TRIM(FNMPRE)
+!      I = LEN_TRIM(FILEXT)
+      J = LEN_TRIM(FNMPRE)
 !
 !      IF ( IFILE.EQ.0 ) THEN
 !          FNAME  = 'restart.'//FILEXT(:I)
@@ -328,7 +333,8 @@
 !               WRITE (FNAME(8:8),'(I1)') IFILE
 !        END IF
 
-! QL, 150629, restart file name
+      IFILE  = IFILE + 1
+!
       YY =  TIME(1)/10000
       MM = (TIME(1)-YY*10000)/100
       DD = (TIME(1)-YY*10000-MM*100)
@@ -336,21 +342,43 @@
       MN = (TIME(2)-HH*10000)/100
       SS = (TIME(2)-HH*10000-MN*100) 
       TOTSEC = HH*3600+MN*60+SS
-      WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
-           trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
 
-      IFILE  = IFILE + 1
-!
+      ! Open and read/write file
       IF ( WRITE ) THEN
-          IF ( .NOT.IOSFLG .OR. IAPROC.EQ.NAPRST )                    &
-          OPEN (NDSR,FILE=FNMPRE(:J)//FNAME,FORM='UNFORMATTED',       &
-                ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR)
-        ELSE
-          OPEN (NDSR,FILE=FNMPRE(:J)//FNAME,FORM='UNFORMATTED',       &
-                ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR,       &
-                STATUS='OLD')
-        END IF
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
+              trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
+
+         IF ( .NOT.IOSFLG .OR. IAPROC.EQ.NAPRST )             &
+              OPEN (NDSR,FILE=FNAME,FORM='UNFORMATTED',       &
+              ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR)
+         IF ( IAPROC .EQ. NAPERR ) then
+            WRITE (NDSE,*) ' wrote restart file ',trim(FNAME)
+         end IF
+
+      ELSE ! READ
+
+         if (runtype == 'continue') then
+            WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
+                 trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
+         else
+            FNAME = INITFILE
+         end if
+         ! initial file MUST exist, if not exit
+         inquire( file=FNAME, exist=exists)
+         if ( exists ) then
+            IF ( IAPROC .EQ. NAPERR ) then
+               WRITE (NDSE,*) ' reading initial file ',trim(FNAME)
+            end IF
+            OPEN (NDSR, FILE=FNAME, FORM='UNFORMATTED',          &
+                 ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR, &
+                 STATUS='OLD')
+         ELSE
+            error_msg = "required initial file " // trim(FNAME) // "does not exist"
+            call shr_sys_abort(error_msg)
+         END IF
+      END IF
 !
+
 ! test info ---------------------------------------------------------- *
 !
       IF ( WRITE ) THEN
@@ -409,13 +437,16 @@
               IF ( IAPROC .EQ. NAPRST ) WRITE (NDSR,REC=2) TIME
             ELSE
               READ (NDSR,REC=2,ERR=802,IOSTAT=IERR) TTIME
-              IF (TIME(1).NE.TTIME(1) .OR. TIME(2).NE.TTIME(2)) THEN
-                  IF ( IAPROC .EQ. NAPERR )                           &
-                      WRITE (NDSE,906) TTIME, TIME
-                  CALL EXTCDE ( 20 )
-                END IF
-            END IF
-!
+              ! Abort if the error check fails for a branch or continue run
+              if (runtype == 'branch' .or. runtype == 'continue') then
+                 IF (TIME(1).NE.TTIME(1) .OR. TIME(2).NE.TTIME(2)) THEN
+                    IF ( IAPROC .EQ. NAPERR ) then                          
+                       WRITE (NDSE,906) TTIME, TIME
+                       CALL EXTCDE ( 20 )
+                    END IF
+                 END IF
+              end if
+           END IF
         END IF
 !
 ! Spectra ------------------------------------------------------------ *

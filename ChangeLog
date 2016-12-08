@@ -1,6 +1,28 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: mvertens,jet
+Date: 08 Dec 2016
+Model: ww3
+Version: ww3_161208
+One-line summary: Fix ERI bug due to ww3.  Add new ww3 namelist
+
+	Ran aux-pop tests:
+	   ERI passes but different from baseline (expected)
+	   namelist comparison to baseline fails due to new ww3 namelist (expected)
+	   still failing STS memory limit tests.
+	   Everything else BFB to alpha05a.
+
+A       cime_config/namelist_definition_ww3.xml
+M       cime_config/buildlib
+M       cime_config/buildnml
+M       src/source/w3cesmmd.f90
+M       src/source/w3iorsmd.f90
+M       src/cpl_mct/wav_comp_mct.F90
+M       ChangeLog
+
+================================================================================
+
 Originator: mlevy,jet
 Date: 14 Oct 2016
 Model: ww3

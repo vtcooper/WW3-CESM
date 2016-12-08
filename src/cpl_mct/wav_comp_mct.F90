@@ -166,20 +166,19 @@
 !/
       use w3iopomd
       use w3timemd
-      ! QL, 150925, add rstwr and runtype (initial/continue/branch)
-      use w3cesmmd, only : casename, rstwr, runtype, histwr
+      use w3cesmmd, only : casename, initfile, rstwr, runtype, histwr
 
       use esmf
       use mct_mod 
       use seq_flds_mod
-      use ww3_cpl_indices  , only :  ww3_cpl_indices_set
-      use ww3_cpl_indices  , only :  &
-         index_x2w_Sa_u, index_x2w_Sa_v, index_x2w_Sa_tbot, &
-         index_x2w_Si_ifrac, &
-         index_x2w_So_t, index_x2w_So_u, index_x2w_So_v, index_x2w_So_bldepth, &
-         index_w2x_Sw_lamult, index_w2x_Sw_ustokes, index_w2x_Sw_vstokes, index_w2x_Sw_hstokes
 
-      use shr_sys_mod      , only : shr_sys_flush 
+      use ww3_cpl_indices  , only : ww3_cpl_indices_set
+      use ww3_cpl_indices  , only : index_x2w_Sa_u, index_x2w_Sa_v, index_x2w_Sa_tbot, index_x2w_Si_ifrac
+      use ww3_cpl_indices  , only : index_x2w_So_t, index_x2w_So_u, index_x2w_So_v, index_x2w_So_bldepth
+      use ww3_cpl_indices  , only : index_w2x_Sw_lamult, index_w2x_Sw_ustokes
+      use ww3_cpl_indices  , only : index_w2x_Sw_vstokes, index_w2x_Sw_hstokes
+
+      use shr_sys_mod      , only : shr_sys_flush, shr_sys_abort 
       use shr_kind_mod     , only : in=>shr_kind_in, r8=>shr_kind_r8, &
                                     cs=>shr_kind_cs, cl=>shr_kind_cl
       use seq_cdata_mod    , only : seq_cdata, seq_cdata_setptrs
@@ -192,7 +191,10 @@
       use seq_comm_mct     , only : seq_comm_inst, seq_comm_name, seq_comm_suffix
       use shr_file_mod     , only : shr_file_setlogunit, shr_file_setloglevel, &
                                     shr_file_getlogunit, shr_file_getloglevel, &
-                                    shr_file_getunit, shr_file_setio
+                                    shr_file_getunit, shr_file_freeunit, shr_file_setio
+      use shr_nl_mod       , only : shr_nl_find_group_name
+      use shr_mpi_mod      , only : shr_mpi_bcast
+      
 !
       implicit none
 !
@@ -222,10 +224,10 @@ CONTAINS
       !/
 
       implicit none
-      TYPE(ESMF_CLOCK), INTENT(INOUT) :: ECLOCK
-      TYPE(SEQ_CDATA) , INTENT(INOUT) :: CDATA
-      TYPE(MCT_AVECT) , INTENT(INOUT) :: X2W_W, W2X_W
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: NLFILENAME ! NAMELIST FILENAME
+      type(esmf_clock), intent(inout) :: eclock
+      type(seq_cdata) , intent(inout) :: cdata
+      type(mct_avect) , intent(inout) :: x2w_w, w2x_w
+      character(len=*), intent(in), optional :: nlfilename ! namelist filename
 
       !/ ------------------------------------------------------------------- /
       !/ Local PARAMETER statements
@@ -256,8 +258,9 @@ CONTAINS
       type(mct_ggrid), pointer :: dom
       type(seq_infodata_type), pointer :: infodata   ! input init object
 
-      integer             :: ndso, ndse, nds(13), ntrace(2), time0(2), &
-                             timen(2), odat(30), nh(4), iprt(6)
+      integer             :: unitn            ! namelist unit number
+      integer             :: ndso, ndse, nds(13), ntrace(2), time0(2)
+      integer             :: timen(2), odat(30), nh(4), iprt(6)
       integer             :: i,j,npts
       integer             :: ierr
       integer             :: jsea,isea
@@ -288,6 +291,8 @@ CONTAINS
                     'Partitioned wave field data   ' /
       DATA IDSTR  / 'LEV', 'CUR', 'WND', 'ICE', 'DT0', 'DT1', 'DT2',  &
                     'MOV' /
+
+      namelist /ww3_inparm/ initfile
 
       !--------------------------------------------------------------------
       ! Set up data structures
@@ -329,15 +334,10 @@ CONTAINS
 
       if (     trim(starttype) == trim(seq_infodata_start_type_start)) then
          runtype = "initial"
-         write(stdout,*) 'starttype: initial'
       else if (trim(starttype) == trim(seq_infodata_start_type_cont) ) then
          runtype = "continue"
-         write(stdout,*) 'starttype: continue'
       else if (trim(starttype) == trim(seq_infodata_start_type_brnch)) then
          runtype = "branch"
-         write(stdout,*) 'starttype: branch'
-      else
-         write(stdout,*) 'wav_comp_mct ERROR: unknown starttype'
       end if
 
       !--------------------------------------------------------------------
@@ -396,10 +396,18 @@ CONTAINS
       ! Redirect share output to wav log
       call shr_file_getLogUnit (shrlogunit)
       call shr_file_getLogLevel(shrloglev)
-      call shr_file_setLogUnit (stdout)
+      call shr_file_setLogUnit (ndso)
 
       if ( iaproc .eq. napout ) write (ndso,900)
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
+
+      if (     trim(starttype) == trim(seq_infodata_start_type_start)) then
+         write(ndso,*) 'starttype: initial'
+      else if (trim(starttype) == trim(seq_infodata_start_type_cont) ) then
+         write(ndso,*) 'starttype: continue'
+      else if (trim(starttype) == trim(seq_infodata_start_type_brnch)) then
+         write(ndso,*) 'starttype: branch'
+      end if
 
       !--------------------------------------------------------------------
       ! Define input fields
@@ -420,7 +428,7 @@ CONTAINS
       ! NOTE - are not setting TIMEN here
 
       if ( iaproc .eq. napout ) write (ndso,930)
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
 
       ! QL, 150525, initial run or restart run
       if ( runtype .eq. "initial") then
@@ -450,7 +458,7 @@ CONTAINS
 
       call stme21 ( time0 , dtme21 )
       if ( iaproc .eq. napout ) write (ndso,931) dtme21
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
       time = time0
 
       !--------------------------------------------------------------------
@@ -459,7 +467,7 @@ CONTAINS
 
       iostyp = 1        ! gridded field
       write (ndso,940) 'no dedicated output process, any file system '
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
 
       ! TODO - need to enable restart files in run
       ! Actually will need a new restart flag - since all of the ODAT
@@ -507,13 +515,13 @@ CONTAINS
       odat(1) = time(1)     ! YYYYMMDD for first output
       odat(2) = time(2)     ! HHMMSS for first output
       odat(3) = dtime_sync  ! output interval in sec ! changed by Adrean
-      odat(4) = 99990101     ! YYYYMMDD for last output
-      odat(5) = 0            ! HHMMSS for last output
+      odat(4) = 99990101    ! YYYYMMDD for last output
+      odat(5) = 0           ! HHMMSS for last output
       odat(16) = time(1)    ! YYYYMMDD for first output
       odat(17) = time(2)    ! HHMMSS for first output
-      odat(18) = 86400       ! output interval in sec
-      odat(19) = 99990101     ! YYYYMMDD for last output
-      odat(20) = 0            ! HHMMSS for last output
+      odat(18) = 86400      ! output interval in sec
+      odat(19) = 99990101   ! YYYYMMDD for last output
+      odat(20) = 0          ! HHMMSS for last output
       !DEBUG
                                                                        
       ! Output Type 1: fields of mean wave parameters gridded output
@@ -573,21 +581,51 @@ CONTAINS
          end do
          if ( flt ) write (ndso,1945) 'no fields defined'
       end if
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
 
       !--------------------------------------------------------------------
       ! Wave model initializations
       !--------------------------------------------------------------------
 
+      ! Notes on ww3 initialization:
+      ! ww3 read initialization occurs in w3iors (which is called by initmd)
+      ! For a startup (including hybrid) or branch run the initial datafile is
+      ! set in namelist input 'initfile'
+      ! For a continue run - the initfile vluae is created from the time(1:2)
+      ! array set below
+
       if ( iaproc .eq. napout ) write (ndso,950)
       if ( iaproc .eq. napout ) write (ndso,951) 'wave model ...'
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
 
+      ! Read namelist (set initfile in w3cesmmd)
+      if ( iaproc .eq. napout ) then
+         unitn = shr_file_getunit()
+         write(ndso,*) 'Read in ww3_inparm namelist from wav_in'
+         open( unitn, file='wav_in', status='old' )
+         call shr_nl_find_group_name(unitn, 'ww3_inparm', status=ierr)
+         if (ierr == 0) then
+            read (unitn, ww3_inparm, iostat=ierr)
+            if (ierr /= 0) then
+               call shr_sys_abort('problem reading ww3_inparm namelist')
+            end if
+         end if
+         close( unitn )
+         call shr_file_freeUnit( unitn )
+      end if
+      call shr_mpi_bcast(initfile, mpi_comm)
+
+      ! Set casename (in w3cesmmd)
       call seq_infodata_GetData(infodata,case_name=casename)
 
+      ! Read in input data and initialize the model 
+      ! w3init calls w3iors which:
+      ! - reads either the initfile if the run is startup or branch
+      ! - constructs the filename from the casename variable and the time(:) array 
+      !   which is set above 
       call w3init ( 1, 'ww3', nds, ntrace, odat, flgrd, npts, x, y,   &
            pnames, iprt, prtfrm, mpi_comm )
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
 
       ! overwrite dt values with variables from coupler
       ! is this a problem with any things being set in w3init?
@@ -606,8 +644,7 @@ CONTAINS
 
       call wav_setgsmap_mct(mpi_comm, compid, gsmap)
       lsize = mct_gsmap_lsize(gsmap, mpi_comm)
-      write(stdout,*)'lsize= ',lsize
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
 
       ! initialize mct domain
 
@@ -640,7 +677,7 @@ CONTAINS
 
       ! end redirection of share output to wav log
 
-      call shr_sys_flush(stdout)
+      call shr_sys_flush(ndso)
       call shr_file_setlogunit (shrlogunit)
       call shr_file_setloglevel(shrloglev)
 
@@ -704,9 +741,6 @@ CONTAINS
       call shr_file_getLogLevel(shrloglev)
       call shr_file_setLogUnit (stdout)
 
-!      write(stdout,*) 'wrm tcx1'
-!      call shr_sys_flush(stdout)
-
       call seq_timemgr_EClockGetData( EClock, curr_ymd=ymd, curr_tod=tod )
 
       hh = tod/3600
@@ -727,9 +761,6 @@ CONTAINS
 
       time = time0
 
-      !write(stdout,*)'time0= ',time0
-      !write(stdout,*)'timen= ',timen
-
       ! QL, 150823, set flag for writing restart file
       rstwr = seq_timemgr_RestartAlarmIsOn(EClock)
 
@@ -748,11 +779,8 @@ CONTAINS
       !--- fill with special values as default, these should not be used in practice
       !--- set time for input data to time0 and timen (shouldn't matter)
 
-!      def_value = -1.0e36
+      ! def_value = -1.0e36
       def_value = 0.0
-
-!      write(stdout,*) 'wrm tcx5'
-!      call shr_sys_flush(stdout)
 
       if (flags(1)) then
          TLN  = timen
@@ -783,65 +811,23 @@ CONTAINS
          TIN  = timen
          ICEI = def_value   ! ice frac
       endif
-
-!      write(stdout,*) 'wrm tcx6'
-!      call shr_sys_flush(stdout)
-
-#if (1 == 0) 
-! tcraig, this is the local fill only, really only need 1d
-      do jsea=1, nseal
-         isea = iaproc + (jsea-1)*naproc
-         IX  = MAPSF(ISEA,1)
-         IY  = MAPSF(ISEA,2)
-
-         if (flags(1)) then
-            WLEV(IX,IY) = 0.0
-         endif
-
-         if (flags(2)) then
-            CX0(IX,IY)  = x2w_w%rattr(index_x2w_so_u,JSEA)
-            CXN(IX,IY)  = CX0(IX,IY)
-            CY0(IX,IY)  = x2w_w%rattr(index_x2w_so_v,JSEA)
-            CYN(IX,IY)  = CY0(IX,IY)
-         endif
-
-         if (flags(3)) then
-            WX0(IX,IY)  = x2w_w%rattr(index_x2w_sa_u,JSEA)
-            WXN(IX,IY)  = WX0(IX,IY)
-            WY0(IX,IY)  = x2w_w%rattr(index_x2w_sa_v,JSEA)
-            WYN(IX,IY)  = WY0(IX,IY)
-            DT0(IX,IY)  = x2w_w%rattr(index_x2w_sa_tbot,JSEA) - x2w_w%rattr(index_x2w_so_t,JSEA)
-            DTN(IX,IY)  = DT0(IX,IY)
-         endif
-
-         if (flags(4)) then
-            ICEI(IX,IY) = x2w_w%rattr(index_x2w_si_ifrac,JSEA)
-         endif
-
-         ! QL, 150827, get mixing layer depth from coupler
-         if (flags(5)) then
-            HML(IX,IY) = max(x2w_w%rattr(index_x2w_so_bldepth,JSEA), 5.)
-         endif
-
-      enddo
-
-#else
-! tcraig, this is the global fill
+      
+      ! this is the global fill
       call seq_cdata_setptrs(cdata_w,gsmap=gsmap,mpicom=mpi_comm)
       call mct_aVect_gather(x2w_w,x2w0,gsmap,0,mpi_comm)
       call mct_aVect_bcast(x2w0,0,mpi_comm)
 
-! use these loops for global copy
+      ! use these loops for global copy
       gindex = 0
       do IY = 1,NY
       do IX = 1,NX
          gindex = gindex + 1
-! use this loop to do local copy
-!      do jsea=1, nseal
-!         isea = iaproc + (jsea-1)*naproc
-!         IX  = MAPSF(ISEA,1)
-!         IY  = MAPSF(ISEA,2)
-!         gindex = ix + (iy-1)*nx 
+         ! use this loop to do local copy
+         !      do jsea=1, nseal
+         !         isea = iaproc + (jsea-1)*naproc
+         !         IX  = MAPSF(ISEA,1)
+         !         IY  = MAPSF(ISEA,2)
+         !         gindex = ix + (iy-1)*nx 
 
          if (flags(1)) then
             WLEV(IX,IY) = 0.0
@@ -876,19 +862,18 @@ CONTAINS
       enddo
 
       call mct_aVect_clean(x2w0)
-#endif
 
       ! 7.b Run the wave model for the given interval
 
-!      write(stdout,*) 'wrm tcx7'
-!      call shr_sys_flush(stdout)
-!      call mpi_barrier(mpi_comm,ierr)
-!      write(stdout,*) 'wrm tcx7a'
-!      call shr_sys_flush(stdout)
+      !      write(stdout,*) 'wrm tcx7'
+      !      call shr_sys_flush(stdout)
+      !      call mpi_barrier(mpi_comm,ierr)
+      !      write(stdout,*) 'wrm tcx7a'
+      !      call shr_sys_flush(stdout)
 
       call w3wave ( 1, timen )
 
-!      copy ww3 data to coupling datatype
+      ! copy ww3 data to coupling datatype
       ! QL, 150612, copy enhancement factor, uStokes, vStokes to coupler
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
@@ -904,11 +889,11 @@ CONTAINS
              w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = 0.
              w2x_w%rattr(index_w2x_Sw_vstokes,jsea) = 0.
           endif
-!         w2x_w%rattr(index_w2x_Sw_hstokes,jsea) = ??
+          ! w2x_w%rattr(index_w2x_Sw_hstokes,jsea) = ??
       enddo
 
-!      write(stdout,*) 'wrm tcx8'
-!      call shr_sys_flush(stdout)
+      !      write(stdout,*) 'wrm tcx8'
+      !      call shr_sys_flush(stdout)
 
       !----------------------------------------------------------------------------
       ! Reset shr logging to original values
@@ -917,8 +902,8 @@ CONTAINS
       call shr_file_setLogLevel(shrloglev)
       call shr_sys_flush(stdout)
 
-!      write(stdout,*) 'wrm tcx9'
-!      call shr_sys_flush(stdout)
+      ! write(stdout,*) 'wrm tcx9'
+      ! call shr_sys_flush(stdout)
 
       ! TODO Put in gptl timer calls
 
