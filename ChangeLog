@@ -1,6 +1,17 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: mvertens
+Date: 03 Jan 2017
+Model: ww3
+Version: ww3_170103
+One-line summary: Update to nmlgen interface change in cime5.2.0-alpha.14
+
+Update to work with cime5.2.0-alpha.14 and later
+
+M       cime_config/buildnml
+
+================================================================================
 Originator: mvertens,jet
 Date: 08 Dec 2016
 Model: ww3

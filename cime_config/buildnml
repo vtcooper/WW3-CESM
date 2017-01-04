@@ -53,29 +53,33 @@ def _create_namelists(case):
 ####################################################################################
     """Write out the namelist for this component."""
 
-    #----------------------------------------------------
-    # Construct the namelist 
-    #----------------------------------------------------
     srcroot = case.get_value("SRCROOT")
     caseroot = case.get_value("CASEROOT")
 
+    #----------------------------------------------------
+    # Construct the namelist generator 
+    #----------------------------------------------------
     namelist_xml_dir = os.path.join(srcroot, "components", "ww3", "cime_config")
     definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_ww3.xml")]
+    nmlgen = NamelistGenerator(case, definition_file)
+
+    #----------------------------------------------------
+    # Initialize namelist defaults 
+    #----------------------------------------------------
     config = {}
     runtype = case.get_value("RUN_TYPE")
     config["runtype"] = runtype
     infile = []
-    nmlgen = NamelistGenerator(case, infile, definition_file, config)
+    nmlgen.init_defaults(infile, config)
 
-    entries = nmlgen.get_definition_entries()
-    for entry in entries:
-        nmlgen.add_default(entry)
-
+    #----------------------------------------------------
+    # Write output namelist
+    #----------------------------------------------------
     namelist_file = os.path.join(caseroot, "CaseDocs", "wav_in")
     nmlgen.write_output_file(namelist_file, data_list_path=None, groups=["ww3_inparm"])
 
-    initfile = nmlgen.get_value("initfile")
-    logger.info("ww3 initial conditions file is %s" %initfile)
+    # write diagnostic info
+    logger.debug("ww3 initial conditions file is %s" %nmlgen.get_value("initfile"))
 
     #----------------------------------------------------
     # Prestage necessary files to rundir
@@ -100,6 +104,10 @@ def _main_func():
     caseroot = _parse_input(sys.argv)
 
     with Case(caseroot) as case:
+        ninst = case.get_value("NINST_WAV")
+        if ninst > 1:
+            expect(False, "WW3 does not have multi instance functionality yet")
+
         _create_namelists(case)
 
         # copy namelist files to rundir
