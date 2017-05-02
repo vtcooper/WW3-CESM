@@ -1,6 +1,16 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: jedwards
+Date: 02 May 2017
+Model: ww3
+Version: ww3_170502
+One-line summary: Update to nmlgen interface change in cime5.3.0-alpha.10
+
+Update to work with cime5.3.0-alpha.10 and later (this change is backward compatible)
+
+M       cime_config/buildnml
+================================================================================
 Originator: mvertens
 Date: 03 Jan 2017
 Model: ww3
@@ -150,21 +160,21 @@ Date: 11 Mar 2015
 Model: ww3
 Version: ww3_150311
 One-line summary:  updates needed for introduction of cime
-	
+
 A       bld/ww3.buildlib
 A       bld/ww3.buildnml
-	
+
 D       bld/ww3.buildexe.csh
 D       bld/ww3.buildnml.csh
 D       bld/ww3.cpl7.template
-	
+
 ================================================================================
 Originator: tcraig
 Date: 05 Sep 2013
 Model: ww3
 Version: ww3_130905
 One-line summary:  modify coupling interface intents
-	
+
 M       src/cpl_mct/wav_comp_mct.F90
 ================================================================================
 Originator: tcraig
