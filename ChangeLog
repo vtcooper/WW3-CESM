@@ -1,6 +1,19 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: mvertens
+Date: 14 May 2017
+Model: ww3
+Version: ww3_170514
+One-line summary: New logic in buildnml to have ww3.input_data_list created
+
+This fixes CIME issue #1168
+
+A  namelist group was also introduced to ensure that files that are copied 
+to $RUNDIR from $DIN_LOC_ROOT but with generic names in $RUNDIR are listed in the
+ww3.input_data_list.
+
+================================================================================
 Originator: jedwards
 Date: 02 May 2017
 Model: ww3

@@ -28,19 +28,47 @@
           that have only a small number of allowed values.
   -->
 
-  <entry id="initfile">
+  <entry id="initfile" skip_default_entry="true">
     <type>char</type>
     <group>ww3_inparm</group>
     <category>setup</category>
+    <input_pathname>abs</input_pathname>
     <values>
-      <value>unset</value>
       <value runtype="startup">$DIN_LOC_ROOT/wav/ww3/restart.ww3.init.seed</value>
       <value runtype="hybrid">$DIN_LOC_ROOT/wav/ww3/restart.ww3.init.seed</value>
-      <value runtype="branch">$RUN_REFCASE.ww3.r.$RUN_REFDATE-00000</value>
     </values>
     <desc>
       Initial condition file. 
-      This is set in ww buildnml from refacase and refdate for branch and hybrid runs
+      This is set in ww buildnml from refacase and refdate for branch runs
+    </desc>
+  </entry>
+
+  <entry id="prestage_wind">
+    <type>char</type>
+    <group>prestage_only</group>
+    <category>prestage_only</category>
+    <input_pathname>abs</input_pathname>
+    <values>
+      <value>$DIN_LOC_ROOT/wav/ww3/core2_G4_wns_30min_20000601_to_05.nc</value>
+    </values>
+    <desc>
+      This namelist group is only here to ensure that this file is in $DIN_LOC_ROOT and
+      can be obtained by check_input_data if need be
+    </desc>
+  </entry>
+
+
+  <entry id="prestage_mod_def">
+    <type>char</type>
+    <group>prestage_only</group>
+    <category>prestage_only</category>
+    <input_pathname>abs</input_pathname>
+    <values>
+      <value>$DIN_LOC_ROOT/wav/ww3/G4L1.mod_def.ww3.121031</value>
+    </values>
+    <desc>
+      This namelist group is only here to ensure that this file is in $DIN_LOC_ROOT and
+      can be obtained by check_input_data if need be
     </desc>
   </entry>
 

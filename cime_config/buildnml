@@ -39,24 +39,45 @@ def _create_namelists(case):
     namelist_xml_dir = os.path.join(srcroot, "components", "ww3", "cime_config")
     definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_ww3.xml")]
     nmlgen = NamelistGenerator(case, definition_file)
+    infile = []
 
     #----------------------------------------------------
-    # Initialize namelist defaults
+    # Create config dictionary
     #----------------------------------------------------
     config = {}
     runtype = case.get_value("RUN_TYPE")
     config["runtype"] = runtype
-    infile = []
+
+    #----------------------------------------------------
+    # Clear out old data.
+    #----------------------------------------------------
+    data_list_path = os.path.join(case.get_case_root(), "Buildconf", "ww3.input_data_list")
+    if os.path.exists(data_list_path):
+        os.remove(data_list_path)
+
+    #----------------------------------------------------
+    # Initialize namelist defaults
+    #----------------------------------------------------
     nmlgen.init_defaults(infile, config)
+
+    run_type = case.get_value("RUN_TYPE")
+    if run_type == 'branch':
+        run_refcase = case.get_value("RUN_REFCASE")
+        run_refdate = case.get_value("RUN_REFDATE")
+        run_tod     = case.get_value("RUN_REFTOD")
+        filename = "%s.ww3.r.%s-%s" %(run_refcase, run_refdate, run_tod)
+        nmlgen.add_default("initfile", value=filename, ignore_abs_path=True)
+    else:
+        nmlgen.add_default("initfile")
+
+    # write diagnostic info
+    logger.debug("ww3 initial conditions file is %s" %nmlgen.get_value("initfile"))
 
     #----------------------------------------------------
     # Write output namelist
     #----------------------------------------------------
     namelist_file = os.path.join(caseroot, "CaseDocs", "wav_in")
-    nmlgen.write_output_file(namelist_file, data_list_path=None, groups=["ww3_inparm"])
-
-    # write diagnostic info
-    logger.debug("ww3 initial conditions file is %s" %nmlgen.get_value("initfile"))
+    nmlgen.write_output_file(namelist_file, data_list_path, groups=["ww3_inparm"])
 
     #----------------------------------------------------
     # Prestage necessary files to rundir
@@ -66,11 +87,13 @@ def _create_namelists(case):
 
     file1 = os.path.join(din_loc_root,"wav","ww3","core2_G4_wns_30min_20000601_to_05.nc")
     file2 = os.path.join(rundir,"wind.ww3")
-    shutil.copy(file1, file2)
+    if os.path.isfile(file1):
+        shutil.copy(file1, file2)
 
     file1 = os.path.join(din_loc_root,"wav","ww3","G4L1.mod_def.ww3.121031")
     file2 = os.path.join(rundir,"mod_def.ww3")
-    shutil.copy(file1, file2)
+    if os.path.isfile(file1):
+        shutil.copy(file1, file2)
 
 ###############################################################################
 def _main_func():
