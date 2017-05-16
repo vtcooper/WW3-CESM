@@ -897,7 +897,7 @@
       LOGICAL                 :: WAUX1, WAUX2, WAUX3, WAUXE
       CHARACTER(LEN=30)       :: IDTST, TNAME
       CHARACTER(LEN=10)       :: VERTST
-      CHARACTER(LEN=128)      :: FNAME
+      CHARACTER(LEN=256)      :: FNAME
       CHARACTER(LEN=16)       :: FLDSTR1,FLDSTR2,FLDSTR3,FLDSTRE
       LOGICAL                 :: EXISTS
       INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC

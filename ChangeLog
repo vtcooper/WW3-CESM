@@ -1,6 +1,20 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: klindsay,jet
+Date: 16 May 2017
+Model: ww3
+Version: ww3_170516
+One-line summary: lengthen char arrays for path lengths from 128 to 256
+
+Testing:  Ran aux_pop against baseline.  Everything passed.
+
+File Mods:
+
+	M       ChangeLog
+	M       src/source/w3iogomd.f90
+	M       src/source/w3iorsmd.f90
+================================================================================
 Originator: mvertens
 Date: 14 May 2017
 Model: ww3

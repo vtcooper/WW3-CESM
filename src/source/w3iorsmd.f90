@@ -266,10 +266,10 @@
       LOGICAL                 :: WRITE, IOSFLG
       CHARACTER(LEN=4)        :: TYPE
       CHARACTER(LEN=10)       :: VERTST
-      CHARACTER(LEN=128)      :: FNAME
+      CHARACTER(LEN=256)      :: FNAME
       CHARACTER(LEN=26)       :: IDTST
       CHARACTER(LEN=30)       :: TNAME
-      character(len=128)      :: error_msg
+      character(len=256)      :: error_msg
       logical                 :: exists    ! if file exists or not
 !/
 !/ ------------------------------------------------------------------- /
