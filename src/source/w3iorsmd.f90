@@ -216,9 +216,9 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      ! CESM specific use statements        
+      ! CESM specific use statements
       use shr_sys_mod, only : shr_sys_abort
-      use w3cesmmd   , only : casename, initfile, runtype, stdout
+      use w3cesmmd   , only : casename, initfile, runtype, stdout, inst_suffix
 
       USE W3GDATMD, ONLY: W3SETG
       USE W3ODATMD, ONLY: W3SETO
@@ -340,14 +340,19 @@
       DD = (TIME(1)-YY*10000-MM*100)
       HH = TIME(2)/10000
       MN = (TIME(2)-HH*10000)/100
-      SS = (TIME(2)-HH*10000-MN*100) 
+      SS = (TIME(2)-HH*10000-MN*100)
       TOTSEC = HH*3600+MN*60+SS
 
       ! Open and read/write file
-      IF ( WRITE ) THEN
+      if (len_trim(inst_suffix) > 0) then
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
+              trim(CASENAME)//&
+              &'.ww3'//trim(inst_suffix)//'.r.',YY,'-',MM,'-',DD,'-',TOTSEC
+      else
          WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
               trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
-
+      ENDIF
+      IF ( WRITE ) THEN
          IF ( .NOT.IOSFLG .OR. IAPROC.EQ.NAPRST )             &
               OPEN (NDSR,FILE=FNAME,FORM='UNFORMATTED',       &
               ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR)
@@ -357,10 +362,7 @@
 
       ELSE ! READ
 
-         if (runtype == 'continue') then
-            WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
-                 trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
-         else
+         if (runtype /= 'continue') then
             FNAME = INITFILE
          end if
          ! initial file MUST exist, if not exit
@@ -440,7 +442,7 @@
               ! Abort if the error check fails for a branch or continue run
               if (runtype == 'branch' .or. runtype == 'continue') then
                  IF (TIME(1).NE.TTIME(1) .OR. TIME(2).NE.TTIME(2)) THEN
-                    IF ( IAPROC .EQ. NAPERR ) then                          
+                    IF ( IAPROC .EQ. NAPERR ) then
                        WRITE (NDSE,906) TTIME, TIME
                        CALL EXTCDE ( 20 )
                     END IF
