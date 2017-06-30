@@ -1,6 +1,22 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: jedwards
+Date: 30 June 2017
+Model: ww3
+Version: ww3_170630
+One-line summary: add multi-instance support
+
+Testing:  NCK.T62_g16.G.cheyenne_intel.pop-cice, NCK.T62_g16.C.cheyenne_intel.pop-default
+
+File Mods:   cime_config/buildlib
+  cime_config/buildnml
+  src/source/w3iorsmd.f90
+  src/source/w3cesmmd.f90
+  src/source/w3iogomd.f90
+  src/cpl_mct/wav_comp_mct.F90
+
+================================================================================
 Originator: klindsay,jet
 Date: 16 May 2017
 Model: ww3
@@ -23,7 +39,7 @@ One-line summary: New logic in buildnml to have ww3.input_data_list created
 
 This fixes CIME issue #1168
 
-A  namelist group was also introduced to ensure that files that are copied 
+A  namelist group was also introduced to ensure that files that are copied
 to $RUNDIR from $DIN_LOC_ROOT but with generic names in $RUNDIR are listed in the
 ww3.input_data_list.
 
@@ -234,5 +250,3 @@ Version: ww3_120227
 ================================================================================
 Version: ww3_111230
 ================================================================================
-
-

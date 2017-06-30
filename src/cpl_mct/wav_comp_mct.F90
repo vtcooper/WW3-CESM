@@ -34,8 +34,8 @@
 !       FLH     L.A.  Flags for homogeneous fields.
 !       NH      I.A.  Number of times for homogeneous fields.
 !       THO     I.A.  Times of homogeneous fields.
-!       TIME0   I.A.  Starting time.  
-!       TIMEN   I.A.  Ending time.    
+!       TIME0   I.A.  Starting time.
+!       TIMEN   I.A.  Ending time.
 !     ----------------------------------------------------------------
 !
 !       NDS, NTRACE, ..., see W3WAVE
@@ -82,7 +82,7 @@
 !
 !     ----------------------------------------------------------------
 !
-!     wav_comp_init 
+!     wav_comp_init
 !
 !        0.   Set up data structures.                ( W3NMOD, etc. )
 !        1.   I-O setup.
@@ -91,7 +91,7 @@
 !          c  Local parameters.
 !        2.   Define input fields
 !        3.   Set time frame.
-!        4.   Define output 
+!        4.   Define output
 !          a  Loop over types, do
 !        +--------------------------------------------------------+
 !        | b    Process standard line                             |
@@ -106,7 +106,7 @@
 !          a  Wave model.                              ( W3INIT )
 !          d  Set field times.
 !
-!     wav_comp_run 
+!     wav_comp_run
 !
 !        7.   Run model with input
 !             Do until end time is reached
@@ -152,7 +152,7 @@
       use w3gdatmd
       use w3wdatmd, only: time, w3ndat, w3dimw, w3setw
       use w3adatmd
-      use w3idatmd, only: flags, w3seti, w3ninp 
+      use w3idatmd, only: flags, w3seti, w3ninp
       USE W3IDATMD, ONLY: TC0, CX0, CY0, TCN, CXN, CYN
       USE W3IDATMD, ONLY: TW0, WX0, WY0, DT0, TWN, WXN, WYN, DTN
       USE W3IDATMD, ONLY: TIN, ICEI
@@ -167,9 +167,10 @@
       use w3iopomd
       use w3timemd
       use w3cesmmd, only : casename, initfile, rstwr, runtype, histwr
+      use w3cesmmd, only : inst_index, inst_name, inst_suffix
 
       use esmf
-      use mct_mod 
+      use mct_mod
       use seq_flds_mod
 
       use ww3_cpl_indices  , only : ww3_cpl_indices_set
@@ -178,7 +179,7 @@
       use ww3_cpl_indices  , only : index_w2x_Sw_lamult, index_w2x_Sw_ustokes
       use ww3_cpl_indices  , only : index_w2x_Sw_vstokes, index_w2x_Sw_hstokes
 
-      use shr_sys_mod      , only : shr_sys_flush, shr_sys_abort 
+      use shr_sys_mod      , only : shr_sys_flush, shr_sys_abort
       use shr_kind_mod     , only : in=>shr_kind_in, r8=>shr_kind_r8, &
                                     cs=>shr_kind_cs, cl=>shr_kind_cl
       use seq_cdata_mod    , only : seq_cdata, seq_cdata_setptrs
@@ -194,7 +195,7 @@
                                     shr_file_getunit, shr_file_freeunit, shr_file_setio
       use shr_nl_mod       , only : shr_nl_find_group_name
       use shr_mpi_mod      , only : shr_mpi_bcast
-      
+
 !
       implicit none
 !
@@ -208,9 +209,6 @@
       private :: wav_domain_mct
 
       integer,save :: stdout
-      integer,save :: inst_index            ! number of current instance (ie. 1)
-      character(len=16),save :: inst_name   ! fullname of current instance (ie. "wav_0001")
-      character(len=16),save :: inst_suffix ! char string associated with instance
 
       include "mpif.h"
 !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -243,7 +241,7 @@ CONTAINS
       integer :: compid
       integer :: mpi_comm
       integer :: lsize
-      integer :: shrlogunit, shrloglev  
+      integer :: shrlogunit, shrloglev
       integer :: hh,mm,ss
       integer :: dtime_sync        ! integer timestep size
       integer :: start_ymd         ! start date (yyyymmdd)
@@ -266,7 +264,7 @@ CONTAINS
       integer             :: jsea,isea
       real                :: a(nhmax,4)
       real, allocatable   :: x(:), y(:)
-      logical             :: flgrd(nogrd), prtfrm, flt 
+      logical             :: flgrd(nogrd), prtfrm, flt
       character(len=*),parameter :: subname = '(wav_init_mct)'
 
       character(len=3)    :: idstr(8), idtst
@@ -353,10 +351,10 @@ CONTAINS
       ! NDS(1) ! OUTPUT LOG: General output unit number ("log file") (NDS0)
       ! NDS(2) ! OUTPUT LOG: Error output unit number (NDSE)
       ! NDS(3) ! OUTPUT LOG: Test output unit number (NDST)
-      ! NDS(4) ! OUTPUT LOG: Unit for 'direct' output (SCREEN) 
+      ! NDS(4) ! OUTPUT LOG: Unit for 'direct' output (SCREEN)
       !
       ! NDS(5) ! INPUT: mod_def.ww3 file (model definition) unit number
-      ! NDS(9) ! INPUT: unit for read in boundary conditions (based on FLBPI) 
+      ! NDS(9) ! INPUT: unit for read in boundary conditions (based on FLBPI)
       !
       ! The following units are referenced in module w3wavemd for output
       ! NDS( 6) ! OUTPUT DATA: restart(N).ww3 file (model restart) unit number
@@ -378,7 +376,7 @@ CONTAINS
       nds( 2) = stdout
       nds( 3) = stdout
       nds( 4) = stdout
-      nds( 5) = shr_file_getunit()  
+      nds( 5) = shr_file_getunit()
       nds( 6) = shr_file_getunit()
       nds( 7) = shr_file_getunit()
       nds( 8) = shr_file_getunit()
@@ -408,7 +406,11 @@ CONTAINS
       else if (trim(starttype) == trim(seq_infodata_start_type_brnch)) then
          write(ndso,*) 'starttype: branch'
       end if
-
+      if ( iaproc == napout) then
+         write(ndso,*) trim(subname),' inst_name   = ',trim(inst_name)
+         write(ndso,*) trim(subname),' inst_index  = ',inst_index
+         write(ndso,*) trim(subname),' inst_suffix = ',trim(inst_suffix)
+      endif
       !--------------------------------------------------------------------
       ! Define input fields
       !--------------------------------------------------------------------
@@ -434,24 +436,24 @@ CONTAINS
       if ( runtype .eq. "initial") then
          call seq_timemgr_EClockGetData(EClock, &
               start_ymd=start_ymd, start_tod=start_tod)
-      else      
+      else
          call seq_timemgr_EClockGetData(EClock, &
               curr_ymd=start_ymd, curr_tod=start_tod)
       endif
-  
+
       hh = start_tod/3600
       mm = (start_tod - (hh * 3600))/60
-      ss = start_tod - (hh*3600) - (mm*60) 
+      ss = start_tod - (hh*3600) - (mm*60)
 
       time0(1) = start_ymd
       time0(2) = hh*10000 + mm*100 + ss
 
       call seq_timemgr_EClockGetData(EClock, &
            stop_ymd=stop_ymd, stop_tod=stop_tod)
-  
+
       hh = stop_tod/3600
       mm = (stop_tod - (hh * 3600))/60
-      ss = stop_tod - (hh*3600) - (mm*60) 
+      ss = stop_tod - (hh*3600) - (mm*60)
 
       timen(1) = stop_ymd
       timen(2) = hh*10000 + mm*100 + ss
@@ -502,15 +504,15 @@ CONTAINS
       histwr = .false.
 
       ! QL, 160601, get coupling interval
-      call seq_timemgr_eclockgetdata(eclock, dtime=dtime_sync )      
+      call seq_timemgr_eclockgetdata(eclock, dtime=dtime_sync )
       !DEBUG
       ! Hardwire gridded output for now
       ! first output time stamp is now read from file
       ! QL, 150525, 1-5 for history files, 16-20 for restart files
-      !     150629, restart output interval is set to the total time of run 
+      !     150629, restart output interval is set to the total time of run
       !     150823, restart is taken over by rstwr
-      !     160601, output interval is set to coupling interval, so that 
-      !             variables calculated in W3IOGO could be updated at 
+      !     160601, output interval is set to coupling interval, so that
+      !             variables calculated in W3IOGO could be updated at
       !             every coupling interval
       odat(1) = time(1)     ! YYYYMMDD for first output
       odat(2) = time(2)     ! HHMMSS for first output
@@ -523,42 +525,42 @@ CONTAINS
       odat(19) = 99990101   ! YYYYMMDD for last output
       odat(20) = 0          ! HHMMSS for last output
       !DEBUG
-                                                                       
+
       ! Output Type 1: fields of mean wave parameters gridded output
 
-      flgrd( 1) = .false. !   1. depth (m)                              
-      flgrd( 2) = .false. !   2. mean current vel (vec, m/s)            
-      flgrd( 3) = .true.  !   3. mean wind vel (vec, m/s)               
-      flgrd( 4) = .true.  !   4. air-sea temp diff (deg C)              
-      flgrd( 5) = .true.  !   5. skin friction vel (scalar, m/s)        
-      flgrd( 6) = .true.  !   6. significant wave height (m)            
-      flgrd( 7) = .false. !   7. mean wave length (m)                   
-      flgrd( 8) = .true.  !   8. mean wave period (Tn1, s)              
-      flgrd( 9) = .true.  !   9. mean wave dir (deg: met conv)          
-      flgrd(10) = .false. !  10. mean dir spread (deg: )                
-      flgrd(11) = .false. !  11. peak freq (Hz)                         
-      flgrd(12) = .false. !  12. peak dir (deg: )                       
-      flgrd(13) = .false. !  13. peak freq of wind-sea part             
-      flgrd(14) = .false. !  14. wind-sea dir (deg: met conv)           
-      flgrd(15) = .false. !  15. wave height of partitions               
-      flgrd(16) = .false. !  16. peak periods of partitions             
-      flgrd(17) = .false. !  17. peak wave length of partitions         
-      flgrd(18) = .false. !  18. mean dir of partitions                 
-      flgrd(19) = .false. !  19. dir spread of partitions               
-      flgrd(20) = .false. !  20. wind-sea frac of partitions             
-      flgrd(21) = .false. !  21. wind-sea frac of entire spec           
-      flgrd(22) = .false. !  22. number of partitions                   
-      flgrd(23) = .false. !  23. average time step (s)                  
-      flgrd(24) = .false. !  24. cut-off freq (Hz)                      
-      flgrd(25) = .true.  !  25. ice concentration (frac)               
-      flgrd(26) = .false. !  26. water level (m?)                       
-      flgrd(27) = .false. !  27. near-bottom rms exclusion amp          
-      flgrd(28) = .false. !  28. near-bottom rms orbital vel            
-      flgrd(29) = .false. !  29. radiation stresses                     
-      flgrd(30) = .false. !  30. user defined (1)                       
-      flgrd(31) = .false. !  31. user defined (2)                       
+      flgrd( 1) = .false. !   1. depth (m)
+      flgrd( 2) = .false. !   2. mean current vel (vec, m/s)
+      flgrd( 3) = .true.  !   3. mean wind vel (vec, m/s)
+      flgrd( 4) = .true.  !   4. air-sea temp diff (deg C)
+      flgrd( 5) = .true.  !   5. skin friction vel (scalar, m/s)
+      flgrd( 6) = .true.  !   6. significant wave height (m)
+      flgrd( 7) = .false. !   7. mean wave length (m)
+      flgrd( 8) = .true.  !   8. mean wave period (Tn1, s)
+      flgrd( 9) = .true.  !   9. mean wave dir (deg: met conv)
+      flgrd(10) = .false. !  10. mean dir spread (deg: )
+      flgrd(11) = .false. !  11. peak freq (Hz)
+      flgrd(12) = .false. !  12. peak dir (deg: )
+      flgrd(13) = .false. !  13. peak freq of wind-sea part
+      flgrd(14) = .false. !  14. wind-sea dir (deg: met conv)
+      flgrd(15) = .false. !  15. wave height of partitions
+      flgrd(16) = .false. !  16. peak periods of partitions
+      flgrd(17) = .false. !  17. peak wave length of partitions
+      flgrd(18) = .false. !  18. mean dir of partitions
+      flgrd(19) = .false. !  19. dir spread of partitions
+      flgrd(20) = .false. !  20. wind-sea frac of partitions
+      flgrd(21) = .false. !  21. wind-sea frac of entire spec
+      flgrd(22) = .false. !  22. number of partitions
+      flgrd(23) = .false. !  23. average time step (s)
+      flgrd(24) = .false. !  24. cut-off freq (Hz)
+      flgrd(25) = .true.  !  25. ice concentration (frac)
+      flgrd(26) = .false. !  26. water level (m?)
+      flgrd(27) = .false. !  27. near-bottom rms exclusion amp
+      flgrd(28) = .false. !  28. near-bottom rms orbital vel
+      flgrd(29) = .false. !  29. radiation stresses
+      flgrd(30) = .false. !  30. user defined (1)
+      flgrd(31) = .false. !  31. user defined (2)
       ! QL, 150525, new output
-      flgrd(32) = .true.  !  32. Stokes drift at z=0                       
+      flgrd(32) = .true.  !  32. Stokes drift at z=0
       flgrd(33) = .true.  !  33. Turbulent Langmuir number (La_t)
       flgrd(34) = .true.  !  34. Langmuir number (La_Proj)
       flgrd(35) = .true.  !  35. Angle between wind and LC direction
@@ -601,8 +603,10 @@ CONTAINS
       ! Read namelist (set initfile in w3cesmmd)
       if ( iaproc .eq. napout ) then
          unitn = shr_file_getunit()
-         write(ndso,*) 'Read in ww3_inparm namelist from wav_in'
-         open( unitn, file='wav_in', status='old' )
+         write(ndso,*) 'Read in ww3_inparm namelist from wav_in'//trim(inst_suffix)
+
+         open( unitn, file='wav_in'//trim(inst_suffix), status='old' )
+
          call shr_nl_find_group_name(unitn, 'ww3_inparm', status=ierr)
          if (ierr == 0) then
             read (unitn, ww3_inparm, iostat=ierr)
@@ -618,11 +622,11 @@ CONTAINS
       ! Set casename (in w3cesmmd)
       call seq_infodata_GetData(infodata,case_name=casename)
 
-      ! Read in input data and initialize the model 
+      ! Read in input data and initialize the model
       ! w3init calls w3iors which:
       ! - reads either the initfile if the run is startup or branch
-      ! - constructs the filename from the casename variable and the time(:) array 
-      !   which is set above 
+      ! - constructs the filename from the casename variable and the time(:) array
+      !   which is set above
       call w3init ( 1, 'ww3', nds, ntrace, odat, flgrd, npts, x, y,   &
            pnames, iprt, prtfrm, mpi_comm )
       call shr_sys_flush(ndso)
@@ -649,7 +653,7 @@ CONTAINS
       ! initialize mct domain
 
       call wav_domain_mct(lsize, gsmap, dom)
-      
+
       ! set flags in infodata
       ! wav_prognostic is set to .false. for debugging purposes only
 
@@ -657,17 +661,17 @@ CONTAINS
            wav_prognostic=.true., wav_nx=nx, wav_ny=ny)
 
       ! initialize mct attribute vectors
-      
+
       call mct_avect_init(w2x_w, rlist=seq_flds_w2x_fields, lsize=lsize)
       call mct_avect_zero(w2x_w)
-      
+
       call mct_avect_init(x2w_w, rlist=seq_flds_x2w_fields, lsize=lsize)
       call mct_avect_zero(x2w_w)
 
       ! add call to gptl timer
 
       ! QL, 150823, send initial state to driver
-      ! QL, 160611, initial values for lamult, ustokes and vstokes  
+      ! QL, 160611, initial values for lamult, ustokes and vstokes
       do jsea=1, nseal
           w2x_w%rattr(index_w2x_Sw_lamult,jsea) = 1.
           w2x_w%rattr(index_w2x_Sw_ustokes,jsea) = 0.
@@ -701,7 +705,7 @@ CONTAINS
 1946  FORMAT ( '                       ',A)
 
     END SUBROUTINE WAV_INIT_MCT
-    
+
 !=====================================================================
 !=====================================================================
 !=====================================================================
@@ -745,7 +749,7 @@ CONTAINS
 
       hh = tod/3600
       mm = (tod - (hh * 3600))/60
-      ss = tod - (hh*3600) - (mm*60) 
+      ss = tod - (hh*3600) - (mm*60)
 
       timen(1) = ymd
       timen(2) = hh*10000 + mm*100 + ss
@@ -754,7 +758,7 @@ CONTAINS
 
       hh = tod/3600
       mm = (tod - (hh * 3600))/60
-      ss = tod - (hh*3600) - (mm*60) 
+      ss = tod - (hh*3600) - (mm*60)
 
       time0(1) = ymd
       time0(2) = hh*10000 + mm*100 + ss
@@ -790,19 +794,19 @@ CONTAINS
       if (flags(2)) then
          TC0  = time0
          TCN  = timen
-         CX0  = def_value   ! ocn u current   
-         CXN  = def_value   
+         CX0  = def_value   ! ocn u current
+         CXN  = def_value
          CY0  = def_value   ! ocn v current
-         CYN  = def_value      
+         CYN  = def_value
       endif
 
       if (flags(3)) then
          TW0  = time0
          TWN  = timen
          WX0  = def_value   ! atm u wind
-         WXN  = def_value      
+         WXN  = def_value
          WY0  = def_value   ! atm v wind
-         WYN  = def_value      
+         WYN  = def_value
          DT0  = def_value   ! air temp - ocn temp
          DTN  = def_value
       endif
@@ -811,7 +815,7 @@ CONTAINS
          TIN  = timen
          ICEI = def_value   ! ice frac
       endif
-      
+
       ! this is the global fill
       call seq_cdata_setptrs(cdata_w,gsmap=gsmap,mpicom=mpi_comm)
       call mct_aVect_gather(x2w_w,x2w0,gsmap,0,mpi_comm)
@@ -827,7 +831,7 @@ CONTAINS
          !         isea = iaproc + (jsea-1)*naproc
          !         IX  = MAPSF(ISEA,1)
          !         IY  = MAPSF(ISEA,2)
-         !         gindex = ix + (iy-1)*nx 
+         !         gindex = ix + (iy-1)*nx
 
          if (flags(1)) then
             WLEV(IX,IY) = 0.0
@@ -910,7 +914,7 @@ CONTAINS
       ! Formats
 
     END SUBROUTINE WAV_RUN_MCT
-    
+
 !=====================================================================
 !=====================================================================
 !=====================================================================
@@ -956,13 +960,13 @@ CONTAINS
       integer :: n,jsea,isea,ix,iy
       character(len=*),parameter :: subname = '(wav_setgsmap_mct)'
       ! -------------------------------------------------------------------- /
-      
+
       allocate(gindex(nseal))
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
-         iy = mapsf(isea,2) 
-         gindex(jsea) = ix + (iy-1)*nx 
+         iy = mapsf(isea,2)
+         gindex(jsea) = ix + (iy-1)*nx
       end do
       call mct_gsmap_init( gsmap, gindex, mpi_comm, compid, nseal, nx*ny)
       deallocate(gindex)
@@ -978,9 +982,9 @@ CONTAINS
       implicit none
       integer        , intent(in)   :: lsize
       type(mct_gsmap), intent(in)   :: gsmap
-      type(mct_ggrid), intent(inout):: dom  
+      type(mct_ggrid), intent(inout):: dom
 
-      integer  :: n,i,ix,iy,isea,jsea   ! indices	
+      integer  :: n,i,ix,iy,isea,jsea   ! indices
       real(r8) :: lon, lat, mask
       real(r8), pointer  :: data(:)     ! temporary
       integer , pointer  :: idata(:)    ! temporary
@@ -1007,43 +1011,43 @@ CONTAINS
       ! determine domain (numbering scheme is: west to east and south to north to south pole)
       ! initialize attribute vector with special value
 
-      data(:) = -9999.0_r8 
-      call mct_ggrid_importrattr(dom,"lat"  ,data,lsize) 
-      call mct_ggrid_importrattr(dom,"lon"  ,data,lsize) 
-      call mct_ggrid_importrattr(dom,"area" ,data,lsize) 
-      call mct_ggrid_importrattr(dom,"aream",data,lsize) 
-      data(:) = 0.0_r8     
-      call mct_ggrid_importrattr(dom,"mask" ,data,lsize) 
+      data(:) = -9999.0_r8
+      call mct_ggrid_importrattr(dom,"lat"  ,data,lsize)
+      call mct_ggrid_importrattr(dom,"lon"  ,data,lsize)
+      call mct_ggrid_importrattr(dom,"area" ,data,lsize)
+      call mct_ggrid_importrattr(dom,"aream",data,lsize)
+      data(:) = 0.0_r8
+      call mct_ggrid_importrattr(dom,"mask" ,data,lsize)
 
       ! fill in correct values for domain components
       ! note aream will be filled in in the atm-lnd mapper
-      ! sx, sy  real  i  grid increments (deg.).        
+      ! sx, sy  real  i  grid increments (deg.).
 
 
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
-         iy = mapsf(isea,2) 
-         lon = x0 + real(ix-1)*sx 
+         iy = mapsf(isea,2)
+         lon = x0 + real(ix-1)*sx
          data(jsea) = lon
          !write(stdout,*)' jsea= ',jsea,' lon is ',data(jsea)
       end do
-      call mct_ggrid_importrattr(dom,"lon",data,lsize) 
+      call mct_ggrid_importrattr(dom,"lon",data,lsize)
 
       do jsea=1, nseal
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
-         iy = mapsf(isea,2) 
-         lat = y0 + real(iy-1)*sy 
+         iy = mapsf(isea,2)
+         lat = y0 + real(iy-1)*sy
          data(jsea) = lat
          !write(stdout,*)' jsea= ',jsea,' lat is ',data(jsea)
       end do
-      call mct_ggrid_importrattr(dom,"lat",data,lsize) 
+      call mct_ggrid_importrattr(dom,"lat",data,lsize)
 
       do jsea = 1,nseal
          isea = iaproc + (jsea-1)*naproc
          ix = mapsf(isea,1)
-         iy = mapsf(isea,2) 
+         iy = mapsf(isea,2)
          lat = y0 + real(iy-1)*sy
          data(jsea) = sx*deg2rad*sy*deg2rad*cos(lat*deg2rad)
          !write(stdout,*)' jsea= ',jsea,' area is ',data(jsea)
@@ -1060,12 +1064,12 @@ CONTAINS
             mask = 1.0_r8
          else
             mask = 0.0_r8
-         end if 
+         end if
          data(jsea) = mask
          !write(stdout,*)' jsea= ',jsea,' mask is ',data(jsea)
       end do
-      call mct_ggrid_importrattr(dom,"mask",data,lsize) 
-      call mct_ggrid_importrattr(dom,"frac",data,lsize) 
+      call mct_ggrid_importrattr(dom,"mask",data,lsize)
+      call mct_ggrid_importrattr(dom,"frac",data,lsize)
 
       n = mct_aVect_lSize(dom%data)
 
@@ -1075,6 +1079,3 @@ CONTAINS
     end subroutine wav_domain_mct
 
   END MODULE WAV_COMP_MCT
-
-
-

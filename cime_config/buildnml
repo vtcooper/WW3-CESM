@@ -24,29 +24,10 @@ from CIME.buildnml import create_namelist_infile, parse_input
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 ####################################################################################
-def _create_namelists(case):
+def _create_namelists(case, confdir, namelist_infile, nmlgen):
 ####################################################################################
     """Write out the namelist for this component."""
-
-    srcroot = case.get_value("SRCROOT")
-    caseroot = case.get_value("CASEROOT")
-
-    #----------------------------------------------------
-    # Construct the namelist generator
-    #----------------------------------------------------
-    namelist_xml_dir = os.path.join(srcroot, "components", "ww3", "cime_config")
-    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_ww3.xml")]
-    nmlgen = NamelistGenerator(case, definition_file)
-    infile = []
-
-    #----------------------------------------------------
-    # Create config dictionary
-    #----------------------------------------------------
-    config = {}
-    runtype = case.get_value("RUN_TYPE")
-    config["runtype"] = runtype
 
     #----------------------------------------------------
     # Clear out old data.
@@ -55,12 +36,14 @@ def _create_namelists(case):
     if os.path.exists(data_list_path):
         os.remove(data_list_path)
 
+    config = {}
+    run_type = case.get_value("RUN_TYPE")
+    config["runtype"] = run_type
     #----------------------------------------------------
     # Initialize namelist defaults
     #----------------------------------------------------
-    nmlgen.init_defaults(infile, config)
+    nmlgen.init_defaults(namelist_infile, config)
 
-    run_type = case.get_value("RUN_TYPE")
     if run_type == 'branch':
         run_refcase = case.get_value("RUN_REFCASE")
         run_refdate = case.get_value("RUN_REFDATE")
@@ -76,8 +59,88 @@ def _create_namelists(case):
     #----------------------------------------------------
     # Write output namelist
     #----------------------------------------------------
-    namelist_file = os.path.join(caseroot, "CaseDocs", "wav_in")
+    namelist_file = os.path.join(confdir, "wav_in")
     nmlgen.write_output_file(namelist_file, data_list_path, groups=["ww3_inparm"])
+
+###############################################################################
+def buildnml(case, caseroot, compname):
+###############################################################################
+    """Build the ww3 namelist """
+
+    # Build the component namelist
+    if compname != "ww":
+        raise AttributeError
+
+    srcroot = case.get_value("SRCROOT")
+    rundir = case.get_value("RUNDIR")
+    ninst = case.get_value("NINST_WAV")
+
+    # determine the confdir directory
+    confdir = os.path.join(caseroot,"Buildconf","ww3conf")
+    if not os.path.isdir(confdir):
+        os.makedirs(confdir)
+
+    #----------------------------------------------------
+    # Construct the namelist generator
+    #----------------------------------------------------
+    # determine directory for user modified namelist_definitions.xml and namelist_defaults.xml
+    user_xml_dir = os.path.join(caseroot, "SourceMods", "src.ww3")
+    expect (os.path.isdir(user_xml_dir),
+            "user_xml_dir %s does not exist " %user_xml_dir)
+
+    # user definition *replaces* existing definition.
+    namelist_xml_dir = os.path.join(srcroot, "components", "ww3", "cime_config")
+    definition_file = [os.path.join(namelist_xml_dir, "namelist_definition_ww3.xml")]
+    user_definition = os.path.join(user_xml_dir, "namelist_definition_ww3.xml")
+    if os.path.isfile(user_definition):
+        definition_file = [user_definition]
+    for file_ in definition_file:
+        expect(os.path.isfile(file_), "Namelist XML file %s not found!" % file_)
+
+    # Create the namelist generator object - independent of instance
+    nmlgen = NamelistGenerator(case, definition_file)
+
+    #----------------------------------------------------
+    # Loop over instances
+    #----------------------------------------------------
+    for inst_counter in range(1, ninst+1):
+
+        # determine instance string
+        inst_string = ""
+        if ninst > 1:
+            inst_string = '_' + '%04d' % inst_counter
+
+        # If multi-instance case does not have restart file, use
+        # single-case restart for each instance
+        rpointer = "rpointer.ice"
+        if (os.path.isfile(os.path.join(rundir,rpointer)) and
+            (not os.path.isfile(os.path.join(rundir,rpointer + inst_string)))):
+            shutil.copy(os.path.join(rundir, rpointer),
+                        os.path.join(rundir, rpointer + inst_string))
+
+        inst_string_label = inst_string
+        if not inst_string_label:
+            inst_string_label = "\"\""
+
+        # create namelist_infile using user_nl_file as input
+        user_nl_file = os.path.join(caseroot, "user_nl_ww" + inst_string)
+        expect(os.path.isfile(user_nl_file),
+               "Missing required user_nl_file %s " %(user_nl_file))
+        infile = os.path.join(confdir, "namelist_infile")
+        create_namelist_infile(case, user_nl_file, infile)
+        namelist_infile = [infile]
+
+        # create namelist
+        _create_namelists(case, confdir, namelist_infile, nmlgen)
+
+        # copy namelist files to rundir
+        if os.path.isdir(rundir):
+            file1  = os.path.join(confdir, "wav_in")
+            file2 = os.path.join(rundir, "wav_in")
+            if inst_string:
+                file2 += inst_string
+            logger.debug("WW3 namelist copy: file1 %s file2 %s " %(file1, file2))
+            shutil.copy2(file1, file2)
 
     #----------------------------------------------------
     # Prestage necessary files to rundir
@@ -95,6 +158,8 @@ def _create_namelists(case):
     if os.path.isfile(file1):
         shutil.copy(file1, file2)
 
+
+
 ###############################################################################
 def _main_func():
 ###############################################################################
@@ -102,23 +167,11 @@ def _main_func():
     # Build the component namelist
 
     caseroot = parse_input(sys.argv)
-
     with Case(caseroot) as case:
-        ninst = case.get_value("NINST_WAV")
-        if ninst > 1:
-            expect(False, "WW3 does not have multi instance functionality yet")
+        buildnml(case, caseroot, "ww")
 
-        _create_namelists(case)
-
-        # copy namelist files to rundir
-        # TODO: need to add multi-instance support
-        rundir = case.get_value("RUNDIR")
-        file1 = os.path.join(caseroot, "CaseDocs", "wav_in")
-        file2 = os.path.join(rundir, "wav_in")
-        shutil.copy(file1, file2)
 
 ###############################################################################
 
 if __name__ == "__main__":
     _main_func()
-

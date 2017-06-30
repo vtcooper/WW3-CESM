@@ -207,7 +207,7 @@
       !             LASLPJ: La_{SL,Proj}
       !             ALPHAL: angle between wind and Langmuir cells (SL
       !                     averaged)
-      !             ALPHALS: angle between wind and Langmuir cells 
+      !             ALPHALS: angle between wind and Langmuir cells
       !                     (surface)
       !             UD: wind direction
       ! QL, 160530, LAMULT: enhancement factor
@@ -437,7 +437,7 @@
         ! tail for depth integrated SD
         ETUSSXH(JSEA)  = ETUSSXH(JSEA) + 2*GRAV*ETUSCX(JSEA)/SIG(NK)   &
           *(1.-(1.-4.*HSL*WN(NK,ISEA))*EXP(-2.*WN(NK,ISEA)*HSL))       &
-          /6./WN(NK,ISEA)/HSL 
+          /6./WN(NK,ISEA)/HSL
         ETUSSYH(JSEA)  = ETUSSYH(JSEA) + 2*GRAV*ETUSCY(JSEA)/SIG(NK)   &
           *(1.-(1.-4.*HSL*WN(NK,ISEA))*EXP(-2.*WN(NK,ISEA)*HSL))       &
           /6./WN(NK,ISEA)/HSL
@@ -501,7 +501,7 @@
                 /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
               LAPROJ(ISEA) = LANGMT(ISEA) &
                 * SQRT(ABS(COS(ALPHALS(ISEA))) &
-                / ABS(COS(SWW-ALPHALS(ISEA)))) 
+                / ABS(COS(SWW-ALPHALS(ISEA))))
               ! Stokes depth
               SWW = ATAN2(USSYH(ISEA),USSXH(ISEA)) - UD(ISEA)
               ! ALPHAL: angle between wind and LC direction
@@ -775,7 +775,7 @@
 !         30  User defined #1. (requires coding ...)
 !         31  User defined #1. (requires coding ...)
 ! QL, 150525
-!         32  Stokes drift at z=0. 
+!         32  Stokes drift at z=0.
 !         33  Langmuir number.
 !         34  Langmuir number for misaligned wind and wave (La_Proj).
 !         35  Angle between wind and LC direction.
@@ -872,7 +872,7 @@
       USE W3ODATMD, ONLY: NDSO
 !/
       USE W3SERVMD, ONLY: EXTCDE
-      USE W3CESMMD, ONLY : CASENAME
+      USE W3CESMMD, ONLY : CASENAME, inst_suffix
 !      use shr_sys_mod
       USE NETCDF
 !
@@ -1022,11 +1022,16 @@
       DD = (TIME(1)-YY*10000-MM*100)
       HH = TIME(2)/10000
       MN = (TIME(2)-HH*10000)/100
-      SS = (TIME(2)-HH*10000-MN*100) 
+      SS = (TIME(2)-HH*10000-MN*100)
       TOTSEC = HH*3600+MN*60+SS
-      WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
-            YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
-
+      if (len_trim(inst_suffix) > 0) then
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)&
+              &//'.ww3'//trim(inst_suffix)//'.hi.', &
+              YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
+      else
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
+              YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
+      ENDIF
       INQUIRE(FILE=TRIM(FNAME),EXIST=EXISTS)
       IF (.NOT.EXISTS) THEN
          IERR = NF90_CREATE(TRIM(FNAME),NF90_CLOBBER,NCID)
