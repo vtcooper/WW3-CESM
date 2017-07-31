@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
 
-<definitions_variables>
+<entry_id version="3.0">
 
-  <entry id="COMP_WAV"> 
+  <description>
+    <desc wav="WW3" >Wave Watch</desc>
+  </description>
+
+  <entry id="COMP_WAV">
     <type>char</type>
     <valid_values>ww</valid_values>
     <default_value>ww</default_value>
@@ -11,15 +15,10 @@
     <desc>Name of wave component</desc>
   </entry>
 
-  <description>
-    <desc compset="_WW3" >WW3:</desc>
-  </description>
-
   <help>
     =========================================
     WW naming conventions
     =========================================
   </help>
 
-</definitions_variables>
-
+</entry_id>
