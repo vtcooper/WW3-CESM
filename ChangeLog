@@ -2,6 +2,16 @@
 ww3 ChangeLog
 ================================================================================
 Originator: jedwards
+Date: 31 July 2017
+Model: ww3
+Version: ww3_170731
+One-line summary: update config_component.xml to version 3.0
+
+File Mods:
+  cime_config/config_component.xml
+
+================================================================================
+Originator: jedwards
 Date: 30 June 2017
 Model: ww3
 Version: ww3_170630
