@@ -19,6 +19,7 @@
       logical, public :: rstwr   ! true => write restart at end of day
       logical, public :: histwr  ! true => write history file (snapshot)
 
+      integer, public :: outfreq ! output frequency in hours
       integer, public :: stdout  ! output log file
 
       integer, public                  :: inst_index            ! number of current instance (ie. 1)

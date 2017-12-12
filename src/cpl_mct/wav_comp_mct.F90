@@ -166,7 +166,7 @@
 !/
       use w3iopomd
       use w3timemd
-      use w3cesmmd, only : casename, initfile, rstwr, runtype, histwr
+      use w3cesmmd, only : casename, initfile, rstwr, runtype, histwr, outfreq
       use w3cesmmd, only : inst_index, inst_name, inst_suffix
 
       use esmf
@@ -290,7 +290,7 @@ CONTAINS
       DATA IDSTR  / 'LEV', 'CUR', 'WND', 'ICE', 'DT0', 'DT1', 'DT2',  &
                     'MOV' /
 
-      namelist /ww3_inparm/ initfile
+      namelist /ww3_inparm/ initfile, outfreq
 
       !--------------------------------------------------------------------
       ! Set up data structures
@@ -531,8 +531,8 @@ CONTAINS
       flgrd( 1) = .false. !   1. depth (m)
       flgrd( 2) = .false. !   2. mean current vel (vec, m/s)
       flgrd( 3) = .true.  !   3. mean wind vel (vec, m/s)
-      flgrd( 4) = .true.  !   4. air-sea temp diff (deg C)
-      flgrd( 5) = .true.  !   5. skin friction vel (scalar, m/s)
+      flgrd( 4) = .false.  !   4. air-sea temp diff (deg C)
+      flgrd( 5) = .false.  !   5. skin friction vel (scalar, m/s)
       flgrd( 6) = .true.  !   6. significant wave height (m)
       flgrd( 7) = .false. !   7. mean wave length (m)
       flgrd( 8) = .true.  !   8. mean wave period (Tn1, s)
@@ -552,7 +552,7 @@ CONTAINS
       flgrd(22) = .false. !  22. number of partitions
       flgrd(23) = .false. !  23. average time step (s)
       flgrd(24) = .false. !  24. cut-off freq (Hz)
-      flgrd(25) = .true.  !  25. ice concentration (frac)
+      flgrd(25) = .false.  !  25. ice concentration (frac)
       flgrd(26) = .false. !  26. water level (m?)
       flgrd(27) = .false. !  27. near-bottom rms exclusion amp
       flgrd(28) = .false. !  28. near-bottom rms orbital vel
@@ -560,14 +560,14 @@ CONTAINS
       flgrd(30) = .false. !  30. user defined (1)
       flgrd(31) = .false. !  31. user defined (2)
       ! QL, 150525, new output
-      flgrd(32) = .true.  !  32. Stokes drift at z=0
-      flgrd(33) = .true.  !  33. Turbulent Langmuir number (La_t)
-      flgrd(34) = .true.  !  34. Langmuir number (La_Proj)
-      flgrd(35) = .true.  !  35. Angle between wind and LC direction
-      flgrd(36) = .true.  !  36. Depth averaged Stokes drift (0-H_0.2ML)
-      flgrd(37) = .true.  !  37. Langmuir number (La_SL)
-      flgrd(38) = .true.  !  38. Langmuir number (La_SL,Proj)
-      flgrd(39) = .true.  !  39. Enhancement factor with La_SL,Proj
+      flgrd(32) = .false.  !  32. Stokes drift at z=0
+      flgrd(33) = .false.  !  33. Turbulent Langmuir number (La_t)
+      flgrd(34) = .false.  !  34. Langmuir number (La_Proj)
+      flgrd(35) = .false.  !  35. Angle between wind and LC direction
+      flgrd(36) = .false.  !  36. Depth averaged Stokes drift (0-H_0.2ML)
+      flgrd(37) = .false.  !  37. Langmuir number (La_SL)
+      flgrd(38) = .false.  !  38. Langmuir number (La_SL,Proj)
+      flgrd(39) = .false.  !  39. Enhancement factor with La_SL,Proj
 
       if ( iaproc .eq. napout ) then
          flt = .true.
@@ -618,6 +618,7 @@ CONTAINS
          call shr_file_freeUnit( unitn )
       end if
       call shr_mpi_bcast(initfile, mpi_comm)
+      call shr_mpi_bcast(outfreq, mpi_comm)
 
       ! Set casename (in w3cesmmd)
       call seq_infodata_GetData(infodata,case_name=casename)
@@ -756,6 +757,14 @@ CONTAINS
 
       call seq_timemgr_EClockGetData( EClock, prev_ymd=ymd, prev_tod=tod )
 
+      ! QL, 171107, output every outfreq hours
+      if (outfreq .gt. 0 .and. mod(hh, outfreq) .eq. 0 ) then
+          histwr = .true.
+      else
+          histwr = seq_timemgr_historyAlarmIsOn(EClock)
+      end if
+
+
       hh = tod/3600
       mm = (tod - (hh * 3600))/60
       ss = tod - (hh*3600) - (mm*60)
@@ -767,9 +776,6 @@ CONTAINS
 
       ! QL, 150823, set flag for writing restart file
       rstwr = seq_timemgr_RestartAlarmIsOn(EClock)
-
-      ! QL, 160601, set flag for writing history file
-      histwr = seq_timemgr_historyAlarmIsOn(EClock)
 
       !--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! 7.  Model with input

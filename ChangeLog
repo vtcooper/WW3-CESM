@@ -1,6 +1,28 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: altuntas
+Date: 11 Dec 2017
+Model: ww3
+Version: ww3_171211
+One-line summary: enable better control on the WW3 output frequency.
+  The output frequency is now set by 'outfreq' in the ‘wav_in' namelist and can be
+  modified in the user specific namelist ‘user_nl_ww’. The default value is set
+  to 0, which turns WW3 output off. As for the metadata, the units and long name
+  for each variables are now saved. (lat and lon are not saved in each file but
+  may be retrieved during post-processing.)
+
+Testing: aux_pop. bit for bit.
+
+File Mods:
+M       cime_config/namelist_definition_ww3.xml
+M       cime_config/user_nl_ww
+M       src/cpl_mct/wav_comp_mct.F90
+M       src/source/w3cesmmd.f90
+M       src/source/w3iogomd.f90
+
+
+================================================================================
 Originator: jedwards
 Date: 31 July 2017
 Model: ww3

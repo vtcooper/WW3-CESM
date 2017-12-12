@@ -38,8 +38,21 @@
       <value runtype="hybrid">$DIN_LOC_ROOT/wav/ww3/restart.ww3.init.seed</value>
     </values>
     <desc>
-      Initial condition file. 
+      Initial condition file.
       This is set in ww buildnml from refacase and refdate for branch runs
+    </desc>
+  </entry>
+
+  <entry id="outfreq">
+    <type>integer</type>
+    <group>ww3_inparm</group>
+    <category>setup</category>
+    <valid_values>0,1,2,3,4,6,8,12,24</valid_values>
+    <values>
+        <value>0</value>
+    </values>
+    <desc>
+      Output frequency (6 = once per 6 hours). A value of 0 turns output off.
     </desc>
   </entry>
 

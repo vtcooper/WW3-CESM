@@ -899,6 +899,8 @@
       CHARACTER(LEN=10)       :: VERTST
       CHARACTER(LEN=256)      :: FNAME
       CHARACTER(LEN=16)       :: FLDSTR1,FLDSTR2,FLDSTR3,FLDSTRE
+      CHARACTER(LEN=16)       :: UNITSTR1,UNITSTR2,UNITSTR3,UNITSTRE
+      CHARACTER(LEN=128)      :: LNSTR1,LNSTR2,LNSTR3,LNSTRE
       LOGICAL                 :: EXISTS
       INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC
       INTEGER                 :: VARID1,VARID2,VARID3,VARIDE,NCID,NCLOOP
@@ -1100,6 +1102,8 @@
                     AUX1(1:NSEA) = DW(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'DW'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Water depth'
                   ELSE IF ( IO .EQ.  2 ) THEN
                     AUX1(1:NSEA) = CX(1:NSEA)
                     AUX2(1:NSEA) = CY(1:NSEA)
@@ -1107,6 +1111,10 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'CX'
                     FLDSTR2 = 'CY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Mean current, x-component'
+                    LNSTR2 = 'Mean current, y-component'
                   ELSE IF ( IO .EQ.  3 ) THEN
                     DO ISEA=1, NSEA
                       AUX1(ISEA) = UA(ISEA)*COS(UD(ISEA))
@@ -1116,10 +1124,16 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'UAX'
                     FLDSTR2 = 'UAY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Mean wind, x-component'
+                    LNSTR2 = 'Mean wind, y-component'
                   ELSE IF ( IO .EQ.  4 ) THEN
                     AUX1(1:NSEA) = AS(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'AS'
+                    UNITSTR1 = 'deg C'
+                    LNSTR1 = 'Air-sea temperature difference'
                   ELSE IF ( IO .EQ.  5 ) THEN
                     DO ISEA=1, NSEA
                       IX     = MAPSF(ISEA,1)
@@ -1138,90 +1152,136 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'ASFX'
                     FLDSTR2 = 'ASFY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Skin friction velocity, x-component'
+                    LNSTR2 = 'Skin friction velocity, y-component'
                   ELSE IF ( IO .EQ.  6 ) THEN
                     AUX1(1:NSEA) = HS(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'HS'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Significant wave height'
                   ELSE IF ( IO .EQ.  7 ) THEN
                     AUX1(1:NSEA) = WLM(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'WLM'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Mean wave length'
                   ELSE IF ( IO .EQ.  8 ) THEN
                     AUX1(1:NSEA) = TMN(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'TMN'
+                    UNITSTR1 = 's'
+                    LNSTR1 = 'Mean wave period'
                   ELSE IF ( IO .EQ.  9 ) THEN
                     AUX1(1:NSEA) = THM(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'THM'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Mean wave direction'
                   ELSE IF ( IO .EQ. 10 ) THEN
                     AUX1(1:NSEA) = THS(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'THS'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Mean directional spread'
                   ELSE IF ( IO .EQ. 11 ) THEN
                     AUX1(1:NSEA) = FP0(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'PF0'
+                    UNITSTR1 = 'Hz'
+                    LNSTR1 = 'Peak frequency'
                   ELSE IF ( IO .EQ. 12 ) THEN
                     AUX1(1:NSEA) = THP0(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'THP0'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Peak direction'
                   ELSE IF ( IO .EQ. 13 ) THEN
                     AUX1(1:NSEA) = FP1(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'PF1'
+                    UNITSTR1 = 'Hz'
+                    LNSTR1 = 'Peak frequency of wind-sea part'
                   ELSE IF ( IO .EQ. 14 ) THEN
                     AUX1(1:NSEA) = THP1(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'THP1'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Mean wave direction of wind-sea'
                   ELSE IF ( IO .EQ. 15 ) THEN
                     AUXE(1:NSEA,0:NOSWLL) = PHS(1:NSEA,0:NOSWLL)
                     WAUXE = .TRUE.
                     FLDSTRE = 'PHS'
+                    UNITSTRE = 'm'
+                    LNSTRE = 'Wave height of partitions'
                   ELSE IF ( IO .EQ. 16 ) THEN
                     AUXE(1:NSEA,0:NOSWLL) = PTP(1:NSEA,0:NOSWLL)
                     WAUXE = .TRUE.
                     FLDSTRE = 'PTP'
+                    UNITSTRE = 's'
+                    LNSTRE = 'Peak wave period of partitions'
                   ELSE IF ( IO .EQ. 17 ) THEN
                     AUXE(1:NSEA,0:NOSWLL) = PLP(1:NSEA,0:NOSWLL)
                     WAUXE = .TRUE.
                     FLDSTRE = 'PLP'
+                    UNITSTRE = 'm'
+                    LNSTRE = 'Peak wave length of partitions'
                   ELSE IF ( IO .EQ. 18 ) THEN
                     AUXE(1:NSEA,0:NOSWLL) = PTH(1:NSEA,0:NOSWLL)
                     WAUXE = .TRUE.
                     FLDSTRE = 'PTH'
+                    UNITSTRE = 'rad'
+                    LNSTRE = 'Mean wave direction of partitions'
                   ELSE IF ( IO .EQ. 19 ) THEN
                     AUXE(1:NSEA,0:NOSWLL) = PSI(1:NSEA,0:NOSWLL)
                     WAUXE = .TRUE.
                     FLDSTRE = 'PSI'
+                    UNITSTRE = 'rad'
+                    LNSTRE = 'Directional spread of partitions'
                   ELSE IF ( IO .EQ. 20 ) THEN
                     AUXE(1:NSEA,0:NOSWLL) = PWS(1:NSEA,0:NOSWLL)
                     WAUXE = .TRUE.
                     FLDSTRE = 'PWS'
+                    UNITSTRE = '1'
+                    LNSTRE = 'Wind-sea fraction of partitions'
                   ELSE IF ( IO .EQ. 21 ) THEN
                     AUX1(1:NSEA) = PWST(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'PWST'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Wind-sea fraction of total spectrum'
                   ELSE IF ( IO .EQ. 22 ) THEN
                     AUX1(1:NSEA) = PNR(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'PNR'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Number of partitions'
                   ELSE IF ( IO .EQ. 23 ) THEN
                     AUX1(1:NSEA) = DTDYN(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'DTDYN'
+                    UNITSTR1 = 's'
+                    LNSTR1 = 'Mean dynamic time step'
                   ELSE IF ( IO .EQ. 24 ) THEN
                     AUX1(1:NSEA) = FCUT(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'FCUT'
+                    UNITSTR1 = 'Hz'
+                    LNSTR1 = 'Cut-off frequency for tail'
                   ELSE IF ( IO .EQ. 25 ) THEN
                     AUX1(1:NSEA) = ICE(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'ICE'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Ice coverage'
                   ELSE IF ( IO .EQ. 26 ) THEN
                     AUX1(1:NSEA) = WLV(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'WLV'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Water levels'
                   ELSE IF ( IO .EQ. 27 ) THEN
                     DO ISEA=1, NSEA
                       IF ( ABA(ISEA) .NE. UNDEF ) THEN
@@ -1236,6 +1296,10 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'ABAX'
                     FLDSTR2 = 'ABAY'
+                    UNITSTR1 = 'm'
+                    UNITSTR2 = 'm'
+                    LNSTR1 = 'Near bottom rms wave excursion amplitude, x-component'
+                    LNSTR2 = 'Near bottom rms wave excursion amplitude, y-component'
                   ELSE IF ( IO .EQ. 28 ) THEN
                     DO ISEA=1, NSEA
                       IF ( ABA(ISEA) .NE. UNDEF ) THEN
@@ -1250,6 +1314,10 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'UBAX'
                     FLDSTR2 = 'UBAY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Near bottom rms wave velocity, x-component'
+                    LNSTR2 = 'Near bottom rms wave velocity, y-component'
                   ELSE IF ( IO .EQ. 29 ) THEN
                     AUX1(1:NSEA) = SXX(1:NSEA)
                     AUX2(1:NSEA) = SYY(1:NSEA)
@@ -1260,14 +1328,24 @@
                     FLDSTR1 = 'SXX'
                     FLDSTR2 = 'SYY'
                     FLDSTR3 = 'SXY'
+                    UNITSTR1 = 'm'
+                    UNITSTR2 = 'm'
+                    UNITSTR3 = 'm'
+                    LNSTR1 = 'Radiation stress, xx-component'
+                    LNSTR2 = 'Radiation stress, yy-component'
+                    LNSTR3 = 'Radiation stress, xy-component'
                   ELSE IF ( IO .EQ. 30 ) THEN
                     AUX1(1:NSEA) = USERO(1:NSEA,1)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'USERO1'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'User defined variable 1'
                   ELSE IF ( IO .EQ. 31 ) THEN
                     AUX1(1:NSEA) = USERO(1:NSEA,2)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'USERO2'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'User defined variable 2'
                   ! QL, 150525, new output
                   ELSE IF ( IO .EQ. 32 ) THEN
                     AUX1(1:NSEA) = USSX(1:NSEA)
@@ -1276,14 +1354,22 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'USSX'
                     FLDSTR2 = 'USSY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Surface Stokes drift, x-component'
+                    LNSTR2 = 'Surface Stokes drift, y-component'
                   ELSE IF ( IO .EQ. 33 ) THEN
                     AUX1(1:NSEA) = LANGMT(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'LANGMT'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Turbulent Langmuir number'
                   ELSE IF ( IO .EQ. 34 ) THEN
                     AUX1(1:NSEA) = LAPROJ(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'LAPROJ'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Projected turbulent Langmuir number'
                   ELSE IF ( IO .EQ. 35 ) THEN
                     AUX1(1:NSEA) = ALPHAL(1:NSEA)
                     AUX2(1:NSEA) = ALPHALS(1:NSEA)
@@ -1291,6 +1377,10 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'ALPHAL'
                     FLDSTR2 = 'ALPHALS'
+                    UNITSTR1 = 'rad'
+                    UNITSTR2 = 'rad'
+                    LNSTR1 = 'Angle between wind and LC, surface layer'
+                    LNSTR2 = 'Angle between wind and LC, surface'
                   ELSE IF ( IO .EQ. 36 ) THEN
                     AUX1(1:NSEA) = USSXH(1:NSEA)
                     AUX2(1:NSEA) = USSYH(1:NSEA)
@@ -1298,18 +1388,28 @@
                     WAUX2 = .TRUE.
                     FLDSTR1 = 'USSXH'
                     FLDSTR2 = 'USSYH'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Surface layer averaged Stokes drift, x-component'
+                    LNSTR2 = 'Surface layer averaged Stokes drift, y-component'
                   ELSE IF ( IO .EQ. 37 ) THEN
                     AUX1(1:NSEA) = LASL(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'LASL'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Surface layer averaged Langmuir number'
                   ELSE IF ( IO .EQ. 38 ) THEN
                     AUX1(1:NSEA) = LASLPJ(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'LASLPJ'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Surface layer averaged and projected turbulent Langmuir number'
                   ELSE IF ( IO .EQ. 39 ) THEN
                     AUX1(1:NSEA) = LAMULT(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'LAMULT'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Enhancement factor'
                   ELSE
                     WRITE (NDSE,999)
                     CALL EXTCDE ( 30 )
@@ -1320,18 +1420,26 @@
                     IF (WAUX1) THEN
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR1),NF90_FLOAT,DIMID(1:2),VARID1)
                       IERR = NF90_PUT_ATT(NCID,VARID1,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARID1,"units",UNITSTR1)
+                      IERR = NF90_PUT_ATT(NCID,VARID1,"long_name",LNSTR1)
                     ENDIF
                     IF (WAUX2) THEN
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR2),NF90_FLOAT,DIMID(1:2),VARID2)
                       IERR = NF90_PUT_ATT(NCID,VARID2,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARID2,"units",UNITSTR2)
+                      IERR = NF90_PUT_ATT(NCID,VARID2,"long_name",LNSTR2)
                     ENDIF
                     IF (WAUX3) THEN
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR3),NF90_FLOAT,DIMID(1:2),VARID3)
                       IERR = NF90_PUT_ATT(NCID,VARID3,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARID3,"units",UNITSTR3)
+                      IERR = NF90_PUT_ATT(NCID,VARID3,"long_name",LNSTR3)
                     ENDIF
                     IF (WAUXE) THEN
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTRE),NF90_FLOAT,DIMID(1:3),VARIDE)
                       IERR = NF90_PUT_ATT(NCID,VARIDE,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"units",UNITSTRE)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"long_name",LNSTRE)
                     ENDIF
 
                   ELSEIF (NCLOOP == 2) THEN
