@@ -2,6 +2,21 @@
 ww3 ChangeLog
 ================================================================================
 Originator: altuntas
+Date: 15 Jan 2018
+Model: ww3
+Version: ww3_180115
+One-line summary: set restart file write frequency to waw_cpl_dt
+  Restart file output interval was hard-coded to be exactly one day. The interval
+  is now changed to be equal to coupling interval. This allows ww3 to write restart
+  files at any coupling interval at which the restart alarm is turned on by CIME.
+
+Testing: aux_pop. bit for bit.
+
+File Mods:
+M       cpl_mct/wav_comp_mct.F90
+
+================================================================================
+Originator: altuntas
 Date: 11 Dec 2017
 Model: ww3
 Version: ww3_171211
