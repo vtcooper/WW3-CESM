@@ -1,6 +1,15 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: jedwards
+Date: 01 Oct 2018
+Model: ww3
+Version: ww3_181001
+One-line summary: py3 compatibility, fix for cime issue #2822
+
+M       cime_config/buildnml
+
+================================================================================
 Originator: altuntas
 Date: 15 Jan 2018
 Model: ww3
