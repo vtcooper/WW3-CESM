@@ -7,14 +7,18 @@ if ($#ARGV == -1) {
 my ($CASEROOT) = @ARGV;
 chdir "${CASEROOT}";
 
-my $CASEROOT		= `./xmlquery CASEROOT       --value`;
-my $CASETOOLS		= `./xmlquery CASETOOLS      --value`;
-my $SRCROOT		= `./xmlquery SRCROOT        --value`;
-my $MACH		= `./xmlquery MACH           --value`;
-my $OBJROOT		= `./xmlquery OBJROOT        --value`;
-my $LIBROOT		= `./xmlquery LIBROOT        --value`;
-my $GMAKE_J		= `./xmlquery GMAKE_J        --value`;
-my $GMAKE		= `./xmlquery GMAKE          --value`;
+my $CASEROOT       = `./xmlquery CASEROOT       --value`;
+my $CASETOOLS      = `./xmlquery CASETOOLS      --value`;
+my $SRCROOT        = `./xmlquery SRCROOT        --value`;
+my $MACH           = `./xmlquery MACH           --value`;
+my $OBJROOT        = `./xmlquery OBJROOT        --value`;
+my $LIBROOT        = `./xmlquery LIBROOT        --value`;
+my $GMAKE_J        = `./xmlquery GMAKE_J        --value`;
+my $GMAKE          = `./xmlquery GMAKE          --value`;
+my $EXEROOT        = `./xmlquery EXEROOT        --value`;
+my $MPILIB         = `./xmlquery MPILIB         --value`;
+my $COMP_INTERFACE = `./xmlquery COMP_INTERFACE --value`;
+my $NINST_VALUE    = `./xmlquery NINST_VALUE    --value`;
 
 chdir "$OBJROOT/wav/obj";
 
@@ -25,7 +29,7 @@ print file "${SRCROOT}/components/ww3/src/cpl_share\n";
 print file "${SRCROOT}/components/ww3/src/cpl_mct\n";
 close(file);
 
-my $sysmod = "$GMAKE complib -j $GMAKE_J MODEL=ww3 COMPLIB=$LIBROOT/libwav.a -f $CASETOOLS/Makefile MACFILE=$CASEROOT/Macros.$MACH";
+my $sysmod = "$GMAKE complib -j $GMAKE_J MODEL=ww3 COMPLIB=$LIBROOT/libwav.a -f $CASETOOLS/Makefile CASETOOLS=$CASETOOLS EXEROOT=$EXEROOT MPILIB=$MPILIB COMP_INTERFACE=$COMP_INTERFACE NINST_VALUE=$NINST_VALUE";
 system($sysmod) == 0 or die "ERROR: $sysmod failed: $?\n";
 
 exit(0);
