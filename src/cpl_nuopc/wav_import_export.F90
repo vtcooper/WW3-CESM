@@ -3,10 +3,9 @@ module wav_import_export
   use ESMF
   use NUOPC
   use NUOPC_Model
-  use shr_kind_mod          , only : r8 => shr_kind_r8
-  use shr_nuopc_methods_mod , only : shr_nuopc_methods_chkerr
-  use shr_nuopc_scalars_mod , only : flds_scalar_name, flds_scalar_num
-  use med_constants_mod     , only : dbug_flag=>med_constants_dbug_flag
+  use shr_kind_mod    , only : r8 => shr_kind_r8
+  use shr_cal_mod     , only : shr_cal_ymd2date
+  use wav_shr_methods , only : chkerr
 
   implicit none
   private ! except
@@ -30,7 +29,7 @@ module wav_import_export
   type (fld_list_type)   :: fldsToWav(fldsMax)
   type (fld_list_type)   :: fldsFrWav(fldsMax)
 
-  integer     ,parameter :: debug = 0 ! internal debug level
+  integer     ,parameter :: dbug_flag = 0 ! internal debug level
   character(*),parameter :: u_FILE_u = &
        __FILE__
 
@@ -38,16 +37,16 @@ module wav_import_export
 contains
 !===============================================================================
 
-  subroutine advertise_fields(importState, ExportState, rc)
+  subroutine advertise_fields(importState, ExportState, scalar_name, rc)
 
     ! input/output variables
-    type(ESMF_State)     :: importState
-    type(ESMF_State)     :: exportState
-    integer, intent(out) :: rc
+    type(ESMF_State)               :: importState
+    type(ESMF_State)               :: exportState
+    character(len=*) , intent(in)  :: scalar_name
+    integer          , intent(out) :: rc
 
     ! local variables
     integer          :: n, num
-    integer          :: dbrc
     character(len=*), parameter :: subname='(wav_import_export:advertise_fields)'
     !-------------------------------------------------------------------------------
 
@@ -71,7 +70,7 @@ contains
     do n = 1,fldsToWav_num
        call NUOPC_Advertise(importState, standardName=fldsToWav(n)%stdname, &
             TransferOfferGeomObject='will provide', rc=rc)
-       if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
     end do
 
     !--------------------------------
@@ -88,7 +87,7 @@ contains
     do n = 1,fldsFrWav_num
        call NUOPC_Advertise(exportState, standardName=fldsFrWav(n)%stdname, &
             TransferOfferGeomObject='will provide', rc=rc)
-       if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
     end do
 
   end subroutine advertise_fields
@@ -111,7 +110,7 @@ contains
     rc = ESMF_SUCCESS
 
     call NUOPC_ModelGet(gcomp, importState=importState, exportState=exportState, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call fldlist_realize( &
          state=ExportState, &
@@ -121,7 +120,7 @@ contains
          flds_scalar_num=flds_scalar_num, &
          tag=subname//':WW3Export',&
          mesh=Emesh, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call fldlist_realize( &
          state=importState, &
@@ -131,7 +130,7 @@ contains
          flds_scalar_num=flds_scalar_num, &
          tag=subname//':WW3Import',&
          mesh=Emesh, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   end subroutine realize_fields
 
@@ -148,7 +147,6 @@ contains
     use w3idatmd    , only: TC0, TCN, TLN, TIN, TW0, TWN, WX0, WY0, WXN, WYN
     use w3odatmd    , only: naproc, iaproc
     use w3wdatmd    , only: time
-    use shr_cal_mod , only: shr_cal_ymd2date
     
     ! input/output variables
     type(ESMF_GridComp)  :: gcomp
@@ -181,24 +179,23 @@ contains
     real(r8)          :: def_value
     integer           :: time0(2) ! starting time of the run interval
     integer           :: timen(2) ! ending time of the run interval
-    integer           :: dbrc
     character(len=*), parameter :: subname='(wav_import_export:import_fields)'
     !---------------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
-    call ESMF_LogWrite(subname//' called', ESMF_LOGMSG_INFO, rc=dbrc)
+    call ESMF_LogWrite(subname//' called', ESMF_LOGMSG_INFO)
 
     ! Get import state, clock and vm
 
     call ESMF_GridCompGet(gcomp, clock=clock, importState=importState, vm=vm, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! Determine time0 and timen - note have not advanced the model clock yet with nuopc
 
     call ESMF_ClockGetNextTime( clock, Etime, rc=rc )
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_TimeGet( ETime, yy=yy, mm=mm, dd=dd, s=tod, rc=rc )
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call shr_cal_ymd2date(yy, mm, dd, ymd)
     hh = tod/3600
     mm = (tod - (hh * 3600))/60
@@ -207,9 +204,9 @@ contains
     timen(2) = hh*10000 + mm*100 + ss
 
     call ESMF_ClockGet( clock, currTime=ETime, rc=rc )
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_TimeGet( ETime, yy=yy, mm=mm, dd=dd, s=tod, rc=rc )
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call shr_cal_ymd2date(yy, mm, dd, ymd)
     hh = tod/3600
     mm = (tod - (hh * 3600))/60
@@ -221,21 +218,21 @@ contains
     ! Determine global data 
 
     call state_getfldptr(importState, 'So_u', so_u, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'So_v', so_v, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'So_t', so_t, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'So_bldepth', so_bldepth, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'Sa_u', sa_u, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'Sa_v', sa_v, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'Sa_tbot', sa_tbot, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'Si_ifrac', si_ifrac, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     so_u_global(:)       = 0._r8
     so_v_global(:)       = 0._r8
@@ -344,7 +341,7 @@ contains
     enddo
 100 format(a,i6,2x,d21.14)
 
-    call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO, rc=dbrc)
+    call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO)
 
   end subroutine import_fields
 
@@ -370,28 +367,27 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
-    integer           :: dbrc
     character(len=*), parameter :: subname='(wav_import_export:export_fields)'
     !---------------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
-    call ESMF_LogWrite(subname//' called', ESMF_LOGMSG_INFO, rc=dbrc)
+    call ESMF_LogWrite(subname//' called', ESMF_LOGMSG_INFO)
 
     ! Get export state
     call NUOPC_ModelGet(gcomp, exportState=exportState, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! copy ww3 data to coupling datatype
     ! copy enhancement factor, uStokes, vStokes to coupler
 
     call state_getfldptr(exportState, 'Sw_lamult', sw_lamult, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call state_getfldptr(exportState, 'Sw_ustokes', sw_ustokes, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do jsea=1, nseal
        isea = iaproc + (jsea-1)*naproc
@@ -421,7 +417,6 @@ contains
 
     ! local variables
     integer :: rc
-    integer :: dbrc
     character(len=*), parameter :: subname='(wav_import_export:fldlist_add)'
     !-------------------------------------------------------------------------------
 
@@ -430,7 +425,7 @@ contains
     num = num + 1
     if (num > fldsMax) then
        call ESMF_LogWrite(trim(subname)//": ERROR num > fldsMax "//trim(stdname), &
-            ESMF_LOGMSG_ERROR, line=__LINE__, file=__FILE__, rc=dbrc)
+            ESMF_LOGMSG_ERROR, line=__LINE__, file=__FILE__)
        return
     endif
     fldlist(num)%stdname = trim(stdname)
@@ -458,7 +453,6 @@ contains
     integer             , intent(inout) :: rc
 
     ! local variables
-    integer                :: dbrc
     integer                :: n
     type(ESMF_Field)       :: field
     character(len=80)      :: stdname
@@ -472,7 +466,7 @@ contains
        if (NUOPC_IsConnected(state, fieldName=stdname)) then
           if (stdname == trim(flds_scalar_name)) then
              call ESMF_LogWrite(trim(subname)//trim(tag)//" Field = "//trim(stdname)//" is connected on root pe", &
-                  ESMF_LOGMSG_INFO, rc=dbrc)
+                  ESMF_LOGMSG_INFO)
 
              ! Create the scalar field
              call SetScalarField(field, flds_scalar_name, flds_scalar_num, rc=rc)
@@ -481,7 +475,7 @@ contains
           else
 
              call ESMF_LogWrite(trim(subname)//trim(tag)//" Field = "//trim(stdname)//" is connected using mesh", &
-                  ESMF_LOGMSG_INFO, rc=dbrc)
+                  ESMF_LOGMSG_INFO)
              ! Create the field
              field = ESMF_FieldCreate(mesh, ESMF_TYPEKIND_R8, name=stdname, meshloc=ESMF_MESHLOC_ELEMENT, rc=rc)
              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
@@ -496,7 +490,7 @@ contains
 
           if (stdname /= trim(flds_scalar_name)) then
              call ESMF_LogWrite(subname // trim(tag) // " Field = "// trim(stdname) // " is not connected.", &
-                  ESMF_LOGMSG_INFO, rc=dbrc)
+                  ESMF_LOGMSG_INFO)
              call ESMF_StateRemove(state, (/stdname/), rc=rc)
              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
           end if
@@ -562,21 +556,20 @@ contains
     type(ESMF_FieldStatus_Flag) :: status
     type(ESMF_Field)            :: lfield
     type(ESMF_Mesh)             :: lmesh
-    integer                     :: dbrc
     integer                     :: nnodes, nelements
     character(len=*), parameter :: subname='(wav_import_export:state_getfldptr)'
     ! ----------------------------------------------
 
     rc = ESMF_SUCCESS
     if (dbug_flag > 5) then
-       call ESMF_LogWrite(trim(subname)//": called", ESMF_LOGMSG_INFO, rc=dbrc)
+       call ESMF_LogWrite(trim(subname)//": called", ESMF_LOGMSG_INFO)
     end if
 
     call ESMF_StateGet(State, itemName=trim(fldname), field=lfield, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldGet(lfield, status=status, rc=rc)
-    if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if (status /= ESMF_FIELDSTATUS_COMPLETE) then
        call ESMF_LogWrite(trim(subname)//": ERROR data not allocated ", ESMF_LOGMSG_INFO, rc=rc)
@@ -584,23 +577,23 @@ contains
        return
     else
        call ESMF_FieldGet(lfield, mesh=lmesh, rc=rc)
-       if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        call ESMF_MeshGet(lmesh, numOwnedNodes=nnodes, numOwnedElements=nelements, rc=rc)
-       if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        if (nnodes == 0 .and. nelements == 0) then
-          call ESMF_LogWrite(trim(subname)//": no local nodes or elements ", ESMF_LOGMSG_INFO, rc=dbrc)
+          call ESMF_LogWrite(trim(subname)//": no local nodes or elements ", ESMF_LOGMSG_INFO)
           rc = ESMF_FAILURE
           return
        end if
 
        call ESMF_FieldGet(lfield, farrayPtr=fldptr, rc=rc)
-       if (shr_nuopc_methods_ChkErr(rc,__LINE__,u_FILE_u)) return
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif  ! status
 
     if (dbug_flag > 5) then
-       call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO, rc=dbrc)
+       call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO)
     end if
 
   end subroutine state_getfldptr
