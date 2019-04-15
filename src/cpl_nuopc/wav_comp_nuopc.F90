@@ -305,6 +305,7 @@ contains
     ! local variables
     character(len=CL) :: logmsg
     logical           :: isPresent, isSet
+    character(len=CL) :: cvalue
     character(len=*), parameter :: subname=trim(modName)//':(InitializeAdvertise) '
     !-------------------------------------------------------------------------------
 

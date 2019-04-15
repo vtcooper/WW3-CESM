@@ -37,12 +37,12 @@ module wav_import_export
 contains
 !===============================================================================
 
-  subroutine advertise_fields(importState, ExportState, scalar_name, rc)
+  subroutine advertise_fields(importState, ExportState, flds_scalar_name, rc)
 
     ! input/output variables
     type(ESMF_State)               :: importState
     type(ESMF_State)               :: exportState
-    character(len=*) , intent(in)  :: scalar_name
+    character(len=*) , intent(in)  :: flds_scalar_name
     integer          , intent(out) :: rc
 
     ! local variables
@@ -94,12 +94,14 @@ contains
 
 !===============================================================================
 
-  subroutine realize_fields(gcomp, Emesh, rc)
+  subroutine realize_fields(gcomp, Emesh, flds_scalar_name, flds_scalar_num, rc)
 
     ! input/output variables
-    type(ESMF_GridComp)  :: gcomp
-    type(ESMF_Mesh)      :: Emesh
-    integer, intent(out) :: rc
+    type(ESMF_GridComp)            :: gcomp
+    type(ESMF_Mesh)                :: Emesh
+    character(len=*) , intent(in)  :: flds_scalar_name
+    integer          , intent(in)  :: flds_scalar_num
+    integer          , intent(out) :: rc
 
     ! local variables
     type(ESMF_State)     :: importState

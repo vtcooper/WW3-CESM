@@ -322,7 +322,7 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do n = 1, fieldCount
-       call ESMF_StateGet(State, itemName=trim(fieldnamelist(n)), field=lfield, rc=rc)
+       call ESMF_StateGet(State, itemName=trim(lfieldnamelist(n)), field=lfield, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        call field_getfldptr(lfield, fldptr1=fldptr1, fldptr2=fldptr2, rank=lrank, rc=rc)
@@ -335,7 +335,7 @@ contains
        elseif (lrank == 2) then
           fldptr2 = reset_value
        else
-          call ESMF_LogWrite(trim(subname)//": ERROR in rank "//trim(fldname), ESMF_LOGMSG_ERROR)
+          call ESMF_LogWrite(trim(subname)//": ERROR in rank "//trim(lfieldnamelist(n)), ESMF_LOGMSG_ERROR)
           rc = ESMF_FAILURE
           return
        endif
