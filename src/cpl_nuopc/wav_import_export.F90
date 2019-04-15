@@ -94,11 +94,11 @@ contains
 
 !===============================================================================
 
-  subroutine realize_fields(gcomp, Emesh, flds_scalar_name, flds_scalar_num, rc)
+  subroutine realize_fields(gcomp, mesh, flds_scalar_name, flds_scalar_num, rc)
 
     ! input/output variables
     type(ESMF_GridComp)            :: gcomp
-    type(ESMF_Mesh)                :: Emesh
+    type(ESMF_Mesh)                :: mesh
     character(len=*) , intent(in)  :: flds_scalar_name
     integer          , intent(in)  :: flds_scalar_num
     integer          , intent(out) :: rc
@@ -121,7 +121,7 @@ contains
          flds_scalar_name=flds_scalar_name, &
          flds_scalar_num=flds_scalar_num, &
          tag=subname//':WW3Export',&
-         mesh=Emesh, rc=rc)
+         mesh=mesh, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call fldlist_realize( &
@@ -131,7 +131,7 @@ contains
          flds_scalar_name=flds_scalar_name, &
          flds_scalar_num=flds_scalar_num, &
          tag=subname//':WW3Import',&
-         mesh=Emesh, rc=rc)
+         mesh=mesh, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   end subroutine realize_fields

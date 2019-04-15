@@ -181,7 +181,7 @@ module wav_comp_nuopc
   use shr_nl_mod            , only : shr_nl_find_group_name
   use shr_mpi_mod           , only : shr_mpi_bcast
   use shr_kind_mod          , only : r8=>shr_kind_r8, i8=>shr_kind_i8, cl=>shr_kind_cl, cs=>shr_kind_cs
-  use shr_file_mod          , only : shr_file_getLogUnit, shr_file_setLogUnit
+  use shr_file_mod          , only : shr_file_getLogUnit, shr_file_setLogUnit, shr_file_getunit
   use shr_cal_mod           , only : shr_cal_ymd2date
   use wav_import_export     , only : advertise_fields, realize_fields, import_fields, export_fields
   use wav_import_export     , only : state_getfldptr
@@ -870,7 +870,7 @@ contains
     ! Realize the actively coupled fields
     !--------------------------------------------------------------------
 
-    call realize_fields(gcomp, mesh=Emesh, flds_scalar_name, flds_scalar_num, rc)
+    call realize_fields(gcomp, mesh=Emesh, flds_scalar_name=flds_scalar_name, flds_scalar_num=flds_scalar_num, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     !--------------------------------------------------------------------
@@ -1208,7 +1208,7 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     read(cvalue,*) history_ymd
 
-    call time_alarmInit(mclock, history_alarm, history_option, &
+    call alarmInit(mclock, history_alarm, history_option, &
          opt_n   = history_n,           &
          opt_ymd = history_ymd,         &
          RefTime = mcurrTime,           &
