@@ -155,7 +155,7 @@ module wav_comp_nuopc
   use w3wdatmd              , only: time, w3ndat, w3dimw, w3setw
   use w3adatmd
   use w3idatmd              , only: flags, w3seti, w3ninp
-  use w3idatmd              , only: TC0, CX0, CY0, TCN, CXN, CYN, NX, NY
+  use w3idatmd              , only: TC0, CX0, CY0, TCN, CXN, CYN
   use w3idatmd              , only: TW0, WX0, WY0, DT0, TWN, WXN, WYN, DTN
   use w3idatmd              , only: TIN, ICEI, TLN, WLEV, HML
   use w3odatmd              , only: w3nout, w3seto, naproc, iaproc, napout, naperr
@@ -261,7 +261,6 @@ contains
 
     call ESMF_MethodRemove(gcomp, label=model_label_SetRunClock, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
     call NUOPC_CompSpecialize(gcomp, specLabel=model_label_SetRunClock, &
          specRoutine=ModelSetRunClock, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -1010,7 +1009,7 @@ contains
        ! output every outfreq hours
        histwr = .true.
     else
-       call ESMF_ClockGetAlarm(clock, alarmname='alarm_restart', alarm=alarm, rc=rc)
+       call ESMF_ClockGetAlarm(clock, alarmname='alarm_history', alarm=alarm, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
        if (ESMF_AlarmIsRinging(alarm, rc=rc)) then
           if (ChkErr(rc,__LINE__,u_FILE_u)) return

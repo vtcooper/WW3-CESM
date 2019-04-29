@@ -82,7 +82,7 @@ contains
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_lamult' )
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_ustokes')
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_vstokes')
-    call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_hstokes')
+   !call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_hstokes')
 
     do n = 1,fldsFrWav_num
        call NUOPC_Advertise(exportState, standardName=fldsFrWav(n)%stdname, &
@@ -147,7 +147,7 @@ contains
     use w3gdatmd    , only: nseal, MAPSTA, MAPFS, MAPSF, NX, NY
     use w3idatmd    , only: CX0, CY0, CXN, CYN, DT0, DTN, ICEI, HML, WLEV, flags
     use w3idatmd    , only: TC0, TCN, TLN, TIN, TW0, TWN, WX0, WY0, WXN, WYN
-    use w3odatmd    , only: naproc, iaproc
+    use w3odatmd    , only: naproc, iaproc, napout
     use w3wdatmd    , only: time
     
     ! input/output variables
@@ -159,6 +159,7 @@ contains
     type(ESMF_VM)     :: vm
     type(ESMF_Clock)  :: clock 
     type(ESMF_Time)   :: ETime
+    type(ESMF_Field)  :: lfield
     integer           :: ymd, tod
     integer           :: yy, mm, dd, hh, ss
     real(r8)          :: so_u_global(nx*ny)
@@ -261,21 +262,21 @@ contains
     end do
 
     call ESMF_VMAllReduce(vm, sendData=so_u_global       , recvData=so_u_global       , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=so_v_global       , recvData=so_v_global       , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=so_t_global       , recvData=so_t_global       , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=so_bldepth_global , recvData=so_bldepth_global , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=sa_u_global       , recvData=sa_u_global       , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=sa_v_global       , recvData=sa_v_global       , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=sa_tbot_global    , recvData=sa_tbot_global    , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
     call ESMF_VMAllReduce(vm, sendData=si_ifrac_global   , recvData=si_ifrac_global   , count=nx*ny, &
-         reduceflag=ESMF_REDUCE_MAX, rc=rc)
+         reduceflag=ESMF_REDUCE_SUM, rc=rc)
 
     ! input fields associated with W3FLDG calls in ww3_shel.ftn
     ! these arrays are global, just fill the local cells for use later
@@ -355,9 +356,10 @@ contains
     ! Create the export state
     !---------------------------------------------------------------------------
 
-    use w3adatmd, only: LAMULT, USSX, USSY
-    use w3odatmd, only: naproc, iaproc
-    use w3gdatmd, only: nseal, MAPSTA, MAPFS, MAPSF
+    use shr_const_mod , only : fillvalue=>SHR_CONST_SPVAL
+    use w3adatmd      , only : LAMULT, USSX, USSY
+    use w3odatmd      , only : naproc, iaproc
+    use w3gdatmd      , only : nseal, MAPSTA, MAPFS, MAPSF
 
     ! input/output/variables
     type(ESMF_GridComp)  :: gcomp
@@ -365,7 +367,7 @@ contains
 
     ! Local variables
     type(ESMF_State)  :: exportState
-    integer           :: n, jsea, isea, ix, iy
+    integer           :: n, jsea, isea, ix, iy, lsize
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
@@ -407,6 +409,14 @@ contains
        endif
        ! sw_hstokes(jsea) = ??
     enddo
+
+    ! Fill in the local land points with fill value
+    lsize = size(sw_lamult)
+    do n = nseal+1,lsize
+       sw_lamult(n)  = fillvalue
+       sw_ustokes(n) = fillvalue
+       sw_vstokes(n) = fillvalue
+    end do
 
   end subroutine export_fields
 
