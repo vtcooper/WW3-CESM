@@ -1,6 +1,15 @@
 ================================================================================
 ww3 ChangeLog
 ================================================================================
+Originator: fischer
+Date: 04 Apr 2019
+Model: ww3
+Version: ww3_190402
+One-line summary: Build system cleanup, fix for cime issue #3024
+
+M       cime_config/buildlib
+
+================================================================================
 Originator: jedwards
 Date: 01 Oct 2018
 Model: ww3
