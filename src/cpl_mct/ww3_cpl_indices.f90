@@ -1,21 +1,19 @@
 module ww3_cpl_indices
-  
+
   use seq_flds_mod
   use mct_mod
 
   implicit none
+  public                               ! By default make data public
 
-  SAVE
-  public                               ! By default make data private
-
-  integer :: index_x2w_Sa_u     
-  integer :: index_x2w_Sa_v     
-  integer :: index_x2w_Sa_tbot  
+  integer :: index_x2w_Sa_u
+  integer :: index_x2w_Sa_v
+  integer :: index_x2w_Sa_tbot
   integer :: index_x2w_Si_ifrac
-  integer :: index_x2w_So_t     
-  integer :: index_x2w_So_u     
-  integer :: index_x2w_So_v     
-  integer :: index_x2w_So_bldepth     
+  integer :: index_x2w_So_t
+  integer :: index_x2w_So_u
+  integer :: index_x2w_So_v
+  integer :: index_x2w_So_bldepth
 
   integer :: index_w2x_Sw_lamult
   integer :: index_w2x_Sw_ustokes
