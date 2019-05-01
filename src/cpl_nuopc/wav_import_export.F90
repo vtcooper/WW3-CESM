@@ -170,6 +170,7 @@ contains
     real(r8)          :: sa_v_global(nx*ny)
     real(r8)          :: sa_tbot_global(nx*ny)
     real(r8)          :: si_ifrac_global(nx*ny)
+    real(r8), pointer :: temp_global(:)
     real(r8), pointer :: so_u(:)
     real(r8), pointer :: so_v(:)
     real(r8), pointer :: so_t(:)
@@ -261,22 +262,41 @@ contains
        si_ifrac_global   (ix + (iy-1)*nx) = si_ifrac(n)
     end do
 
-    call ESMF_VMAllReduce(vm, sendData=so_u_global       , recvData=so_u_global       , count=nx*ny, &
+    allocate(temp_global(nseal))
+
+    call ESMF_VMAllReduce(vm, sendData=so_u_global       , recvData=temp_global       , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=so_v_global       , recvData=so_v_global       , count=nx*ny, &
+    so_u_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=so_v_global       , recvData=temp_global       , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=so_t_global       , recvData=so_t_global       , count=nx*ny, &
+    so_v_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=so_t_global       , recvData=temp_global       , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=so_bldepth_global , recvData=so_bldepth_global , count=nx*ny, &
+    so_t_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=so_bldepth_global , recvData=temp_global , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=sa_u_global       , recvData=sa_u_global       , count=nx*ny, &
+    so_bldepth_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=sa_u_global       , recvData=temp_global       , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=sa_v_global       , recvData=sa_v_global       , count=nx*ny, &
+    sa_u_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=sa_v_global       , recvData=temp_global       , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=sa_tbot_global    , recvData=sa_tbot_global    , count=nx*ny, &
+    sa_v_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=sa_tbot_global    , recvData=temp_global    , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
-    call ESMF_VMAllReduce(vm, sendData=si_ifrac_global   , recvData=si_ifrac_global   , count=nx*ny, &
+    sa_tbot_global = temp_global
+
+    call ESMF_VMAllReduce(vm, sendData=si_ifrac_global   , recvData=temp_global   , count=nx*ny, &
          reduceflag=ESMF_REDUCE_SUM, rc=rc)
+    si_ifrac_global = temp_global
+
+    deallocate(temp_global)
 
     ! input fields associated with W3FLDG calls in ww3_shel.ftn
     ! these arrays are global, just fill the local cells for use later
