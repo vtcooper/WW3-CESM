@@ -21,6 +21,8 @@ module wav_import_export
 
   type fld_list_type
      character(len=128) :: stdname
+     integer :: ungridded_lbound = 0
+     integer :: ungridded_ubound = 0
   end type fld_list_type
 
   integer, parameter     :: fldsMax = 100
@@ -83,6 +85,8 @@ contains
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_ustokes')
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_vstokes')
    !call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_hstokes')
+    call fldlist_add(fldsFrWav_num, fldsFrWav, 'wave_elevation_spectrun', &
+         ungridded_lbound=1, ungridded_ubound=25)  ! TODO: make 25 general
 
     do n = 1,fldsFrWav_num
        call NUOPC_Advertise(exportState, standardName=fldsFrWav(n)%stdname, &
@@ -379,6 +383,7 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
+    real(r8), pointer :: wave_elevation_spectrum(:,:)
     character(len=*), parameter :: subname='(wav_import_export:export_fields)'
     !---------------------------------------------------------------------------
 
@@ -392,13 +397,16 @@ contains
     ! copy ww3 data to coupling datatype
     ! copy enhancement factor, uStokes, vStokes to coupler
 
-    call state_getfldptr(exportState, 'Sw_lamult', sw_lamult, rc)
+    call state_getfldptr(exportState, 'Sw_lamult', fldptr1d=sw_lamult, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'Sw_ustokes', sw_ustokes, rc)
+    call state_getfldptr(exportState, 'Sw_ustokes', fldptr1d=sw_ustokes, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc)
+    call state_getfldptr(exportState, 'Sw_vstokes', fldptr1d=sw_vstokes, rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call state_getfldptr(exportState, 'wave_elevation_spectrun', fldptr2d=wave_elevation_spectrum, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do jsea=1, nseal
@@ -410,11 +418,15 @@ contains
           sw_lamult(jsea)  = LAMULT(ISEA)
           sw_ustokes(jsea) = USSX(ISEA)
           sw_vstokes(jsea) = USSY(ISEA)
+          do k = 1,25 ! TODO: genralize
+             wave_elevation_spectrum(jsea,k) = EF(isea,k) ! TODO: need to add where EF is used and its dimensions
+          end do
        else
           sw_lamult(jsea)  = 1.
           sw_ustokes(jsea) = 0.
           sw_vstokes(jsea) = 0.
        endif
+
        ! sw_hstokes(jsea) = ??
     enddo
 
@@ -454,29 +466,29 @@ contains
 
   !===============================================================================
 
-  subroutine fldlist_realize(state, fldList, numflds, flds_scalar_name, flds_scalar_num, mesh, tag, rc)
+  subroutine fldlist_realize(state, fldList, numflds, flds_scalar_name, flds_scalar_num, tag, rc)
 
-    use NUOPC , only : NUOPC_IsConnected, NUOPC_Realize
-    use ESMF  , only : ESMF_MeshLoc_Element, ESMF_FieldCreate, ESMF_TYPEKIND_R8
-    use ESMF  , only : ESMF_MAXSTR, ESMF_Field, ESMF_State, ESMF_Mesh, ESMF_StateRemove
-    use ESMF  , only : ESMF_LogFoundError, ESMF_LOGMSG_INFO, ESMF_SUCCESS
-    use ESMF  , only : ESMF_LogWrite, ESMF_LOGMSG_ERROR, ESMF_LOGERR_PASSTHRU
+    use NUOPC, only : NUOPC_IsConnected, NUOPC_Realize
+    use ESMF , only : ESMF_MeshLoc_Element, ESMF_FieldCreate, ESMF_TYPEKIND_R8
+    use ESMF , only : ESMF_MAXSTR, ESMF_Field, ESMF_State, ESMF_Mesh, ESMF_StateRemove
+    use ESMF , only : ESMF_LogFoundError, ESMF_LOGMSG_INFO, ESMF_SUCCESS
+    use ESMF , only : ESMF_LogWrite, ESMF_LOGMSG_ERROR, ESMF_LOGERR_PASSTHRU
+    use ESMF , only : ESMF_VM
 
     ! input/output variables
-    type(ESMF_State)    , intent(inout) :: state
-    type(fld_list_type) , intent(in)    :: fldList(:)
-    integer             , intent(in)    :: numflds
-    character(len=*)    , intent(in)    :: flds_scalar_name
-    integer             , intent(in)    :: flds_scalar_num
-    character(len=*)    , intent(in)    :: tag
-    type(ESMF_Mesh)     , intent(in)    :: mesh
-    integer             , intent(inout) :: rc
+    type(ESMF_State)          , intent(inout) :: state
+    type(fld_list_type)       , intent(in)    :: fldList(:)
+    integer                   , intent(in)    :: numflds
+    character(len=*)          , intent(in)    :: flds_scalar_name
+    integer                   , intent(in)    :: flds_scalar_num
+    character(len=*)          , intent(in)    :: tag
+    integer                   , intent(inout) :: rc
 
     ! local variables
     integer                :: n
     type(ESMF_Field)       :: field
     character(len=80)      :: stdname
-    character(len=*),parameter  :: subname='(wav_import_export:fldlist_realize)'
+    character(len=*),parameter  :: subname='(ice_import_export:fld_list_realize)'
     ! ----------------------------------------------
 
     rc = ESMF_SUCCESS
@@ -487,34 +499,35 @@ contains
           if (stdname == trim(flds_scalar_name)) then
              call ESMF_LogWrite(trim(subname)//trim(tag)//" Field = "//trim(stdname)//" is connected on root pe", &
                   ESMF_LOGMSG_INFO)
-
              ! Create the scalar field
              call SetScalarField(field, flds_scalar_name, flds_scalar_num, rc=rc)
-             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
-
+             if (ChkErr(rc,__LINE__,u_FILE_u)) return
           else
-
              call ESMF_LogWrite(trim(subname)//trim(tag)//" Field = "//trim(stdname)//" is connected using mesh", &
                   ESMF_LOGMSG_INFO)
              ! Create the field
-             field = ESMF_FieldCreate(mesh, ESMF_TYPEKIND_R8, name=stdname, meshloc=ESMF_MESHLOC_ELEMENT, rc=rc)
-             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
-
-          endif
+             if (fldlist(n)%ungridded_lbound > 0 .and. fldlist(n)%ungridded_ubound > 0) then
+                field = ESMF_FieldCreate(mesh, ESMF_TYPEKIND_R8, name=stdname, meshloc=ESMF_MESHLOC_ELEMENT, &
+                     ungriddedLbound=(/fldlist(n)%ungridded_lbound/), &
+                     ungriddedUbound=(/fldlist(n)%ungridded_ubound/), &
+                     gridToFieldMap=(/2/), rc=rc)
+                if (ChkErr(rc,__LINE__,u_FILE_u)) return
+             else
+                field = ESMF_FieldCreate(mesh, ESMF_TYPEKIND_R8, name=stdname, meshloc=ESMF_MESHLOC_ELEMENT, rc=rc)
+                if (ChkErr(rc,__LINE__,u_FILE_u)) return
+             end if
+          end if ! if not scalar field
 
           ! NOW call NUOPC_Realize
           call NUOPC_Realize(state, field=field, rc=rc)
-          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
-
+          if (ChkErr(rc,__LINE__,u_FILE_u)) return
        else
-
           if (stdname /= trim(flds_scalar_name)) then
              call ESMF_LogWrite(subname // trim(tag) // " Field = "// trim(stdname) // " is not connected.", &
                   ESMF_LOGMSG_INFO)
              call ESMF_StateRemove(state, (/stdname/), rc=rc)
-             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
+             if (ChkErr(rc,__LINE__,u_FILE_u)) return
           end if
-
        end if
     end do
 
@@ -536,21 +549,21 @@ contains
       ! local variables
       type(ESMF_Distgrid) :: distgrid
       type(ESMF_Grid)     :: grid
-      character(len=*), parameter :: subname='(wav_import_export:SetScalarField)'
+      character(len=*), parameter :: subname='(ice_import_export:SetScalarField)'
       ! ----------------------------------------------
 
       rc = ESMF_SUCCESS
 
       ! create a DistGrid with a single index space element, which gets mapped onto DE 0.
       distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/1/), rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       grid = ESMF_GridCreate(distgrid, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       field = ESMF_FieldCreate(name=trim(flds_scalar_name), grid=grid, typekind=ESMF_TYPEKIND_R8, &
-           ungriddedLBound=(/1/), ungriddedUBound=(/flds_scalar_num/), gridToFieldMap=(/2/), rc=rc) ! num of scalar values
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
+           ungriddedLBound=(/1/), ungriddedUBound=(/flds_scalar_num/), gridToFieldMap=(/2/), rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     end subroutine SetScalarField
 
@@ -558,7 +571,7 @@ contains
 
   !===============================================================================
 
-  subroutine state_getfldptr(State, fldname, fldptr, rc)
+  subroutine state_getfldptr(State, fldname, fldptr1d, fldptrt2d, rc)
     ! ----------------------------------------------
     ! Get pointer to a state field
     ! ----------------------------------------------
@@ -569,7 +582,8 @@ contains
     ! input/output variables
     type(ESMF_State),  intent(in)    :: State
     character(len=*),  intent(in)    :: fldname
-    real(R8), pointer, intent(out)   :: fldptr(:)
+    real(R8), pointer, optional, intent(out)   :: fldptr1d(:)
+    real(R8), pointer, optional, intent(out)   :: fldptr2d(:,:)
     integer,           intent(out)   :: rc
 
     ! local variables

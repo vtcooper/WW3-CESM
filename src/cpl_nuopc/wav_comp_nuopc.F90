@@ -855,7 +855,8 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! read in the mesh with an auto-generated distGrid
-    EMeshTemp = ESMF_MeshCreate(filename=trim(cvalue), fileformat=ESMF_FILEFORMAT_ESMFMESH, rc=rc)
+    EMeshTemp = ESMF_MeshCreate(filename=trim(cvalue), fileformat=ESMF_FILEFORMAT_ESMFMESH, &
+         addUserArea=.true., rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (masterproc) then
        write(stdout,*)'mesh file for domain is ',trim(cvalue)
