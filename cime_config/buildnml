@@ -147,12 +147,16 @@ def buildnml(case, caseroot, compname):
     rundir = case.get_value("RUNDIR")
     din_loc_root = case.get_value("DIN_LOC_ROOT")
 
-    file1 = os.path.join(din_loc_root, "wav", "ww3", "core2_G4_wns_30min_20000601_to_05.nc")
+    #HK use C. Bitz grids
+    #file1 = os.path.join(din_loc_root, "wav", "ww3", "core2_G4_wns_30min_20000601_to_05.nc")
+    file1 = os.path.join("/glade/scratch/hkershaw/wwatch3v6p07/IC4M3IS0k/", "wind.ww3")
     file2 = os.path.join(rundir, "wind.ww3")
     if os.path.isfile(file1):
         shutil.copy(file1, file2)
 
-    file1 = os.path.join(din_loc_root, "wav", "ww3", "G4L1.mod_def.ww3.121031")
+    #HK use C. Bitz grids
+    #file1 = os.path.join(din_loc_root, "wav", "ww3", "G4L1.mod_def.ww3.121031")
+    file1 = os.path.join("/glade/scratch/hkershaw/wwatch3v6p07/IC4M3IS0k/", "mod_def.ww3")
     file2 = os.path.join(rundir, "mod_def.ww3")
     if os.path.isfile(file1):
         shutil.copy(file1, file2)
