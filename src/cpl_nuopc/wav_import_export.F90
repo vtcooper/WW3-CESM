@@ -296,12 +296,13 @@ contains
     ! fill with special values as default, these should not be used in practice
     ! set time for input data to time0 and timen (shouldn't matter)
 
+    !HK flags is now INFLAGS1
     def_value = 0.0
-    if (flags(1)) then
+    if (INFLAGS1(1)) then 
        TLN  = timen
        WLEV = def_value   ! ssh
     endif
-    if (flags(2)) then
+    if (INFLAGS1(2)) then
        TC0  = time0       ! times for ocn current fields
        TCN  = timen       
        CX0  = def_value   ! ocn u current
@@ -309,7 +310,7 @@ contains
        CY0  = def_value   ! ocn v current
        CYN  = def_value
     endif
-    if (flags(3)) then
+    if (INFLAGS1(3)) then
        TW0  = time0       ! times for atm wind/temp fields.
        TWN  = timen
        WX0  = def_value   ! atm u wind
@@ -319,7 +320,7 @@ contains
        DT0  = def_value   ! air temp - ocn temp
        DTN  = def_value
     endif
-    if (flags(4)) then
+    if (INFLAGS1(4)) then
        TIN  = timen       ! time for ice field
        ICEI = def_value   ! ice frac
     endif
@@ -329,16 +330,16 @@ contains
     do iy = 1,NY
        do ix = 1,NX
           n = n + 1
-          if (flags(1)) then
+          if (INFLAGS1(1)) then
              WLEV(ix,iy) = 0.0
           endif
-          if (flags(2)) then
+          if (INFLAGS1(2)) then
              CX0(ix,iy)  = so_u_global(n) ! ocn u current
              CXN(ix,iy)  = so_u_global(n)
              CY0(ix,iy)  = so_v_global(n) ! ocn v current
              CYN(ix,iy)  = so_v_global(n)
           endif
-          if (flags(3)) then
+          if (INFLAGS1(3)) then
              WX0(ix,iy)  = sa_u_global(n)  ! atm u wind
              WXN(ix,iy)  = sa_u_global(n)
              WY0(ix,iy)  = sa_v_global(n)  ! atm v wind
@@ -346,10 +347,10 @@ contains
              DT0(ix,iy)  = sa_tbot_global(n) - so_t_global(n)  ! air temp - ocn temp
              DTN(ix,iy)  = sa_tbot_global(n) - so_t_global(n)
           endif
-          if (flags(4)) then
+          if (INFLAGS1(4)) then
              ICEI(ix,iy) = si_ifrac_global(n) ! ice frac
           endif
-          if (flags(5)) then
+          if (INFLAGS1(5)) then
              HML(ix,iy) = max(so_bldepth_global(n), 5.) ! ocn mixing layer depth
           endif
        enddo
@@ -488,7 +489,7 @@ contains
     integer                :: n
     type(ESMF_Field)       :: field
     character(len=80)      :: stdname
-    character(len=*),parameter  :: subname='(ice_import_export:fld_list_realize)'
+    character(len=*),parameter  :: subname='(wav_import_export:fldlist_realize)'
     ! ----------------------------------------------
 
     rc = ESMF_SUCCESS
@@ -549,21 +550,21 @@ contains
       ! local variables
       type(ESMF_Distgrid) :: distgrid
       type(ESMF_Grid)     :: grid
-      character(len=*), parameter :: subname='(ice_import_export:SetScalarField)'
+      character(len=*), parameter :: subname='(wav_import_export:SetScalarField)'
       ! ----------------------------------------------
 
       rc = ESMF_SUCCESS
 
       ! create a DistGrid with a single index space element, which gets mapped onto DE 0.
       distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/1/), rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
 
       grid = ESMF_GridCreate(distgrid, rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
 
       field = ESMF_FieldCreate(name=trim(flds_scalar_name), grid=grid, typekind=ESMF_TYPEKIND_R8, &
-           ungriddedLBound=(/1/), ungriddedUBound=(/flds_scalar_num/), gridToFieldMap=(/2/), rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+           ungriddedLBound=(/1/), ungriddedUBound=(/flds_scalar_num/), gridToFieldMap=(/2/), rc=rc) ! num of scalar values
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=u_FILE_u)) return
 
     end subroutine SetScalarField
 
