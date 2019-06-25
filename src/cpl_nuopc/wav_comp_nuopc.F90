@@ -1070,11 +1070,11 @@ contains
     call NUOPC_ModelGet(gcomp, exportState=exportState, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'Sw_lamult', sw_lamult, rc)
+    call state_getfldptr(exportState, 'Sw_lamult', sw_lamult, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(exportState, 'Sw_ustokes', sw_ustokes, rc)
+    call state_getfldptr(exportState, 'Sw_ustokes', sw_ustokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc)
+    call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do jsea=1, nseal
