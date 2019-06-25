@@ -149,7 +149,7 @@ contains
     !---------------------------------------------------------------------------
 
     use w3gdatmd    , only: nseal, MAPSTA, MAPFS, MAPSF, NX, NY
-    use w3idatmd    , only: CX0, CY0, CXN, CYN, DT0, DTN, ICEI, HML, WLEV, flags
+    use w3idatmd    , only: CX0, CY0, CXN, CYN, DT0, DTN, ICEI, HML, WLEV, INFLAGS1
     use w3idatmd    , only: TC0, TCN, TLN, TIN, TW0, TWN, WX0, WY0, WXN, WYN
     use w3odatmd    , only: naproc, iaproc, napout
     use w3wdatmd    , only: time
@@ -225,21 +225,21 @@ contains
 
     ! Determine global data 
 
-    call state_getfldptr(importState, 'So_u', so_u, rc)
+    call state_getfldptr(importState, 'So_u', fldptr1d=so_u, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'So_v', so_v, rc)
+    call state_getfldptr(importState, 'So_v', fldptr1d=so_v, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'So_t', so_t, rc)
+    call state_getfldptr(importState, 'So_t', fldptr1d=so_t, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'So_bldepth', so_bldepth, rc)
+    call state_getfldptr(importState, 'So_bldepth', fldptr1d=so_bldepth, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'Sa_u', sa_u, rc)
+    call state_getfldptr(importState, 'Sa_u', fldptr1d=sa_u, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'Sa_v', sa_v, rc)
+    call state_getfldptr(importState, 'Sa_v', fldptr1d=sa_v, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'Sa_tbot', sa_tbot, rc)
+    call state_getfldptr(importState, 'Sa_tbot', fldptr1d=sa_tbot, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(importState, 'Si_ifrac', si_ifrac, rc)
+    call state_getfldptr(importState, 'Si_ifrac', fldptr1d=si_ifrac, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     so_u_global(:)       = 0._r8
@@ -370,7 +370,7 @@ contains
     !---------------------------------------------------------------------------
 
     use shr_const_mod , only : fillvalue=>SHR_CONST_SPVAL
-    use w3adatmd      , only : LAMULT, USSX, USSY
+    use w3adatmd      , only : LAMULT, USSX, USSY, EF
     use w3odatmd      , only : naproc, iaproc
     use w3gdatmd      , only : nseal, MAPSTA, MAPFS, MAPSF
 
@@ -380,7 +380,7 @@ contains
 
     ! Local variables
     type(ESMF_State)  :: exportState
-    integer           :: n, jsea, isea, ix, iy, lsize
+    integer           :: n, jsea, isea, ix, iy, lsize, k
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
@@ -398,16 +398,16 @@ contains
     ! copy ww3 data to coupling datatype
     ! copy enhancement factor, uStokes, vStokes to coupler
 
-    call state_getfldptr(exportState, 'Sw_lamult', fldptr1d=sw_lamult, rc)
+    call state_getfldptr(exportState, 'Sw_lamult', fldptr1d=sw_lamult, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'Sw_ustokes', fldptr1d=sw_ustokes, rc)
+    call state_getfldptr(exportState, 'Sw_ustokes', fldptr1d=sw_ustokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'Sw_vstokes', fldptr1d=sw_vstokes, rc)
+    call state_getfldptr(exportState, 'Sw_vstokes', fldptr1d=sw_vstokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'wave_elevation_spectrun', fldptr2d=wave_elevation_spectrum, rc)
+    call state_getfldptr(exportState, 'wave_elevation_spectrun', fldptr2d=wave_elevation_spectrum, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do jsea=1, nseal
@@ -428,7 +428,7 @@ contains
           sw_vstokes(jsea) = 0.
        endif
 
-       ! sw_hstokes(jsea) = ??
+       ! sw_htokes(jsea) = ??
     enddo
 
     ! Fill in the local land points with fill value
@@ -443,10 +443,12 @@ contains
 
   !===============================================================================
 
-  subroutine fldlist_add(num, fldlist, stdname)
+  subroutine fldlist_add(num, fldlist, stdname, ungridded_lbound, ungridded_ubound)
     integer,                    intent(inout) :: num
     type(fld_list_type),        intent(inout) :: fldlist(:)
     character(len=*),           intent(in)    :: stdname
+    integer, optional,          intent(in)    :: ungridded_lbound
+    integer, optional,          intent(in)    :: ungridded_ubound
 
     ! local variables
     integer :: rc
@@ -462,12 +464,16 @@ contains
        return
     endif
     fldlist(num)%stdname = trim(stdname)
+    if (present(ungridded_lbound) .and. present(ungridded_ubound)) then 
+       fldlist(num)%ungridded_lbound = ungridded_lbound
+       fldlist(num)%ungridded_ubound = ungridded_ubound
+    end if
 
   end subroutine fldlist_add
 
   !===============================================================================
 
-  subroutine fldlist_realize(state, fldList, numflds, flds_scalar_name, flds_scalar_num, tag, rc)
+  subroutine fldlist_realize(state, fldList, numflds, flds_scalar_name, flds_scalar_num, mesh, tag, rc)
 
     use NUOPC, only : NUOPC_IsConnected, NUOPC_Realize
     use ESMF , only : ESMF_MeshLoc_Element, ESMF_FieldCreate, ESMF_TYPEKIND_R8
@@ -483,6 +489,7 @@ contains
     character(len=*)          , intent(in)    :: flds_scalar_name
     integer                   , intent(in)    :: flds_scalar_num
     character(len=*)          , intent(in)    :: tag
+    type(ESMF_Mesh)           , intent(in)    :: mesh
     integer                   , intent(inout) :: rc
 
     ! local variables
@@ -572,7 +579,7 @@ contains
 
   !===============================================================================
 
-  subroutine state_getfldptr(State, fldname, fldptr1d, fldptrt2d, rc)
+  subroutine state_getfldptr(State, fldname, fldptr1d, fldptr2d, rc)
     ! ----------------------------------------------
     ! Get pointer to a state field
     ! ----------------------------------------------
@@ -623,7 +630,12 @@ contains
           return
        end if
 
-       call ESMF_FieldGet(lfield, farrayPtr=fldptr, rc=rc)
+       if (present(fldptr1d)) then 
+         call ESMF_FieldGet(lfield, farrayPtr=fldptr1d, rc=rc)
+       else ! 2D
+         call ESMF_FieldGet(lfield, farrayPtr=fldptr2d, rc=rc)
+       endif
+
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif  ! status
 
