@@ -384,7 +384,7 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
-    real(r8), pointer :: wave_elevation_spectrum(:,:)
+    real(r8), pointer :: wave_elevation_spectrum(:,:)   ! d1 is location, d2 is frequency
     character(len=*), parameter :: subname='(wav_import_export:export_fields)'
     !---------------------------------------------------------------------------
 
@@ -426,8 +426,8 @@ contains
           sw_lamult(jsea)  = 1.
           sw_ustokes(jsea) = 0.
           sw_vstokes(jsea) = 0.
+          wave_elevation_spectrum = 0.  !HK TODO what should this get set to?
        endif
-
        ! sw_htokes(jsea) = ??
     enddo
 
@@ -437,6 +437,7 @@ contains
        sw_lamult(n)  = fillvalue
        sw_ustokes(n) = fillvalue
        sw_vstokes(n) = fillvalue
+       wave_elevation_spectrum(n,:) = fillvalue
     end do
 
   end subroutine export_fields
