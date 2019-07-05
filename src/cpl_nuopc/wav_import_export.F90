@@ -384,7 +384,7 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
-    real(r8), pointer :: wave_elevation_spectrum(:,:)   ! d1 is location, d2 is frequency
+    real(r8), pointer :: wave_elevation_spectrum(:,:)   ! d1 is location, d2 is frequency !HK DO check this
     character(len=*), parameter :: subname='(wav_import_export:export_fields)'
     !---------------------------------------------------------------------------
 

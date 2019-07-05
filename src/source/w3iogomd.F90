@@ -2392,6 +2392,7 @@
                 IF ( FLOGRD( 2,17) ) WBT   (ISEA) = UNDEF
 !
 !HK EF flags for output fields
+!   EF is sent to the coupler for CICE
                 IF ( FLOGRD( 3, 1) ) EF   (ISEA,:) = UNDEF
                 IF ( FLOGRD( 3, 2) ) TH1M (ISEA,:) = UNDEF
                 IF ( FLOGRD( 3, 3) ) STH1M(ISEA,:) = UNDEF
