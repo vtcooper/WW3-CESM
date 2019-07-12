@@ -85,7 +85,7 @@ contains
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_ustokes')
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_vstokes')
    !call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_hstokes')
-    call fldlist_add(fldsFrWav_num, fldsFrWav, 'wave_elevation_spectrun', &
+    call fldlist_add(fldsFrWav_num, fldsFrWav, 'wave_elevation_spectrum', &
          ungridded_lbound=1, ungridded_ubound=25)  ! TODO: make 25 general
 
     do n = 1,fldsFrWav_num
@@ -407,7 +407,7 @@ contains
     call state_getfldptr(exportState, 'Sw_vstokes', fldptr1d=sw_vstokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call state_getfldptr(exportState, 'wave_elevation_spectrun', fldptr2d=wave_elevation_spectrum, rc=rc)
+    call state_getfldptr(exportState, 'wave_elevation_spectrum', fldptr2d=wave_elevation_spectrum, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do jsea=1, nseal
