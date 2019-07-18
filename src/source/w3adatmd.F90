@@ -2488,6 +2488,7 @@
           QP     => WADATS(IMOD)%QP
           WBT    => WADATS(IMOD)%WBT
 !
+!HK this is EF
           EF     => WADATS(IMOD)%EF
           TH1M   => WADATS(IMOD)%TH1M
           STH1M  => WADATS(IMOD)%STH1M

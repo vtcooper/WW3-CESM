@@ -638,13 +638,13 @@
           AFAC   = 1. / MAX( 1.E-10 , ABS(VS(IS)/DAMAX) )
           DT     = MIN ( DT , AFAC / ( MAX ( 1.E-10,                  &
                          1. + OFFSET*AFAC*MIN(0.,VD(IS)) ) ) )
-!          IF (IX == DEBUG_NODE) THEN
+!          IF (IX == WW3DEBUG_NODE) THEN
 !            WRITE(*,'(A20,I10,10F30.10)') 'TIME STEP COMP', IS, DAMAX, DAM(IS), XREL*SPECINIT(IS), AFILT, AFAC, DT
 !          ENDIF
         END DO  ! end of loop on IS
 !
 !        WRITE(*,*) 'NODE_NUMBER', IX
-!        IF (IX == DEBUG_NODE) WRITE(*,*) 'TIMINGS 1', DT
+!        IF (IX == WW3DEBUG_NODE) WRITE(*,*) 'TIMINGS 1', DT
         DT     = MAX ( 0.5, DT )                   ! Here we have a hardlimit, which is not too usefull, at least not as a fixed con
 !
         DTDYN  = DTDYN + DT
@@ -695,7 +695,7 @@
             ENDIF
             VSIO=VS
             VDIO=VD
-!!/DEBUGSRC          IF (IX == DEBUG_NODE) WRITE(44,'(10EN15.4)') SUM(VS), SUM(VD), SUM(VSIN), SUM(VDIN), SUM(VSDS), SUM(VDDS), SUM(
+!!/WW3DEBUGSRC          IF (IX == WW3DEBUG_NODE) WRITE(44,'(10EN15.4)') SUM(VS), SUM(VD), SUM(VSIN), SUM(VDIN), SUM(VSDS), SUM(VDDS), SUM(
           RETURN ! return everything is done for the implicit ...
         END IF ! srce_imp_pre
 !
@@ -703,7 +703,7 @@
 !
         IF (srce_call .eq. srce_direct) THEN
 !          SHAVE = .FALSE.
-!         IF (IX == DEBUG_NODE) THEN
+!         IF (IX == WW3DEBUG_NODE) THEN
 !            WRITE(*,'(A20,I20,F20.10,L20,4F20.10)') 'BEFORE', IX, DEPTH, SHAVE, SUM(VS), SUM(VD), SUM(SPEC)
 !          ENDIF
           IF ( SHAVE ) THEN
@@ -723,10 +723,10 @@
        eInc1 = VSDB(IS) * DT / MAX ( 1. , (1.-HDT*VDDB(IS)))
        SPEC(IS) = MAX ( 0. , SPEC(IS)+eInc1 )
      END DO
-!          IF (IX == DEBUG_NODE) THEN
+!          IF (IX == WW3DEBUG_NODE) THEN
 !            WRITE(*,'(A20,I20,F20.10,L20,4F20.10)') 'AFTER', IX, DEPTH, SHAVE, SUM(VS), SUM(VD), SUM(SPEC)
 !          ENDIF
-!!/DEBUGSRC          IF (IX == DEBUG_NODE) WRITE(44,'(10EN15.4)') SUM(VS), SUM(VD), SUM(VSIN), SUM(VDIN), SUM(VSDS), SUM(VDDS), SUM(
+!!/WW3DEBUGSRC          IF (IX == WW3DEBUG_NODE) WRITE(44,'(10EN15.4)') SUM(VS), SUM(VD), SUM(VSIN), SUM(VDIN), SUM(VSDS), SUM(VDDS), SUM(
         END IF
  
  
@@ -820,7 +820,7 @@
             EXIT
             ENDIF
           IF ( DTTOT .GE. 0.9999*DTG ) THEN
-!            IF (IX == DEBUG_NODE) WRITE(*,*) 'DTTOT, DTG', DTTOT, DTG
+!            IF (IX == WW3DEBUG_NODE) WRITE(*,*) 'DTTOT, DTG', DTTOT, DTG
             EXIT
             ENDIF
         END DO ! INTEGRATIN LOOP
@@ -984,7 +984,7 @@
 !/
 !/    06-Jul-2016 : Origination                         ( version 5.12 )
 !/    06-Jul-2016 : Add SUBROUTINE SIGN_VSD_SEMI_IMPLICIT_WW3
-!/                  Add optional DEBUGSRC/PDLIB           ( version 6.04 )
+!/                  Add optional WW3DEBUGSRC/PDLIB           ( version 6.04 )
 !/
 !  1. Purpose :
 !

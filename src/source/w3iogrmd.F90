@@ -139,7 +139,7 @@
 !/    29-May-2014 : Add IC3 parameters                  ( version 5.01 )
 !/    20-Aug-2016 : Add IOBPA                           ( version 5.12 )
 !/    08-Mar-2018 : Add FSWND for SMC grid.             ( version 6.02 )
-!/    05-Jun-2018 : Add PDLIB/DEBUGINIT and implcit scheme parameters
+!/    05-Jun-2018 : Add PDLIB/WW3DEBUGINIT and implcit scheme parameters
 !/                  for unstructured grids              ( version 6.04 )
 !/    27-Jul-2018 : Added PTMETH and PTFCUT parameters  ( version 6.05 )
 !/                  (C. Bunney, UKMO)
@@ -345,7 +345,7 @@
       I      = LEN_TRIM(FILEXT)
       J      = LEN_TRIM(FNMPRE)
 !
-!AR: ADD DEBUGFLAG      WRITE(*,*) 'FILE=', FNMPRE(:J)//'mod_def.'//FILEXT(:I)
+!AR: ADD WW3DEBUGFLAG      WRITE(*,*) 'FILE=', FNMPRE(:J)//'mod_def.'//FILEXT(:I)
       IF ( WRITE ) THEN
           OPEN (NDSM,FILE=FNMPRE(:J)//'mod_def.'//FILEXT(:I),         &
                 FORM='UNFORMATTED',ERR=800,IOSTAT=IERR)

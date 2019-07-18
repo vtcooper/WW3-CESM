@@ -84,7 +84,7 @@
 !/                  (T.J. Campbell, NRL)                ( version 6.02 )
 !/    07-Jan-2018 : Generalizes ICE100WIND to ICESCALES ( version 6.04 )
 !/    26-Mar-2018 : Add FSWND optional variable.  JGLi  ( version 6.02 )
-!/    05-Jun-2018 : Add PDLIB/DEBUGINIT and implcit scheme parameters
+!/    05-Jun-2018 : Add PDLIB/WW3DEBUGINIT and implcit scheme parameters
 !/                  for unstructured grids              ( version 6.04 )
 !/    18-Aug-2018 : S_{ice} IC5 (Q. Liu)                ( version 6.06 )
 !/    20-Aug-2018:  Extra namelist variables for ST6    ( version 6.06)
@@ -1257,8 +1257,8 @@
                  GRIDS(IMOD)%HQFAC(MY,MX),   &
                  STAT=ISTAT                  )
       CHECK_ALLOC_STATUS ( ISTAT )
-!!/DEBUGINIT         WRITE(740+IAPROC,*) 'After alocation of MAPST2, MY=', MY, ' MX=', MX
-!!/DEBUGINIT         FLUSH(740+IAPROC)
+!!/WW3DEBUGINIT         WRITE(740+IAPROC,*) 'After alocation of MAPST2, MY=', MY, ' MX=', MX
+!!/WW3DEBUGINIT         FLUSH(740+IAPROC)
 !
       GRIDS(IMOD)%FLAGST = .TRUE.
       GRIDS(IMOD)%GINIT  = .TRUE.
@@ -1651,7 +1651,7 @@
       E3DF   => GRIDS(IMOD)%E3DF
 !HK 
 ! E3DF(2,1):E3DF(3,1) is the 2nd dimension of E3DF
-print*, E3DF(2,1), E3DF(3,1)
+!print*,  'HK E3DF(2,1), E3DF(3,1)', E3DF(2,1), E3DF(3,1)
 
       P2MSF  => GRIDS(IMOD)%P2MSF
       US3DF  => GRIDS(IMOD)%US3DF

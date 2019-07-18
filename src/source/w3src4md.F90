@@ -1493,7 +1493,7 @@
 !/    30-Aug-2010 : Clean up from common ST3-ST4 routine( version 3.14-Ifremer )
 !/    23-Jan-2012 : Add output of lambdas to be used in SIN
 !/    13-Nov-2013 : Reduced frequency range with IG1 switch
-!/    06-Jun-2018 : Add optional DEBUGSRC              ( version 6.04 )
+!/    06-Jun-2018 : Add optional WW3DEBUGSRC              ( version 6.04 )
 !/
 !  1. Purpose :
 !
@@ -1552,7 +1552,7 @@
 ! 10. Source code :
 !
 !/ ------------------------------------------------------------------- /
-      USE W3CONSTANTS,ONLY: GRAV, DAIR, DWAT, PI, TPI, RADE, DEBUG_NODE
+      USE W3CONSTANTS,ONLY: GRAV, DAIR, DWAT, PI, TPI, RADE, WW3DEBUG_NODE
       USE W3GDATMD, ONLY: NSPEC, NTH, NK, SSDSBR, DDEN,              &
                           SSDSC, EC2, ES2, ESC,                      &
                           SIG, SSDSP, ECOS, ESIN, DTH, DSIP,         &
@@ -1629,7 +1629,7 @@
       RENEWALFREQ=0.
       IK1=1
  
-      !IF (IX == DEBUG_NODE) WRITE(*,'(A20,4F20.10)') 'ST4 DISSIP ANFANG', SUM(SRHS), SUM(DDIAG)
+      !IF (IX == WW3DEBUG_NODE) WRITE(*,'(A20,4F20.10)') 'ST4 DISSIP ANFANG', SUM(SRHS), SUM(DDIAG)
       NTHSUM=MIN(FLOOR(SSDSC(10)+0.5),NTH-1)  ! number of angular bins for enhanced modulation
       IF (NTHSUM.GT.0) THEN
         WTHSUM(1:NTHSUM)=1
@@ -1836,12 +1836,12 @@
           COEF3=-2.*SIG(IK)*K(IK)*FACTURB
           DDIAG((IK-1)*NTH+1:IK*NTH) = SDIAGISO + &
                                    COEF2*((MAX(0.,BTH((IK-1)*NTH+1:IK*NTH)-COEF1))**SSDSP)
-!            IF (IX == DEBUG_NODE) THEN
+!            IF (IX == WW3DEBUG_NODE) THEN
 !              WRITE(*,'(A10,I10,10F15.6)') 'ST4 D3',IK,BTH0(IK),SUM(BTH((IK-1)*NTH+1:IK*NTH)),COEF1,COEF2,COEF3,SSDSP,SDIAGISO
 !            ENDIF
           END DO
  
-          !IF(IX == DEBUG_NODE) WRITE(*,'(A20,4F15.6)') 'ST4 DISSIP 1', SUM(SRHS), SUM(DDIAG), SUM(BTH)
+          !IF(IX == WW3DEBUG_NODE) WRITE(*,'(A20,4F15.6)') 'ST4 DISSIP 1', SUM(SRHS), SUM(DDIAG), SUM(BTH)
  
 !
 ! Computes Breaking probability
@@ -2051,7 +2051,7 @@
 ! COMPUTES SOURCES TERM from diagonal term
 !
       SRHS = DDIAG * A
-      !IF(IX == DEBUG_NODE) WRITE(*,'(A10,4F20.10)') 'ST4 DISSIP 2', SUM(SRHS), SUM(DDIAG), SSDSC(3)*RENEWALFREQ, DTURB
+      !IF(IX == WW3DEBUG_NODE) WRITE(*,'(A10,4F20.10)') 'ST4 DISSIP 2', SUM(SRHS), SUM(DDIAG), SSDSC(3)*RENEWALFREQ, DTURB
 !
 ! Adds non-diagonal part: high and low frequency generation
 !
@@ -2078,7 +2078,7 @@
           END DO
         END IF
  
-        !IF(IX == DEBUG_NODE) WRITE(*,'(A10,4F20.10)') 'ST4 DISSIP 3', SUM(SRHS), SUM(DDIAG), SUM(A)
+        !IF(IX == WW3DEBUG_NODE) WRITE(*,'(A10,4F20.10)') 'ST4 DISSIP 3', SUM(SRHS), SUM(DDIAG), SUM(A)
 !
 !  COMPUTES WHITECAP PARAMETERS
 !

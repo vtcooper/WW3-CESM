@@ -95,8 +95,8 @@
 !/                  (S. Zieger, BOM)
 !/    09-Aug-2017 : Bug fix for MPI restart read issue  ( version 6.02 )
 !/                  (T. Campbell, NRL)
-!/    05-Jun-2018 : Add PDLIB/TIMINGS/DEBUGIO           ( version 6.04 )
-!/                  DEBUGINIT/MPI
+!/    05-Jun-2018 : Add PDLIB/TIMINGS/WW3DEBUGIO           ( version 6.04 )
+!/                  WW3DEBUGINIT/MPI
 !/
 !/    Copyright 2009-2013 National Weather Service (NWS),
 !/       National Oceanic and Atmospheric Administration.  All rights

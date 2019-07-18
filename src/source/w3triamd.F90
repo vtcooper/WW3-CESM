@@ -112,7 +112,7 @@ CONTAINS
 !/
 !/    15-Feb-2008 : Origination.                        ( version 3.13 )
 !/    25-Aug-2011 : Change of method for IOBPD          ( version 4.04 )
-!/    06-Jun-2018 : Add DEBUGINIT/PDLIB/DEBUGSTP/DEBUGSETIOBP
+!/    06-Jun-2018 : Add WW3DEBUGINIT/PDLIB/WW3DEBUGSTP/WW3DEBUGSETIOBP
 !/                                                      ( version 6.04 )
 !/
 !

@@ -18,7 +18,7 @@
 !/    16-May-2010 : Add iceberg damping                 ( version 3.14.4 )
 !/    14-Nov-2013 : Initialize UST and USTDIR.          ( version 4.13 )
 !/    10-Dec-2014 : Add checks for allocate status      ( version 5.04 )
-!/    06-Jun-2018 : Add PDLIB/SETUP/DEBUGINIT           ( version 6.04 )
+!/    06-Jun-2018 : Add PDLIB/SETUP/WW3DEBUGINIT           ( version 6.04 )
 !/
 !/    Copyright 2009-2013 National Weather Service (NWS),
 !/       National Oceanic and Atmospheric Administration.  All rights

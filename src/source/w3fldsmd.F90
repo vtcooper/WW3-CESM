@@ -32,7 +32,7 @@
 !/    24-Apr-2015 : Adding OASIS coupling calls         ( version 5.07 )
 !/                  (M. Accensi & F. Ardhuin, IFREMER)
 !/    20-Jan-2017 : Update to new W3GSRUMD APIs         ( version 6.02 )
-!/    05-Jun-2018 : adds DEBUGFLS                       ( version 6.04 )
+!/    05-Jun-2018 : adds WW3DEBUGFLS                       ( version 6.04 )
 !/
 !/    Copyright 2009-2012 National Weather Service (NWS),
 !/       National Oceanic and Atmospheric Administration.  All rights
@@ -1648,7 +1648,7 @@
 !
               NNBR = NNBR_MAX
               INGRID = W3GRMP( GSU, X, Y, II, JJ, RR, &
-                       MASK=LMSK, MSKC=MSKC, NNBR=NNBR, DEBUG=LDBG )
+                       MASK=LMSK, MSKC=MSKC, NNBR=NNBR, WW3DEBUG=LDBG )
 !
               IF ( INGRID ) THEN
 !

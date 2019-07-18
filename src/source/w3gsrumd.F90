@@ -533,10 +533,10 @@
 !/ =================================================================== /
 !/
 !/    FUNCTION W3GSUC( IJG, LLG, ICLO, XG, YG, &
-!/                     NCB, NNP, DEBUG ) RESULT(GSU)
+!/                     NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !/      OR
 !/    FUNCTION W3GSUC( IJG, LLG, ICLO, LB, UB, XG, YG, &
-!/                     NCB, NNP, DEBUG ) RESULT(GSU)
+!/                     NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !/
 !/ =================================================================== /
 !/
@@ -579,7 +579,7 @@
 !                          to fewer buckets (less memory) but slower searching.
 !       NNP     Int.   I   OPTIONAL maximum number of nearest-neighbor grid
 !                          point search levels. (default is NNP_DEFAULT)
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -619,7 +619,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GSUC_PTR_R4( IJG, LLG, ICLO, XG, YG, &
-                              NCB, NNP, DEBUG ) RESULT(GSU)
+                              NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !     Single precision pointer interface
       TYPE(T_GSU)         :: GSU
       LOGICAL, INTENT(IN) :: IJG
@@ -629,7 +629,7 @@
       REAL(4), POINTER    :: YG(:,:)
       INTEGER, INTENT(IN), OPTIONAL :: NCB
       INTEGER, INTENT(IN), OPTIONAL :: NNP
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       INTEGER :: LB(2), UB(2)
@@ -637,14 +637,14 @@
       LB(1) = LBOUND(XG,1); LB(2) = LBOUND(XG,2)
       UB(1) = UBOUND(XG,1); UB(2) = UBOUND(XG,2)
       GSU = GSU_CREATE( IJG, LLG, ICLO, LB, UB, XG4=XG, YG4=YG, &
-                        NCB=NCB, NNP=NNP, DEBUG=DEBUG)
+                        NCB=NCB, NNP=NNP, WW3DEBUG=WW3DEBUG)
  
       END FUNCTION W3GSUC_PTR_R4
 !/
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GSUC_PTR_R8( IJG, LLG, ICLO, XG, YG, &
-                              NCB, NNP, DEBUG ) RESULT(GSU)
+                              NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !     Double precision pointer interface
       TYPE(T_GSU)         :: GSU
       LOGICAL, INTENT(IN) :: IJG
@@ -654,7 +654,7 @@
       REAL(8), POINTER    :: YG(:,:)
       INTEGER, INTENT(IN), OPTIONAL :: NCB
       INTEGER, INTENT(IN), OPTIONAL :: NNP
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       INTEGER :: LB(2), UB(2)
@@ -662,14 +662,14 @@
       LB(1) = LBOUND(XG,1); LB(2) = LBOUND(XG,2)
       UB(1) = UBOUND(XG,1); UB(2) = UBOUND(XG,2)
       GSU = GSU_CREATE( IJG, LLG, ICLO, LB, UB, XG8=XG, YG8=YG, &
-                        NCB=NCB, NNP=NNP, DEBUG=DEBUG)
+                        NCB=NCB, NNP=NNP, WW3DEBUG=WW3DEBUG)
  
       END FUNCTION W3GSUC_PTR_R8
 !/
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GSUC_TGT_R4( IJG, LLG, ICLO, LB, UB, XG, YG, &
-                              NCB, NNP, DEBUG ) RESULT(GSU)
+                              NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !     Single precision target interface
       TYPE(T_GSU)         :: GSU
       LOGICAL, INTENT(IN) :: IJG
@@ -681,19 +681,19 @@
       REAL(4), TARGET     :: YG(LB(1):UB(1),LB(2):UB(2))
       INTEGER, INTENT(IN), OPTIONAL :: NCB
       INTEGER, INTENT(IN), OPTIONAL :: NNP
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
 !
       GSU = GSU_CREATE( IJG, LLG, ICLO, LB, UB, XG4=XG, YG4=YG, &
-                        NCB=NCB, NNP=NNP, DEBUG=DEBUG)
+                        NCB=NCB, NNP=NNP, WW3DEBUG=WW3DEBUG)
  
       END FUNCTION W3GSUC_TGT_R4
 !/
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GSUC_TGT_R8( IJG, LLG, ICLO, LB, UB, XG, YG, &
-                              NCB, NNP, DEBUG ) RESULT(GSU)
+                              NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !     Double precision target interface
       TYPE(T_GSU)         :: GSU
       LOGICAL, INTENT(IN) :: IJG
@@ -705,12 +705,12 @@
       REAL(8), TARGET     :: YG(LB(1):UB(1),LB(2):UB(2))
       INTEGER, INTENT(IN), OPTIONAL :: NCB
       INTEGER, INTENT(IN), OPTIONAL :: NNP
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
 !
       GSU = GSU_CREATE( IJG, LLG, ICLO, LB, UB, XG8=XG, YG8=YG, &
-                        NCB=NCB, NNP=NNP, DEBUG=DEBUG)
+                        NCB=NCB, NNP=NNP, WW3DEBUG=WW3DEBUG)
  
       END FUNCTION W3GSUC_TGT_R8
 !/
@@ -1202,7 +1202,7 @@
 !/ =================================================================== /
 !/
 !/    FUNCTION W3GFCL( GSU, XT, YT, IS, JS, XS, YS, &
-!/                     POLE, EPS, FNCL, DEBUG ) RESULT(INGRID)
+!/                     POLE, EPS, FNCL, WW3DEBUG ) RESULT(INGRID)
 !/
 !/ =================================================================== /
 !/
@@ -1236,7 +1236,7 @@
 !                          is shortest distance from target point when the
 !                          target point is not located in the source grid.
 !                          Default is FALSE.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -1278,7 +1278,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GFCL_R4( GSU, XT, YT, IS, JS, XS, YS, &
-                          POLE, EPS, FNCL, DEBUG ) RESULT(INGRID)
+                          POLE, EPS, FNCL, WW3DEBUG ) RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -1289,7 +1289,7 @@
       LOGICAL, INTENT(OUT),OPTIONAL :: POLE
       REAL(4), INTENT(IN), OPTIONAL :: EPS
       LOGICAL, INTENT(IN), OPTIONAL :: FNCL
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: XT8, YT8, XS8(4), YS8(4), EPS8
@@ -1304,7 +1304,7 @@
 !
 !-----call double precision method
       INGRID = W3GFCL( GSU, XT8, YT8, IS, JS, XS8, YS8, POLE=POLE, &
-                       EPS=EPS8, FNCL=FNCL, DEBUG=DEBUG )
+                       EPS=EPS8, FNCL=FNCL, WW3DEBUG=WW3DEBUG )
 !
 !-----set outputs
       XT = XT8; YT = YT8;
@@ -1315,7 +1315,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GFCL_R8( GSU, XT, YT, IS, JS, XS, YS, &
-                          POLE, EPS, FNCL, DEBUG ) RESULT(INGRID)
+                          POLE, EPS, FNCL, WW3DEBUG ) RESULT(INGRID)
 !     Double precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -1326,7 +1326,7 @@
       LOGICAL, INTENT(OUT),OPTIONAL :: POLE
       REAL(8), INTENT(IN), OPTIONAL :: EPS
       LOGICAL, INTENT(IN), OPTIONAL :: FNCL
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: LEPS
@@ -1373,8 +1373,8 @@
         ELSE
           LFNCL = .FALSE.
         END IF
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -1625,7 +1625,7 @@
 !/
 !/ =================================================================== /
 !/
-!/    FUNCTION W3GFCD_R4( GSU, XT, YT, IS, JS, XS, YS, POLE, EPS, DEBUG ) &
+!/    FUNCTION W3GFCD_R4( GSU, XT, YT, IS, JS, XS, YS, POLE, EPS, WW3DEBUG ) &
 !/    RESULT(INGRID)
 !/
 !/ =================================================================== /
@@ -1657,7 +1657,7 @@
 !                          the enclosing grid cell includes a pole.
 !       EPS     Real   I   OPTIONAL small non-zero tolerance used to check if
 !                          target point is in domain and for point coincidence.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -1697,7 +1697,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GFCD_R4( GSU, XT, YT, IS, JS, XS, YS, &
-                          POLE, EPS, DEBUG ) RESULT(INGRID)
+                          POLE, EPS, WW3DEBUG ) RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -1707,7 +1707,7 @@
       REAL(4), INTENT(INOUT)  :: XS(4), YS(4)
       LOGICAL, INTENT(OUT),OPTIONAL :: POLE
       REAL(4), INTENT(IN), OPTIONAL :: EPS
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: XT8, YT8, XS8(4), YS8(4), EPS8
@@ -1722,7 +1722,7 @@
 !
 !-----call double precision method
       INGRID = W3GFCD( GSU, XT8, YT8, IS, JS, XS8, YS8, POLE=POLE, &
-                       EPS=EPS8, DEBUG=DEBUG )
+                       EPS=EPS8, WW3DEBUG=WW3DEBUG )
 !
 !-----set outputs
       XT = XT8; YT = YT8;
@@ -1733,7 +1733,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GFCD_R8( GSU, XT, YT, IS, JS, XS, YS, &
-                          POLE, EPS, DEBUG ) RESULT(INGRID)
+                          POLE, EPS, WW3DEBUG ) RESULT(INGRID)
 !     Double precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -1743,7 +1743,7 @@
       REAL(8), INTENT(INOUT)  :: XS(4), YS(4)
       LOGICAL, INTENT(OUT),OPTIONAL :: POLE
       REAL(8), INTENT(IN), OPTIONAL :: EPS
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: LEPS
@@ -1778,8 +1778,8 @@
 ! -------------------------------------------------------------------- /
 ! 2.  Initialize search
 !
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -1907,7 +1907,7 @@
 !/
 !/ =================================================================== /
 !/
-!/    FUNCTION W3GFPT( GSU, XTIN, YTIN, IX, IY, EPS, DCIN, DEBUG ) &
+!/    FUNCTION W3GFPT( GSU, XTIN, YTIN, IX, IY, EPS, DCIN, WW3DEBUG ) &
 !/    RESULT(INGRID)
 !/
 !/ =================================================================== /
@@ -1939,7 +1939,7 @@
 !                          units of cell width to treat target point as
 !                          inside the source grid.
 !                          Default is 0.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -1971,7 +1971,7 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      FUNCTION W3GFPT_R4( GSU, XTIN, YTIN, IX, IY, EPS, DCIN, DEBUG ) &
+      FUNCTION W3GFPT_R4( GSU, XTIN, YTIN, IX, IY, EPS, DCIN, WW3DEBUG ) &
       RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
@@ -1981,7 +1981,7 @@
       INTEGER, INTENT(OUT)    :: IX, IY
       REAL(4), INTENT(IN), OPTIONAL :: EPS
       REAL(4), INTENT(IN), OPTIONAL :: DCIN
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: XT8, YT8, EPS8, DCIN8
@@ -2001,13 +2001,13 @@
 !
 !-----call double precision method
       INGRID = W3GFPT( GSU, XT8, YT8, IX, IY, EPS=EPS8, DCIN=DCIN8, &
-                       DEBUG=DEBUG )
+                       WW3DEBUG=WW3DEBUG )
  
       END FUNCTION W3GFPT_R4
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      FUNCTION W3GFPT_R8( GSU, XTIN, YTIN, IX, IY, EPS, DCIN, DEBUG ) &
+      FUNCTION W3GFPT_R8( GSU, XTIN, YTIN, IX, IY, EPS, DCIN, WW3DEBUG ) &
       RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
@@ -2017,7 +2017,7 @@
       INTEGER, INTENT(OUT)    :: IX, IY
       REAL(8), INTENT(IN), OPTIONAL :: EPS
       REAL(8), INTENT(IN), OPTIONAL :: DCIN
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8), PARAMETER :: BIG = 1D16
@@ -2062,8 +2062,8 @@
 ! -------------------------------------------------------------------- /
 ! 2.  Initialize search
 !
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -2084,7 +2084,7 @@
 ! 3.  Find enclosing cell and compute closest point
 !
       FNCL = LDCIN .GT. ZERO
-      INGRID = W3GFCL( GSU, XT, YT, IS, JS, XS, YS, EPS=LEPS, FNCL=FNCL, DEBUG=LDBG )
+      INGRID = W3GFCL( GSU, XT, YT, IS, JS, XS, YS, EPS=LEPS, FNCL=FNCL, WW3DEBUG=LDBG )
       IF ( .NOT.INGRID .AND. .NOT.FNCL ) RETURN
 !
 !-----Set in grid if point is within DCIN cell width distance of closest cell
@@ -2093,14 +2093,14 @@
         LON0 = SUM(XS)/FOUR; LAT0 = SUM(YS)/FOUR;
         IF ( D90-ABS(LAT0).GT.NEAR_POLE ) THEN
 !-----------non-pole cell: compute relative location using (lon,lat)
-            CALL GETPQR(XT,YT,XS,YS,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+            CALL GETPQR(XT,YT,XS,YS,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
           ELSE
 !-----------pole cell: compute relative location using stereographic projection
             CALL W3SPLX(LON0,LAT0,ZERO,XT,YT,XTC,YTC)
             DO I=1,4
                 CALL W3SPLX(LON0,LAT0,ZERO,XS(I),YS(I),XSC(I),YSC(I))
               END DO
-            CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+            CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
           ENDIF
           DD = HALF + LDCIN
           INGRID = ABS(IXR-HALF).LE.DD .AND. ABS(JXR-HALF).LE.DD
@@ -2132,7 +2132,7 @@
 !/
 !/ =================================================================== /
 !/
-!/    FUNCTION W3GFIJ( GSU, XTIN, YTIN, IX, JX, EPS, DCIN, DEBUG ) &
+!/    FUNCTION W3GFIJ( GSU, XTIN, YTIN, IX, JX, EPS, DCIN, WW3DEBUG ) &
 !/    RESULT(INGRID)
 !/
 !/ =================================================================== /
@@ -2168,7 +2168,7 @@
 !                          units of cell width to treat target point as
 !                          inside the source grid.
 !                          Default is 0.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -2201,7 +2201,7 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      FUNCTION W3GFIJ_R4( GSU, XTIN, YTIN, IX, JX, EPS, DCIN, DEBUG ) &
+      FUNCTION W3GFIJ_R4( GSU, XTIN, YTIN, IX, JX, EPS, DCIN, WW3DEBUG ) &
       RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
@@ -2212,7 +2212,7 @@
       REAL(4), INTENT(OUT)    :: JX
       REAL(4), INTENT(IN), OPTIONAL :: EPS
       REAL(4), INTENT(IN), OPTIONAL :: DCIN
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: XT8, YT8, IX8, JX8, EPS8, DCIN8
@@ -2232,7 +2232,7 @@
 !
 !-----call double precision method
       INGRID = W3GFIJ( GSU, XT8, YT8, IX8, JX8, EPS=EPS8, DCIN=DCIN8, &
-                       DEBUG=DEBUG )
+                       WW3DEBUG=WW3DEBUG )
 !
 !-----set outputs
       IX = IX8; JX = JX8;
@@ -2241,7 +2241,7 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      FUNCTION W3GFIJ_R8( GSU, XTIN, YTIN, IX, JX, EPS, DCIN, DEBUG ) &
+      FUNCTION W3GFIJ_R8( GSU, XTIN, YTIN, IX, JX, EPS, DCIN, WW3DEBUG ) &
       RESULT(INGRID)
 !     Double precision interface
       LOGICAL                 :: INGRID
@@ -2252,7 +2252,7 @@
       REAL(8), INTENT(OUT)    :: JX
       REAL(8), INTENT(IN), OPTIONAL :: EPS
       REAL(8), INTENT(IN), OPTIONAL :: DCIN
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: LEPS, LDCIN
@@ -2295,8 +2295,8 @@
 ! -------------------------------------------------------------------- /
 ! 2.  Initialize search
 !
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -2308,21 +2308,21 @@
 ! 3.  Find enclosing cell and compute point location
 !
       FNCL = LDCIN .GT. ZERO
-      INGRID = W3GFCL(GSU,XT,YT,IS,JS,XS,YS,POLE=POLE,EPS=LEPS,FNCL=FNCL,DEBUG=LDBG)
+      INGRID = W3GFCL(GSU,XT,YT,IS,JS,XS,YS,POLE=POLE,EPS=LEPS,FNCL=FNCL,WW3DEBUG=LDBG)
       IF ( .NOT.INGRID .AND. .NOT.FNCL ) RETURN
 !
 !-----Compute cell relative index space location
       LON0 = SUM(XS)/FOUR; LAT0 = SUM(YS)/FOUR;
       IF ( D90-ABS(LAT0).GT.NEAR_POLE ) THEN
 !---------non-pole cell: compute relative location using (lon,lat)
-          CALL GETPQR(XT,YT,XS,YS,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+          CALL GETPQR(XT,YT,XS,YS,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
         ELSE
 !---------pole cell: compute relative location using stereographic projection
           CALL W3SPLX(LON0,LAT0,ZERO,XT,YT,XTC,YTC)
           DO I=1,4
               CALL W3SPLX(LON0,LAT0,ZERO,XS(I),YS(I),XSC(I),YSC(I))
             END DO
-          CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+          CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
         ENDIF
       IF ( LDBG ) &
       WRITE(*,'(A,2L2,2E24.16)') 'W3GFIJ_R8 - RELATIVE:',INGRID,FNCL,IXR,JXR
@@ -2354,7 +2354,7 @@
 !/ =================================================================== /
 !/
 !/    FUNCTION W3GRMP( GSU, XTIN, YTIN, IS, JS, RW, EPS, &
-!/                     DCIN, MASK, MSKC, NNBR, DEBUG ) RESULT(INGRID)
+!/                     DCIN, MASK, MSKC, NNBR, WW3DEBUG ) RESULT(INGRID)
 !/
 !/ =================================================================== /
 !/
@@ -2399,7 +2399,7 @@
 !                                  non-masked points (0 < NNBR <= 4).
 !                          Output: Actual number of nearest-neighbor
 !                                  non-masked points used.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -2439,7 +2439,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GRMP_R4( GSU, XTIN, YTIN, IS, JS, RW, EPS, &
-                          DCIN, MASK, MSKC, NNBR, DEBUG ) RESULT(INGRID)
+                          DCIN, MASK, MSKC, NNBR, WW3DEBUG ) RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -2453,7 +2453,7 @@
       LOGICAL, INTENT(IN)   , OPTIONAL :: MASK(:,:)
       INTEGER, INTENT(OUT)  , OPTIONAL :: MSKC
       INTEGER, INTENT(INOUT), OPTIONAL :: NNBR
-      LOGICAL, INTENT(IN)   , OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN)   , OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: XT8, YT8, RW8(4), EPS8, DCIN8
@@ -2474,7 +2474,7 @@
 !-----call double precision method
       INGRID = W3GRMP( GSU, XT8, YT8, IS, JS, RW8, &
                        EPS=EPS8, DCIN=DCIN8, &
-                       MASK=MASK, MSKC=MSKC, NNBR=NNBR, DEBUG=DEBUG )
+                       MASK=MASK, MSKC=MSKC, NNBR=NNBR, WW3DEBUG=WW3DEBUG )
 !
 !-----set outputs
       RW = RW8
@@ -2484,7 +2484,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GRMP_R8( GSU, XTIN, YTIN, IS, JS, RW, EPS, &
-                          DCIN, MASK, MSKC, NNBR, DEBUG ) RESULT(INGRID)
+                          DCIN, MASK, MSKC, NNBR, WW3DEBUG ) RESULT(INGRID)
 !     Double precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -2498,7 +2498,7 @@
       LOGICAL, INTENT(IN)   , OPTIONAL :: MASK(:,:)
       INTEGER, INTENT(OUT)  , OPTIONAL :: MSKC
       INTEGER, INTENT(INOUT), OPTIONAL :: NNBR
-      LOGICAL, INTENT(IN)   , OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN)   , OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8), PARAMETER :: BIG = 1D16
@@ -2573,8 +2573,8 @@
 ! -------------------------------------------------------------------- /
 ! 2.  Initialize search
 !
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -2622,21 +2622,21 @@
 ! 3.  Find enclosing cell and compute remapping
 !
       FNCL = LDCIN .GT. ZERO
-      INGRID = W3GFCL(GSU,XT,YT,IS,JS,XS,YS,POLE=POLE,EPS=LEPS,FNCL=FNCL,DEBUG=LDBG)
+      INGRID = W3GFCL(GSU,XT,YT,IS,JS,XS,YS,POLE=POLE,EPS=LEPS,FNCL=FNCL,WW3DEBUG=LDBG)
       IF ( .NOT.INGRID .AND. .NOT.FNCL ) RETURN
 !
 !-----Compute remapping
       LON0 = SUM(XS)/FOUR; LAT0 = SUM(YS)/FOUR;
       IF ( D90-ABS(LAT0).GT.NEAR_POLE ) THEN
 !---------non-pole cell: compute remapping using (lon,lat)
-          CALL GETPQR(XT,YT,XS,YS,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+          CALL GETPQR(XT,YT,XS,YS,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
         ELSE
 !---------pole cell: compute remapping using stereographic projection
           CALL W3SPLX(LON0,LAT0,ZERO,XT,YT,XTC,YTC)
           DO I=1,4
               CALL W3SPLX(LON0,LAT0,ZERO,XS(I),YS(I),XSC(I),YSC(I))
             END DO
-          CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+          CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
         ENDIF
       DW(1) = (ONE-IXR)*(ONE-JXR)
       DW(2) = IXR*(ONE-JXR)
@@ -2820,7 +2820,7 @@
 !/ =================================================================== /
 !/
 !/    FUNCTION W3GRMC( GSU, XTIN, YTIN, RTYP, NS, IS, JS, CS, EPS, &
-!/                     DCIN, WDTH, MASK, NMSK, DEBUG ) RESULT(INGRID)
+!/                     DCIN, WDTH, MASK, NMSK, WW3DEBUG ) RESULT(INGRID)
 !/
 !/ =================================================================== /
 !/
@@ -2866,7 +2866,7 @@
 !       NMSK    Int.   I   OPTIONAL maximum number of masked points for
 !                          treating an enclosing source grid cell as partially
 !                          masked. Must be >= 0 and < 4.  Default is 2.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -2903,7 +2903,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GRMC_R4( GSU, XTIN, YTIN, RTYP, NS, IS, JS, CS, EPS, &
-                          DCIN, WDTH, MASK, NMSK, DEBUG ) RESULT(INGRID)
+                          DCIN, WDTH, MASK, NMSK, WW3DEBUG ) RESULT(INGRID)
 !     Single precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -2919,7 +2919,7 @@
       REAL(4), INTENT(IN)   , OPTIONAL :: WDTH
       LOGICAL, INTENT(IN)   , OPTIONAL :: MASK(:,:)
       INTEGER, INTENT(IN)   , OPTIONAL :: NMSK
-      LOGICAL, INTENT(IN)   , OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN)   , OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: LEPS, LDCIN, LWDTH=ZERO
@@ -2981,7 +2981,7 @@
       XT = XTIN;  YT = YTIN;
       INGRID = W3GRMC( GSU, XT, YT, RTYP, NS, IS, JS, CS8, &
                        EPS=LEPS, DCIN=LDCIN, WDTH=LWDTH, &
-                       MASK=MASK, NMSK=NMSK, DEBUG=DEBUG )
+                       MASK=MASK, NMSK=NMSK, WW3DEBUG=WW3DEBUG )
       IF ( NS.GT.0 ) THEN
           ALLOCATE( CS(NS) )
           CS(:) = CS8(:)
@@ -2993,7 +2993,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION W3GRMC_R8( GSU, XTIN, YTIN, RTYP, NS, IS, JS, CS, EPS, &
-                          DCIN, WDTH, MASK, NMSK, DEBUG ) RESULT(INGRID)
+                          DCIN, WDTH, MASK, NMSK, WW3DEBUG ) RESULT(INGRID)
 !     Double precision interface
       LOGICAL                 :: INGRID
       TYPE(T_GSU), INTENT(IN) :: GSU
@@ -3009,7 +3009,7 @@
       REAL(8), INTENT(IN)   , OPTIONAL :: WDTH
       LOGICAL, INTENT(IN)   , OPTIONAL :: MASK(:,:)
       INTEGER, INTENT(IN)   , OPTIONAL :: NMSK
-      LOGICAL, INTENT(IN)   , OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN)   , OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       LOGICAL, PARAMETER :: LCMP = .TRUE.
@@ -3094,8 +3094,8 @@
 ! -------------------------------------------------------------------- /
 ! 2.  Initialize search
 !
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -3149,21 +3149,21 @@
 ! 3.  Find enclosing cell and compute relative index space location
 !
       FNCL = LDCIN .GT. ZERO
-      INGRID = W3GFCL(GSU,XT,YT,IC,JC,XC,YC,POLE=POLE,EPS=LEPS,FNCL=FNCL,DEBUG=LDBG)
+      INGRID = W3GFCL(GSU,XT,YT,IC,JC,XC,YC,POLE=POLE,EPS=LEPS,FNCL=FNCL,WW3DEBUG=LDBG)
       IF ( .NOT.INGRID .AND. .NOT.FNCL ) RETURN
 !
 !-----Compute cell relative index space location
       LON0 = SUM(XC)/FOUR; LAT0 = SUM(YC)/FOUR;
       IF ( D90-ABS(LAT0).GT.NEAR_POLE ) THEN
 !---------non-pole cell: compute relative location using (lon,lat)
-          CALL GETPQR(XT,YT,XC,YC,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+          CALL GETPQR(XT,YT,XC,YC,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
         ELSE
 !---------pole cell: compute relative location using stereographic projection
           CALL W3SPLX(LON0,LAT0,ZERO,XT,YT,XTC,YTC)
           DO I=1,4
               CALL W3SPLX(LON0,LAT0,ZERO,XC(I),YC(I),XSC(I),YSC(I))
             END DO
-          CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,DEBUG=LDBG)
+          CALL GETPQR(XTC,YTC,XSC,YSC,IXR,JXR,EPS=LEPS,WW3DEBUG=LDBG)
         ENDIF
       IF ( LDBG ) &
       WRITE(*,'(A,2L2,2E24.16)') 'W3GRMC_R8 - RELATIVE:',INGRID,FNCL,IXR,JXR
@@ -3403,7 +3403,7 @@
 !/
 !/ =================================================================== /
 !/
-!/    FUNCTION W3CKCL( LLG, XT, YT, NS, XS, YS, POLE, EPS, DEBUG ) &
+!/    FUNCTION W3CKCL( LLG, XT, YT, NS, XS, YS, POLE, EPS, WW3DEBUG ) &
 !/    RESULT(INCELL)
 !/
 !/ =================================================================== /
@@ -3441,7 +3441,7 @@
 !                          the source cell contains a pole.
 !       EPS     Real   I   OPTIONAL small non-zero tolerance used to check
 !                          for point coincidence.
-!       DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
+!       WW3DEBUG   Log.   I   OPTIONAL logical flag to turn on debug mode.
 !                          Default is FALSE.
 !     ----------------------------------------------------------------
 !
@@ -3477,7 +3477,7 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      FUNCTION W3CKCL_R4( LLG, XT, YT, NS, XS, YS, POLE, EPS, DEBUG ) &
+      FUNCTION W3CKCL_R4( LLG, XT, YT, NS, XS, YS, POLE, EPS, WW3DEBUG ) &
       RESULT(INCELL)
 !     Single precision interface
       LOGICAL                :: INCELL
@@ -3487,7 +3487,7 @@
       REAL(4), INTENT(INOUT) :: XS(NS), YS(NS)
       LOGICAL, INTENT(OUT)   :: POLE
       REAL(4), INTENT(IN), OPTIONAL :: EPS
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: XT8, YT8, XS8(NS), YS8(NS), EPS8
@@ -3503,7 +3503,7 @@
 !
 !-----call double precision method
       INCELL = W3CKCL( LLG, XT8, YT8, NS, XS8, YS8, POLE, &
-                       EPS=EPS8, DEBUG=DEBUG )
+                       EPS=EPS8, WW3DEBUG=WW3DEBUG )
 !
 !-----return branch cut shifted coordinates
       XT = XT8;  XS = XS8;
@@ -3512,7 +3512,7 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      FUNCTION W3CKCL_R8( LLG, XT, YT, NS, XS, YS, POLE, EPS, DEBUG ) &
+      FUNCTION W3CKCL_R8( LLG, XT, YT, NS, XS, YS, POLE, EPS, WW3DEBUG ) &
       RESULT(INCELL)
 !     Double precision interface
       LOGICAL                :: INCELL
@@ -3522,7 +3522,7 @@
       REAL(8), INTENT(INOUT) :: XS(NS), YS(NS)
       LOGICAL, INTENT(OUT)   :: POLE
       REAL(8), INTENT(IN), OPTIONAL :: EPS
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       REAL(8) :: LEPS
@@ -3552,8 +3552,8 @@
         ELSE
           LEPS = EPS_DEFAULT
         END IF
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -7074,7 +7074,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       FUNCTION GSU_CREATE( IJG, LLG, ICLO, LB, UB, XG4, YG4, XG8, YG8, &
-                           BBOX_ONLY, NCB, NNP, DEBUG ) RESULT(GSU)
+                           BBOX_ONLY, NCB, NNP, WW3DEBUG ) RESULT(GSU)
 !     *** INTERNAL SUBROUTINE ***
       TYPE(T_GSU)         :: GSU
       LOGICAL, INTENT(IN) :: IJG
@@ -7089,7 +7089,7 @@
       LOGICAL, INTENT(IN), OPTIONAL :: BBOX_ONLY
       INTEGER, INTENT(IN), OPTIONAL :: NCB
       INTEGER, INTENT(IN), OPTIONAL :: NNP
-      LOGICAL, INTENT(IN), OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN), OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       TYPE(CLASS_GSU), POINTER :: PTR
@@ -7155,8 +7155,8 @@
             END IF
         END IF
 !
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -7568,7 +7568,7 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-      SUBROUTINE GETPQR( XT, YT, XS, YS, PR, QR, EPS, DEBUG )
+      SUBROUTINE GETPQR( XT, YT, XS, YS, PR, QR, EPS, WW3DEBUG )
 !     *** INTERNAL SUBROUTINE ***
 !     Compute source grid cell-relative coordinates (PR,QR) for target point (XT,YT)
       REAL(8), INTENT(IN)   :: XT
@@ -7578,7 +7578,7 @@
       REAL(8), INTENT(OUT)  :: PR
       REAL(8), INTENT(OUT)  :: QR
       REAL(8), INTENT(IN),  OPTIONAL :: EPS
-      LOGICAL, INTENT(IN) , OPTIONAL :: DEBUG
+      LOGICAL, INTENT(IN) , OPTIONAL :: WW3DEBUG
  
 !     Local parameters
       INTEGER, PARAMETER :: MAX_ITER = 10
@@ -7599,8 +7599,8 @@
         ELSE
           LEPS = EPS_DEFAULT
         END IF
-      IF ( PRESENT(DEBUG) ) THEN
-          LDBG = DEBUG
+      IF ( PRESENT(WW3DEBUG) ) THEN
+          LDBG = WW3DEBUG
         ELSE
           LDBG = .FALSE.
         END IF
@@ -8146,7 +8146,7 @@
  
 !     Local parameters
       INTEGER, PARAMETER :: M = 1 ! order of derivative
-      LOGICAL, PARAMETER :: DEBUG = .FALSE.
+      LOGICAL, PARAMETER :: WW3DEBUG = .FALSE.
       CHARACTER(64) :: FSTR
       LOGICAL :: COMP_M, TYPE_R4, TYPE_R8
       INTEGER :: IHEM
@@ -8372,7 +8372,7 @@
               DXDP = DOT_PRODUCT(C(0:NI,II,NI),XP(II0:IIN))
               DYDP = DOT_PRODUCT(C(0:NI,II,NI),YP(II0:IIN))
             END IF !.NOT.LLG
-          IF ( DEBUG ) THEN
+          IF ( WW3DEBUG ) THEN
               WRITE(FSTR,'(A,I0,A,I0,A)') &
               '(/1A,12I8,5(/1A,2E16.8),/1A,', &
               NI+1,'I16,3(/1A,',NI+1,'E16.8))'
@@ -8429,7 +8429,7 @@
  
 !     Local parameters
       INTEGER, PARAMETER :: M = 1 ! order of derivative
-      LOGICAL, PARAMETER :: DEBUG = .FALSE.
+      LOGICAL, PARAMETER :: WW3DEBUG = .FALSE.
       CHARACTER(64) :: FSTR
       LOGICAL :: COMP_M, TYPE_R4, TYPE_R8
       INTEGER :: IHEM
@@ -8667,7 +8667,7 @@
               DXDQ = DOT_PRODUCT(C(0:NJ,JJ,NJ),XQ(JJ0:JJN))
               DYDQ = DOT_PRODUCT(C(0:NJ,JJ,NJ),YQ(JJ0:JJN))
             END IF !.NOT.LLG
-          IF ( DEBUG ) THEN
+          IF ( WW3DEBUG ) THEN
               WRITE(FSTR,'(A,I0,A,I0,A)') &
               '(/1A,12I8,5(/1A,2E16.8),/1A,', &
               NJ+1,'I16,3(/1A,',NJ+1,'E16.8))'
@@ -8851,7 +8851,7 @@
  
 !     Local parameters
       INTEGER, PARAMETER :: M = 1 ! order of derivative
-      LOGICAL, PARAMETER :: DEBUG = .FALSE.
+      LOGICAL, PARAMETER :: WW3DEBUG = .FALSE.
       CHARACTER(64) :: FSTR
       LOGICAL :: COMP_M, COMP_F, COMP_G, COMP_H, TYPE_R4
       LOGICAL :: COMP_CP, COMP_CQ
@@ -9076,7 +9076,7 @@
               JSDP(1:NSDP) = JP(II0:IIN)
               CSDP(1:NSDP) = C(0:NI,II,NI)
             END IF
-          IF ( DEBUG .AND. COMP_F ) THEN
+          IF ( WW3DEBUG .AND. COMP_F ) THEN
               WRITE(FSTR,'(A,I0,A,I0,A,I0,A)') '(/1A,8I6,E16.8,/1A,',&
               NI+1,'I16,/1A,',NI+1,'E16.8,/1A,',NI+1,'E16.8)'
               WRITE(*,TRIM(FSTR)) &
@@ -9243,7 +9243,7 @@
               JSDQ(1:NSDQ) = JQ(JJ0:JJN)
               CSDQ(1:NSDQ) = C(0:NJ,JJ,NJ)
             END IF
-          IF ( DEBUG .AND. COMP_F ) THEN
+          IF ( WW3DEBUG .AND. COMP_F ) THEN
               WRITE(FSTR,'(A,I0,A,I0,A,I0,A)') '(/1A,8I6,E16.8,/1A,',&
               NJ+1,'I16,/1A,',NJ+1,'E16.8,/1A,',NJ+1,'E16.8)'
               WRITE(*,TRIM(FSTR)) &

@@ -54,7 +54,7 @@
 !/    14-Nov-2013 : Remove UST(DIR) initialization.     ( version 4.13 )
 !/    15-Dec-2013 : Adds fluxes to ice                  ( version 5.01 )
 !/    01-May-2017 : Adds directional MSS parameters     ( version 6.04 )
-!/    05-Jun-2018 : Adds PDLIB/MEMCHECK/DEBUG           ( version 6.04 )
+!/    05-Jun-2018 : Adds PDLIB/MEMCHECK/WW3DEBUG           ( version 6.04 )
 !/    21-Aug-2018 : Add WBT parameter                   ( version 6.06 )
 !/    26-Aug-2018 : UOST (Mentaschi et al. 2015, 2018)  ( version 6.06 )
 !/
@@ -410,14 +410,14 @@
 ! 1.  Set-up of data structures and I/O  ----------------------------- /
 ! 1.a Point to proper data structures.
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 1")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 1")
  
       CALL W3SETO ( IMOD, MDS(2), MDS(3) )
       CALL W3SETG ( IMOD, MDS(2), MDS(3) )
       CALL W3SETW ( IMOD, MDS(2), MDS(3) )
       CALL W3SETA ( IMOD, MDS(2), MDS(3) )
       CALL W3SETI ( IMOD, MDS(2), MDS(3) )
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 2")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 2")
  
  
 !
@@ -435,7 +435,7 @@
       CALL MPI_COMM_RANK ( MPI_COMM_WAVE, IAPROC, IERR_MPI )
       IAPROC = IAPROC + 1
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 3")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 3")
       IF ( IOSTYP .LE. 1 ) THEN
 !
           NAPFLD = MAX(1,NAPROC-1)
@@ -481,7 +481,7 @@
             END IF
         END IF
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 4")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 4")
       FRACOS = 100. * REAL(NTPROC-NAPROC) / REAL(NTPROC)
       IF ( FRACOS.GT.CRITOS .AND. IAPROC.EQ.NAPERR )                  &
                                            WRITE (NDSE,8002) FRACOS
@@ -520,7 +520,7 @@
       IE     = LEN_TRIM(FEXT)
       LFILE  = 'log.' // FEXT(:IE)
       IFL    = LEN_TRIM(LFILE)
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 5")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 5")
       IW     = 1 + INT ( LOG10 ( REAL(NAPROC) + 0.5 ) )
       IW     = MAX ( 3 , MIN ( 9 , IW ) )
       WRITE (FORMAT,'(A5,I1.1,A1,I1.1,A4)')                     &
@@ -541,7 +541,7 @@
 !
 ! 1.d Dataset unit numbers
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 6")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 6")
       NDS    = MDS
       NDSO   = NDS(1)
       NDSE   = NDS(2)
@@ -554,7 +554,7 @@
 !
 ! 1.f Initial and test outputs
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 7")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 7")
  
       IF ( IAPROC .EQ. NAPLOG ) THEN
           CALL WWDATE ( STDATE )
@@ -566,12 +566,12 @@
 ! 2.  Model defintition ---------------------------------------------- /
 ! 2.a Read model defintition file
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 8")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 8")
       CALL W3IOGR ( 'READ', NDS(5), IMOD, FEXT )
  
 ! Update of output parameter flags based on mod_def parameters (for 3D arrays)
       CALL W3FLGRDUPDT ( NDSO, NDSE, FLGRD, FLGR2, FLGD, FLG2 )
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 9")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 9")
  
       IF ( FLAGLL ) THEN
           FACTOR = 1.
@@ -589,19 +589,19 @@
 ! 2.c MPP preparation
 ! 2.c.1 Set simple counters and variables
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 10")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 10")
       CALL SET_UP_NSEAL_NSEALM(NSEALout, NSEALMout)
       NSEAL=NSEALout
       NSEALM=NSEALMout
  
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 11")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 11")
  
         IF ( NSEA .LT. NAPROC ) GOTO 820
         IF ((LPDLIB .eqv. .FALSE.).or.(GTYPE .NE. UNGTYPE)) THEN
           IF ( NSPEC .LT. NAPROC ) GOTO 821
         END IF
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 12")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 12")
 !
 ! 2.c.2 Allocate arrays
 !
@@ -612,7 +612,7 @@
         END IF
       CALL W3DIMA ( IMOD, NDSE, NDST )
       CALL W3DIMI ( IMOD, NDSE, NDST , FLAGSTIDEIN )
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 13")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 13")
  
 !
 ! 2.c.3 Calculated expected number of prop. calls per processor
@@ -691,7 +691,7 @@
         END DO
       END IF
 !
-!!/DEBUGMPI     CALL TEST_MPI_STATUS("Case 14")
+!!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 14")
 ! 2.c.8 Test output
 !
 ! 2.c.9 Test if any spectral points are left out
@@ -812,8 +812,8 @@
       TOFRST(1) = -1
       TOFRST(2) =  0
 !
-!      WRITE(*,*) 'We set NOTYPE=0 just for DEBUGGING'
-!      NOTYPE=0 ! ONLY FOR DEBUGGING PURPOSE
+!      WRITE(*,*) 'We set NOTYPE=0 just for WW3DEBUGGING'
+!      NOTYPE=0 ! ONLY FOR WW3DEBUGGING PURPOSE
       DO J=1, NOTYPE
 !
 ! ... check time step
@@ -892,10 +892,10 @@
           IF ( WLVeff-ZB(ISEA) .LE.0. ) THEN
             MAPTST(IY,IX) = 1
             MAPSTA(IY,IX) = -ABS(MAPSTA(IY,IX))
-!!/DEBUGINIT     WRITE(740+IAPROC,*) 'ISEA=', ISEA, ' JSEA=', JSEA
-!!/DEBUGINIT     WRITE(740+IAPROC,*) 'NSEA=', NSEA, ' NSEAL=', NSEAL
-!!/DEBUGINIT     WRITE(740+IAPROC,*) 'IAPROC=', IAPROC, ' ISPROC=', ISPROC
-!!/DEBUGINIT     FLUSH(740+IAPROC)
+!!/WW3DEBUGINIT     WRITE(740+IAPROC,*) 'ISEA=', ISEA, ' JSEA=', JSEA
+!!/WW3DEBUGINIT     WRITE(740+IAPROC,*) 'NSEA=', NSEA, ' NSEAL=', NSEAL
+!!/WW3DEBUGINIT     WRITE(740+IAPROC,*) 'IAPROC=', IAPROC, ' ISPROC=', ISPROC
+!!/WW3DEBUGINIT     FLUSH(740+IAPROC)
           END IF
 !Li     END IF
       END DO
@@ -905,10 +905,10 @@
         WLVeff=WLV(ISEA)
         DW(ISEA) = MAX ( 0. , WLVeff-ZB(ISEA) )
         IF ( WLVeff-ZB(ISEA) .LE.0. ) THEN
-!!/DEBUGINIT     WRITE(740+IAPROC,*) 'ISEA=', ISEA, ' JSEA=', JSEA
-!!/DEBUGINIT     WRITE(740+IAPROC,*) 'NSEA=', NSEA, ' NSEAL=', NSEAL
-!!/DEBUGINIT     WRITE(740+IAPROC,*) 'IAPROC=', IAPROC, ' ISPROC=', ISPROC
-!!/DEBUGINIT     FLUSH(740+IAPROC)
+!!/WW3DEBUGINIT     WRITE(740+IAPROC,*) 'ISEA=', ISEA, ' JSEA=', JSEA
+!!/WW3DEBUGINIT     WRITE(740+IAPROC,*) 'NSEA=', NSEA, ' NSEAL=', NSEAL
+!!/WW3DEBUGINIT     WRITE(740+IAPROC,*) 'IAPROC=', IAPROC, ' ISPROC=', ISPROC
+!!/WW3DEBUGINIT     FLUSH(740+IAPROC)
           VA(:,JSEA) = 0.
         END IF
       END DO

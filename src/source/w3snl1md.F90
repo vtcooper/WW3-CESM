@@ -73,7 +73,7 @@
 !/    09-May-2002 : Switch clean up.                    ( version 2.21 )
 !/    24-Dec-2004 : Multiple grid version.              ( version 3.06 )
 !/    03-Sep-2012 : Clean up of test output T0, T1      ( version 4.07 )
-!/    06-Jun-2018 : Add optional DEBUGSRC               ( version 6.04 )
+!/    06-Jun-2018 : Add optional WW3DEBUGSRC               ( version 6.04 )
 !/
 !  1. Purpose :
 !
@@ -229,7 +229,7 @@
                     DAL1, DAL2, DAL3, AF11,                           &
                     AWG1, AWG2, AWG3, AWG4, AWG5, AWG6, AWG7, AWG8,   &
                     SWG1, SWG2, SWG3, SWG4, SWG5, SWG6, SWG7, SWG8
-!!/DEBUGSRC      USE W3ODATMD, only : IAPROC
+!!/WW3DEBUGSRC      USE W3ODATMD, only : IAPROC
 !
       IMPLICIT NONE
 !/
@@ -332,9 +332,9 @@
 !
 ! 4.  Put source and diagonal term together -------------------------- *
 !
-!!/DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(SA1)=', sum(SA1)
-!!/DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(SA2)=', sum(SA2)
-!!/DEBUGSRC     FLUSH(740+IAPROC)
+!!/WW3DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(SA1)=', sum(SA1)
+!!/WW3DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(SA2)=', sum(SA2)
+!!/WW3DEBUGSRC     FLUSH(740+IAPROC)
       DO ISP=1, NSPEC
 !
         S(ISP) = CON(ISP) * ( - 2. * ( SA1(ISP) + SA2(ISP) )       &
@@ -358,9 +358,9 @@
                 + SWG8 * ( DA1M(IC81(ISP)) + DA2M(IC82(ISP)) )
 !
         END DO
-!!/DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(S)=', sum(S)
-!!/DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(D)=', sum(D)
-!!/DEBUGSRC     FLUSH(740+IAPROC)
+!!/WW3DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(S)=', sum(S)
+!!/WW3DEBUGSRC     WRITE(740+IAPROC,*)  'W3SNL1 : sum(D)=', sum(D)
+!!/WW3DEBUGSRC     FLUSH(740+IAPROC)
 !
 ! ... Test output :
 !

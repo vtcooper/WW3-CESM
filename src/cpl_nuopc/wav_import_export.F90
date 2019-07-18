@@ -420,6 +420,7 @@ contains
           sw_ustokes(jsea) = USSX(ISEA)
           sw_vstokes(jsea) = USSY(ISEA)
           do k = 1,25 ! TODO: genralize
+             !print*, 'HK size(EF)', size(EF), 'shape(EF)', shape(EF), 'isea', isea
              wave_elevation_spectrum(jsea,k) = EF(isea,k) ! TODO: need to add where EF is used and its dimensions
           end do
        else
@@ -430,6 +431,8 @@ contains
        endif
        ! sw_htokes(jsea) = ??
     enddo
+
+print*, 'export_fields::wave_elevation_spectrum', wave_elevation_spectrum(1,1:25)
 
     ! Fill in the local land points with fill value
     lsize = size(sw_lamult)

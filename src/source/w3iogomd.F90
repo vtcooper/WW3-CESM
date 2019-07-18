@@ -49,7 +49,7 @@
 !/    27-Aug-2015 : Add ICEF,ICEH as output fields      ( version 5.10 )
 !/    01-Mar-2018 : Removed RTD code (now used in post  ( version 6.02 )
 !/                  processing code)
-!/    05-Jun-2018 : Add DEBUGSTP/SETUP                  ( version 6.04 )
+!/    05-Jun-2018 : Add WW3DEBUGSTP/SETUP                  ( version 6.04 )
 !/    22-Aug-2018 : Add WBT output parameter            ( version 6.06 )
 !/
 !/    Copyright 2009-2014 National Weather Service (NWS),

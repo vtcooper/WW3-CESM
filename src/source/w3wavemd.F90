@@ -245,8 +245,8 @@
 !/    27-Aug-2015 : Update for ICEH, ICEF               ( version 5.10 )
 !/    31-Mar-2016 : Current option for smc grid.        ( version 5.18 )
 !/    06-Jun-2018 : Add PDLIB/MEMCHECK/SETUP/NETCDF_QAD/TIMING
-!/                  OASIS/DEBUGINIT/DEBUGSRC/DEBUGRUN/DEBUGCOH
-!/                  DEBUGIOBP/DEBUGIOBC                 ( version 6.04 )
+!/                  OASIS/WW3DEBUGINIT/WW3DEBUGSRC/WW3DEBUGRUN/WW3DEBUGCOH
+!/                  WW3DEBUGIOBP/WW3DEBUGIOBC                 ( version 6.04 )
 !/    14-Sep-2018 : Remove PALM implementation          ( version 6.06 )
 !/
 !  1. Purpose :

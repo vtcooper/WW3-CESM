@@ -505,7 +505,7 @@ CONTAINS
 
       ! QL, 160601, get coupling interval
       call seq_timemgr_eclockgetdata(eclock, dtime=dtime_sync )
-      !DEBUG
+      !WW3DEBUG
       ! Hardwire gridded output for now
       ! first output time stamp is now read from file
       ! QL, 150525, 1-5 for history files, 16-20 for restart files
@@ -524,7 +524,7 @@ CONTAINS
       odat(18) = dtime_sync ! output interval in sec
       odat(19) = 99990101   ! YYYYMMDD for last output
       odat(20) = 0          ! HHMMSS for last output
-      !DEBUG
+      !WW3DEBUG
 
       ! Output Type 1: fields of mean wave parameters gridded output
 

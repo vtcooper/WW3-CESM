@@ -684,7 +684,7 @@
 !/    17-Aug-2010 : Add initialization ABPI0-N(:,0).  ( version 3.14.5 )
 !/    12-Jun-2012 : Add /RTD option or rotated grid option.
 !/                  (Jian-Guo Li)                       ( version 4.06 )
-!/    06-Jun-2018 : Add DEBUGIOBC/SETUP/DEBUGW3ULEV     ( version 6.04 )
+!/    06-Jun-2018 : Add WW3DEBUGIOBC/SETUP/WW3DEBUGW3ULEV     ( version 6.04 )
 !/
 !  1. Purpose :
 !
