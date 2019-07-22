@@ -233,11 +233,11 @@
       USE W3GDATMD, ONLY: NX, NY, NSEA, NSEAL, NSPEC, MAPSTA, MAPST2, &
                           GNAME, FILEXT, GTYPE, UNGTYPE
       USE W3TRIAMD, ONLY: SETUGIOBP
-      USE W3WDATMD
+      USE W3WDATMD  !HK why no only?
       USE W3ODATMD, ONLY: NDSE, NDST, IAPROC, NAPROC, NAPERR, NAPRST, &
                           IFILE => IFILE4, FNMPRE, NTPROC, IOSTYP
       USE W3ODATMD, ONLY: NRQRS, NBLKRS, RSBLKS, IRQRS, IRQRSS, VAAUX
-      USE W3ADATMD, ONLY: MPI_COMM_WCMP
+      USE W3ADATMD, ONLY: MPI_COMM_WCMP, LAMULT !HK
 !/
       USE W3SERVMD, ONLY: EXTCDE
       USE W3CONSTANTS, only: LPDLIB
@@ -678,6 +678,14 @@
                           (FPIS(ISEA),ISEA=1+(IPART-1)*NSIZE,         &
                                           MIN(NSEA,IPART*NSIZE))
                     END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1 
+                    RPOS  = 1_8 + LRECL*(NREC-1_8)
+                    WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) WRITEBUFF
+                    WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR)         &   
+                          (LAMULT(ISEA),ISEA=1+(IPART-1)*NSIZE,         &   
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
                 END IF
             END IF
         ELSE
@@ -744,6 +752,13 @@
                 RPOS  = 1_8 + LRECL*(NREC-1_8)
                 READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR)              &
                       (FPIS(ISEA),ISEA=1+(IPART-1)*NSIZE,             &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1 
+                RPOS  = 1_8 + LRECL*(NREC-1_8)
+                READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR)              &   
+                      (LAMULT(ISEA),ISEA=1+(IPART-1)*NSIZE,             &   
                                       MIN(NSEA,IPART*NSIZE))
                 END DO
             ELSE

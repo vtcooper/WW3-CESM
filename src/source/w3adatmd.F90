@@ -416,6 +416,7 @@
                                  XUSSY(:), XPRMS(:), XTPMS(:),        &
                                  XPHICE(:), XTAUICE(:,:)
         REAL, POINTER         :: XP2SMS(:,:), XUS3D(:,:), XUSSP(:,:)
+
 !
 ! Output fields group 7)
 !
@@ -446,12 +447,13 @@
         REAL, POINTER         :: XUSERO(:,:)
 
 !HK---QL output fileds for Langmuir mixing---
+!HK TODO what group?
         ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
         !             ALPHAL, ALPHALS
         ! QL, 160530, LAMULT
         REAL, POINTER         :: LANGMT(:), LAPROJ(:), LASL(:),       &
                                  LASLPJ(:), LAMULT(:), ALPHAL(:),     &
-                                 ALPHALS(:)
+                                 ALPHALS(:), USSXH(:), USSYH(:)
 !HK------------------------------------------
 
 !
@@ -513,7 +515,7 @@
       ! QL, 160530, LAMULT
      REAL, POINTER           :: LANGMT(:), LAPROJ(:), ALPHAL(:),      &
                                 ALPHALS(:), LAMULT(:), LASL(:),       &
-                                LASLPJ(:)
+                                LASLPJ(:), USSXH(:), USSYH(:) !HK
 
       REAL, POINTER           :: CG(:,:), WN(:,:)
       REAL, POINTER           :: IC3WN_R(:,:), IC3WN_I(:,:), IC3CG(:,:)
@@ -913,6 +915,8 @@
       ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
       !             ALPHAL, ALPHALS
       ! QL, 160530, LAMULT
+                 WADATS(IMOD)%USSXH(NXXX)                             , &
+                 WADATS(IMOD)%USSYH(NXXX)                             , &
                  WADATS(IMOD)%LANGMT(NXXX)                            , &
                  WADATS(IMOD)%LAPROJ(NXXX)                            , &
                  WADATS(IMOD)%LASL(NXXX)                              , &
@@ -2568,13 +2572,21 @@
           WN     => WADATS(IMOD)%WN
 
 !HK----- lamult -----
+          ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
+          !             ALPHAL, ALPHALS
+          ! QL, 160530, LAMULT
+          !USSX   => WADATS(IMOD)%USSX !HK these are already set
+          !USSY   => WADATS(IMOD)%USSY
           LANGMT => WADATS(IMOD)%LANGMT
           LAPROJ => WADATS(IMOD)%LAPROJ
           LASL   => WADATS(IMOD)%LASL
           LASLPJ => WADATS(IMOD)%LASLPJ
           ALPHAL => WADATS(IMOD)%ALPHAL
           ALPHALS=> WADATS(IMOD)%ALPHALS
+          USSXH  => WADATS(IMOD)%USSXH
+          USSYH  => WADATS(IMOD)%USSYH
           LAMULT => WADATS(IMOD)%LAMULT
+
 !HK------------------
 
 !

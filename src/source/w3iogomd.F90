@@ -1166,7 +1166,7 @@
 !/ ------------------------------------------------------------------- /
       USE W3CONSTANTS
       USE W3GDATMD
-      USE W3WDATMD, ONLY: UST, FPIS
+      USE W3WDATMD, ONLY: UST, FPIS, ASF !HK
       USE W3ADATMD, ONLY: CG, WN, DW
       USE W3ADATMD, ONLY: HS, WLM, T02, T0M1, T01, FP0,               &
                           THM, THS, THP0
@@ -1185,6 +1185,23 @@
                           ICPRT, DTPRT, WSCUT, NOSWLL, FLOGRD, FLOGR2,&
                           NOGRP, NGRPP
       USE W3ADATMD, ONLY: NSEALM
+      ! QL, 150525, USSX, USSY: surface Stokes drift (SD)
+      !             USSXH, USSYH: surface layer (SL) averaged SD
+      !             LANGMT: La_t
+      !             LAPROJ: La_{Proj}
+      !             LASL: La_{SL}
+      !             LASLPJ: La_{SL,Proj}
+      !             ALPHAL: angle between wind and Langmuir cells (SL
+      !                     averaged)
+      !             ALPHALS: angle between wind and Langmuir cells
+      !                     (surface)
+      !             UD: wind direction
+      ! QL, 160530, LAMULT: enhancement factor
+      USE W3ADATMD, ONLY: LAMULT, USSXH, USSYH, LANGMT, LAPROJ, &
+                          ALPHAL, ALPHALS, LASL, UD, LASLPJ  !HK
+      ! QL, 150525, HML: mixing layer depth (from coupler)
+      USE W3IDATMD, ONLY: HML
+
 !
       USE W3PARALL, ONLY : INIT_GET_ISEA
       IMPLICIT NONE
@@ -1237,6 +1254,14 @@
       REAL                       USSCO, FT1
       REAL, SAVE              :: HSMIN = 0.01
       LOGICAL                 :: FLOLOC(NOGRP,NGRPP)
+      ! QL
+      REAL                    :: SWW !angle between wind and waves
+      REAL                    :: HSL !surface layer depth (=0.2*HML) 
+      ! QL tmp variables for surface and SL averaged SD
+      REAL                    :: ETUSSX(NSEAL),          &
+                                 ETUSSY(NSEAL),          &
+                                 ETUSSXH(NSEAL),       &
+                                 ETUSSYH(NSEAL)
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -1343,6 +1368,8 @@
 !
       FP1    = UNDEF
       THP1   = UNDEF
+      ! QL, 160530
+      LAMULT  = 1. 
 !
 ! 2.  Integral over discrete part of spectrum ------------------------ *
 !
@@ -1834,6 +1861,50 @@
               T02(JSEA) = TPI / SIG(NK)
               T01(JSEA)= T02(JSEA)
               ENDIF
+       !------ QL start -----
+            ! QL, 150525, output Stokes drift and Langmuir numbers
+            !USERO(ISEA,1) = HS(ISEA) / MAX ( 0.001 , DW(ISEA) )
+            !USERO(ISEA,2) = ASF(ISEA)
+            IF (ETUSSX(JSEA) .NE. 0. .OR. ETUSSY(JSEA) .NE. 0.) THEN
+              USSX(ISEA) = ETUSSX(JSEA)
+              USSY(ISEA) = ETUSSY(JSEA)
+              USSXH(ISEA) = ETUSSXH(JSEA)
+              USSYH(ISEA) = ETUSSYH(JSEA)
+              LANGMT(ISEA) = SQRT ( UST(ISEA) * ASF(ISEA)        &
+                        * SQRT ( DAIR / DWAT )                   &
+                        / SQRT ( USSX(ISEA)**2 + USSY(ISEA)**2 ) )
+              ! Calculating Langmuir Number for misaligned wind and waves
+              ! see Van Roekel et al., 2012
+              ! take z1 = 4 * HS
+              ! SWW: angle between Stokes drift and wind
+
+              ! no Stokes depth
+              SWW = ATAN2(USSY(ISEA),USSX(ISEA)) - UD(ISEA)
+              ! ALPHALS: angle between wind and LC direction, Surface
+              ! Stokes drift
+              ALPHALS(ISEA) = ATAN( SIN(SWW) / ( LANGMT(ISEA)**2  &
+                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
+              LAPROJ(ISEA) = LANGMT(ISEA) &
+                * SQRT(ABS(COS(ALPHALS(ISEA))) &
+                / ABS(COS(SWW-ALPHALS(ISEA))))
+              ! Stokes depth
+              SWW = ATAN2(USSYH(ISEA),USSXH(ISEA)) - UD(ISEA)
+              ! ALPHAL: angle between wind and LC direction
+              ALPHAL(ISEA) = ATAN(SIN(SWW) / (LANGMT(ISEA)**2  &
+                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
+              LASL(ISEA) = SQRT(UST(ISEA)*ASF(ISEA)         &
+                   * SQRT(DAIR/DWAT)                       &
+                   / SQRT(USSXH(ISEA)**2+USSYH(ISEA)**2))
+              LASLPJ(ISEA) = LASL(ISEA) * SQRT(ABS(COS(ALPHAL(ISEA))) &
+                           / ABS(COS(SWW-ALPHAL(ISEA))))
+              ! QL, 160530, LAMULT
+              LAMULT(ISEA) = MIN(5.0, ABS(COS(ALPHAL(ISEA))) * &
+                 SQRT(1.0+(1.5*LASLPJ(ISEA))**(-2)+(5.4*LASLPJ(ISEA))**(-4)))
+              ! user defined output
+              USERO(ISEA,1) = HML(IX,IY)
+              !USERO(ISEA,2) = COS(ALPHAL(ISEA))
+              END IF
+       !----- QL end -----
 !
 !  Add here USERO(JSEA,1) ...
 !

@@ -655,6 +655,7 @@
           IDOUT(I,J) = 'Undefined / Not Used'
           END DO
         END DO
+!HK TODO QL output variables
 !
 ! 1) Forcing fields
 !
