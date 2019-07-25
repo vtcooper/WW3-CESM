@@ -708,7 +708,12 @@ contains
 ! 3) Frequency-dependent standard parameters
 !
 !
-      flgrd( 3, 1)  = .false. !1D Freq. Spectrum   
+!HK These were not set to true in the previous CESM version
+!HK whether the 1D Freq. Spectrum gets allocated is decided 
+!HK in the grid_inp file
+!HK ~/ww3_toolbox/grids/grid_inp/ww3_grid.inp.ww3a
+!HK namelist section:   &OUTS E3D = 1 /
+      flgrd( 3, 1)  = .false.  !1D Freq. Spectrum  !HK EF 
       flgrd( 3, 2)  = .false. !Mean wave dir. a1b1 
       flgrd( 3, 3)  = .false. !Mean dir. spr. a1b1 
       flgrd( 3, 4)  = .false. !Mean wave dir. a2b2 
@@ -834,6 +839,7 @@ contains
 !HK    flgrd(31) = .false. !  31. user defined (2)
 !HK
 !HK    ! QL, 150525, new output
+!HK TODO Why are these .false. ?
 !HK    flgrd(32) = .false. !  32. Stokes drift at z=0
 !HK    flgrd(33) = .false. !  33. Turbulent Langmuir number (La_t)
 !HK    flgrd(34) = .false. !  34. Langmuir number (La_Proj)

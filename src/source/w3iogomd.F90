@@ -793,6 +793,8 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
+!HK This is not being called
+print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
 ! 1.  Initialize flags -------------------------------------- *
 !
@@ -812,6 +814,7 @@
 !
          TESTSTR=OUT_NAMES(IOUT+1)
          SELECT CASE(TRIM(TESTSTR(1:6)))
+
 !
 ! Group 1
 !

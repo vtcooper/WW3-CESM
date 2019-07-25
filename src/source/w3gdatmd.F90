@@ -1649,9 +1649,9 @@
       FLAGLL => GRIDS(IMOD)%FLAGLL
 !
       E3DF   => GRIDS(IMOD)%E3DF
-!HK 
+!HK  I think this gets called twice
 ! E3DF(2,1):E3DF(3,1) is the 2nd dimension of E3DF
-!print*,  'HK E3DF(2,1), E3DF(3,1)', E3DF(2,1), E3DF(3,1)
+!print*, 'HK E3DF', E3DF
 
       P2MSF  => GRIDS(IMOD)%P2MSF
       US3DF  => GRIDS(IMOD)%US3DF

@@ -420,7 +420,8 @@ contains
           sw_ustokes(jsea) = USSX(ISEA)
           sw_vstokes(jsea) = USSY(ISEA)
           do k = 1,25 ! TODO: genralize
-             !print*, 'HK size(EF)', size(EF), 'shape(EF)', shape(EF), 'isea', isea
+             print*, 'HK size(LAMULT)', size(LAMULT), 'shape(LAMULT)', shape(LAMULT)
+             print*, 'HK size(EF)', size(EF), 'shape(EF)', shape(EF), 'shape(wave_elevation_spectrum)', shape(wave_elevation_spectrum)
              wave_elevation_spectrum(jsea,k) = EF(isea,k) ! TODO: need to add where EF is used and its dimensions
           end do
        else
