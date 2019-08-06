@@ -371,6 +371,7 @@ contains
 
     use shr_const_mod , only : fillvalue=>SHR_CONST_SPVAL
     use w3adatmd      , only : LAMULT, USSX, USSY, EF
+    !HK trying to use extended arrays use w3adatmd      , only : XUSSX, XUSSY, XEF
     use w3odatmd      , only : naproc, iaproc
     use w3gdatmd      , only : nseal, MAPSTA, MAPFS, MAPSF
 
@@ -384,7 +385,7 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
-    real(r8), pointer :: wave_elevation_spectrum(:,:)   ! d1 is location, d2 is frequency !HK DO check this
+    real(r8), pointer :: wave_elevation_spectrum(:,:)   ! d2 is location, d1 is frequency 
     character(len=*), parameter :: subname='(wav_import_export:export_fields)'
     !---------------------------------------------------------------------------
 
@@ -396,7 +397,7 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! copy ww3 data to coupling datatype
-    ! copy enhancement factor, uStokes, vStokes to coupler
+    ! copy enhancement factor, uStokes, vStokes, and wave elevation spectrum  to coupler
 
     call state_getfldptr(exportState, 'Sw_lamult', fldptr1d=sw_lamult, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -410,19 +411,30 @@ contains
     call state_getfldptr(exportState, 'wave_elevation_spectrum', fldptr2d=wave_elevation_spectrum, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    do jsea=1, nseal
-       isea = iaproc + (jsea-1)*naproc
-       ix  = MAPSF(ISEA,1)
-       iy  = MAPSF(ISEA,2)
-       if (MAPSTA(iy,ix) .eq. 1) then
-          ! QL, 160530, LAMULT now calculated in WW3 (w3iogomd.f90)
-          sw_lamult(jsea)  = LAMULT(ISEA)
-          sw_ustokes(jsea) = USSX(ISEA)
-          sw_vstokes(jsea) = USSY(ISEA)
-          do k = 1,25 ! TODO: genralize
-             print*, 'HK size(LAMULT)', size(LAMULT), 'shape(LAMULT)', shape(LAMULT)
+             print*, 'HK shape(LAMULT)', shape(LAMULT)
+             print*, 'HK shape(USSX)', shape(USSX), 'shape(USSY)', shape(USSY)
              print*, 'HK size(EF)', size(EF), 'shape(EF)', shape(EF), 'shape(wave_elevation_spectrum)', shape(wave_elevation_spectrum)
-             wave_elevation_spectrum(jsea,k) = EF(isea,k) ! TODO: need to add where EF is used and its dimensions
+             !print*, 'HK extended arrays XUSSX, XUSSY, XEF', shape(XUSSX), shape(XUSSY), shape(XEF)
+
+    !HK This translates the WW3 arrays to the coupler arrays
+
+    do jsea=1, nseal                       !HK jsea is local
+       isea = iaproc + (jsea-1)*naproc     !HK isea is global
+       ix  = MAPSF(ISEA,1)  ! global ix
+       iy  = MAPSF(ISEA,2)  ! global iy
+       if (MAPSTA(iy,ix) .eq. 1) then  ! active sea point
+           !print*, 'nseal', nseal, 'shape(mapsta)', shape(mapsta), ix,iy
+           !print*,  'shape(mapsf)', shape(mapsf)
+          ! QL, 160530, LAMULT now calculated in WW3 (w3iogomd.f90)
+          !HK There are NaNs in LAMULT
+          sw_lamult(jsea)  = 1 !LAMULT(ISEA)
+            !print*, 'LAMULT(ISEA)', ISEA, LAMULT(ISEA)
+          sw_ustokes(jsea) = 0 !USSX(ISEA)
+          sw_vstokes(jsea) = 0 !USSY(ISEA)
+          do k = 1,25 ! TODO: genralize
+             wave_elevation_spectrum(k,jsea) = EF(jsea,k) 
+!HK wave_elevation_spectrum is UNDEF  - needs ouput flag to be turned on
+!print*, 'wave_elevation_spectrum', wave_elevation_spectrum(k,jsea), k, jsea
           end do
        else
           sw_lamult(jsea)  = 1.
@@ -433,15 +445,15 @@ contains
        ! sw_htokes(jsea) = ??
     enddo
 
-print*, 'export_fields::wave_elevation_spectrum', wave_elevation_spectrum(1,1:25)
 
     ! Fill in the local land points with fill value
+    !HK TODO is this correct?
     lsize = size(sw_lamult)
     do n = nseal+1,lsize
        sw_lamult(n)  = fillvalue
        sw_ustokes(n) = fillvalue
        sw_vstokes(n) = fillvalue
-       wave_elevation_spectrum(n,:) = fillvalue
+       wave_elevation_spectrum(:,n) = fillvalue  
     end do
 
   end subroutine export_fields
@@ -637,6 +649,7 @@ print*, 'export_fields::wave_elevation_spectrum', wave_elevation_spectrum(1,1:25
 
        if (present(fldptr1d)) then 
          call ESMF_FieldGet(lfield, farrayPtr=fldptr1d, rc=rc)
+print*, 'HK fldname', fldname, shape(fldptr1d)
        else ! 2D
          call ESMF_FieldGet(lfield, farrayPtr=fldptr2d, rc=rc)
        endif

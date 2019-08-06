@@ -283,7 +283,8 @@
 !      FLCOLD    Log.  Public   Flag for 'cold start' of model.
 !      FLIWND    Log.  Public   Flag for initialization of model
 !                               based on wind.
-!      AINIT(2)  Log.  Public   Flag for array initialization.
+!      AINIT(2)  Log.  Public   Flag for array initialization.  
+!                               HK TODO AINIT vs. AINIT2?  EF vs XEF
 !      FL_ALL    Log.  Public   Flag for all/partial  initialization.
 !     ----------------------------------------------------------------
 !
@@ -1059,6 +1060,7 @@
 !
 ! 6) Wave-ocean layer
 !
+print*, 'HK NSEALM, NXXX', NSEALM, NXXX
       ALLOCATE ( WADATS(IMOD)%SXX   (NSEALM) ,                        &
                  WADATS(IMOD)%SYY   (NSEALM) ,                        &
                  WADATS(IMOD)%SXY   (NSEALM) ,                        &
@@ -1312,6 +1314,7 @@
 !  1. Purpose :
 !
 !     Version of W3DIMX for extended ouput arrays only.
+! HK TODO extended ouput arrays - can we just switch this on?
 !
 ! 10. Source code :
 !
@@ -2758,8 +2761,10 @@
 ! -------------------------------------------------------------------- /
 ! 3.  Set pointers
 !
+print*, 'HK set pointers AINIT', AINIT, 'AINIT2', AINIT2
       IF ( AINIT2 ) THEN
 !
+print*, 'HK inside AINIT2'
           HS     => WADATS(IMOD)%XHS
           WLM    => WADATS(IMOD)%XWLM
           T02    => WADATS(IMOD)%XT02

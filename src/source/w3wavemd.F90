@@ -376,7 +376,8 @@
       USE W3TIMEMD
       USE W3PARALL, ONLY : INIT_GET_ISEA
  
- 
+      ! QL, 150823, flag for restart 
+      use w3cesmmd, only : RSTWR, HISTWR  
 !
       IMPLICIT NONE
 !
@@ -1259,6 +1260,7 @@
 ! ==================================================================== /
 !
   400 CONTINUE
+
 !
 ! 4.  Perform output to file if requested ---------------------------- /
 ! 4.a Check if time is output time
@@ -1328,7 +1330,7 @@
        END IF
      END IF
  
- 
+print*, 'HK 1332' 
 !
             IF ( FLOUT(2) .AND. NRQPO.NE.0 ) THEN
                 IF ( DSEC21(TIME,TONEXT(:,2)).EQ.0. ) THEN
@@ -1373,7 +1375,9 @@
             TOFRST(1) = -1
             TOFRST(2) =  0
 !
+print*, 'HK NOTYPE', NOTYPE
             DO J=1, NOTYPE
+print*, 'HK J, FLOUT(J)', J, FLOUT(J)
               IF ( FLOUT(J) ) THEN
 !
 ! 4.d Perform output
@@ -1381,8 +1385,9 @@
                   TOUT(:) = TONEXT(:,J)
                   DTTST   = DSEC21 ( TIME, TOUT )
 !
+                  ! QL, 160601, add history file flag
                   IF ( DTTST .EQ. 0. ) THEN
-                      IF ( ( J .EQ. 1 ) .OR. ( J .EQ. 7 ) ) THEN
+                      IF ( ( J .EQ. 1 ) .OR. ( J .EQ. 7 ) .AND. HISTWR) THEN
                           IF ( IAPROC .EQ. NAPFLD ) THEN
                               IF ( FLGMPI(1) ) CALL MPI_WAITALL  &
                                  ( NRQGO2, IRQGO2, STATIO, IERR_MPI )
@@ -1412,7 +1417,8 @@
 ! Track output
 !
                           CALL W3IOTR ( NDS(11), NDS(12), VA, IMOD )
-                        ELSE IF ( J .EQ. 4 ) THEN
+                        ! QL, 150823, add restart flag  
+                        ELSE IF ( J .EQ. 4 .AND. RSTWR ) THEN
                           CALL W3IORS ('HOT', NDS(6), XXX, ITEST, IMOD )
                         ELSE IF ( J .EQ. 5 ) THEN
                           IF ( IAPROC .EQ. NAPBPT ) THEN

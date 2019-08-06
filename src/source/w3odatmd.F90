@@ -312,7 +312,7 @@
       INTEGER, PARAMETER      :: NGRPP = 20
       INTEGER, PARAMETER      :: DIMP = 15
       INTEGER                 :: NOGE(NOGRP)
-      INTEGER                 :: NOTYPE
+      INTEGER                 :: NOTYPE = 6 !HK this is nomally set in w3_shel
       INTEGER, PARAMETER      :: NOEXTR=  2
       CHARACTER(LEN=20)       :: IDOUT(NOGRP,NGRPP)
       CHARACTER(LEN=80)       :: FNMPRE = './'

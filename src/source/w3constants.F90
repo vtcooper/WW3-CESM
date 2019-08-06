@@ -84,7 +84,8 @@
       REAL, PARAMETER         :: G2PI3I = 1. / ( GRAV**2 * TPI**3 )
       REAL, PARAMETER         :: G1PI1I = 1. / ( GRAV * TPI )
 !
-      REAL                    :: UNDEF = -999.9
+      !HKREAL                    :: UNDEF = -999.9
+      REAL                    :: UNDEF = -777.7 !HK
 !
 ! Parameters for friction factor table
 !

@@ -243,6 +243,9 @@
       USE W3CONSTANTS, only: LPDLIB
       USE W3PARALL, ONLY: INIT_GET_ISEA, INIT_GET_JSEA_ISPROC
       USE W3GDATMD, ONLY: NK, NTH
+      !HK CESM specific use statements
+      use shr_sys_mod, only : shr_sys_abort
+      use w3cesmmd   , only : casename, initfile, runtype, stdout, inst_suffix !HK
 !!!!!/PDLIB    USE PDLIB_FIELD_VEC!, only : UNST_PDLIB_READ_FROM_FILE, UNST_PDLIB_WRITE_TO_FILE
 !
       IMPLICIT NONE
@@ -278,9 +281,13 @@
       LOGICAL                 :: WRITE, IOSFLG
       CHARACTER(LEN=4)        :: TYPE
       CHARACTER(LEN=10)       :: VERTST
-      CHARACTER(LEN=21)       :: FNAME
+      CHARACTER(LEN=256)      :: FNAME
       CHARACTER(LEN=26)       :: IDTST
       CHARACTER(LEN=30)       :: TNAME
+      ! QL, 150629, for restart file name
+      INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC
+      CHARACTER(LEN=256)      :: ERROR_MSG
+      LOGICAL                 :: EXISTS ! if the file exists or not
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -340,36 +347,84 @@
       WRITEBUFF(:) = 0.
 !
 ! open file ---------------------------------------------------------- *
-!
-      I      = LEN_TRIM(FILEXT)
+!--- HK --- want to use cesm restarts
+!      I      = LEN_TRIM(FILEXT)
       J      = LEN_TRIM(FNMPRE)
 !
-      IF ( IFILE.EQ.0 ) THEN
-          FNAME  = 'restart.'//FILEXT(:I)
-        ELSE
-          FNAME  = 'restartNNN.'//FILEXT(:I)
-          IF ( WRITE .AND. IAPROC.EQ.NAPRST )                         &
-               WRITE (FNAME(8:10),'(I3.3)') IFILE
-        END IF
+!      IF ( IFILE.EQ.0 ) THEN
+!          FNAME  = 'restart.'//FILEXT(:I)
+!        ELSE
+!          FNAME  = 'restartNNN.'//FILEXT(:I)
+!          IF ( WRITE .AND. IAPROC.EQ.NAPRST )                         &
+!               WRITE (FNAME(8:10),'(I3.3)') IFILE
+!        END IF
+!--- HK end
       IFILE  = IFILE + 1
 !
- 
+
+!-- HK do we need this? 
       IF(NDST.EQ.NDSR)THEN
          IF ( IAPROC .EQ. NAPERR )                                    &
             WRITE(NDSE,'(A,I8)')'UNIT NUMBERS OF RESTART FILE AND '&
             //'TEST OUTPUT ARE THE SAME : ',NDST
          CALL EXTCDE ( 15 )
       ENDIF
- 
+! -- HK? end
+
+! -- HK CESM restart --
+      YY =  TIME(1)/10000
+      MM = (TIME(1)-YY*10000)/100
+      DD = (TIME(1)-YY*10000-MM*100)
+      HH = TIME(2)/10000
+      MN = (TIME(2)-HH*10000)/100
+      SS = (TIME(2)-HH*10000-MN*100)
+      TOTSEC = HH*3600+MN*60+SS
+
+      ! Open and read/write file
+      if (len_trim(inst_suffix) > 0) then
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
+              trim(CASENAME)//&
+              &'.ww3'//trim(inst_suffix)//'.r.',YY,'-',MM,'-',DD,'-',TOTSEC
+      else
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5)') &
+              trim(CASENAME)//'.ww3.r.',YY,'-',MM,'-',DD,'-',TOTSEC
+      ENDIF
+! -- HK end --
+
+! -- HK modified for cesm
       IF ( WRITE ) THEN
           IF ( .NOT.IOSFLG .OR. IAPROC.EQ.NAPRST )                    &
-          OPEN (NDSR,FILE=FNMPRE(:J)//FNAME,FORM='UNFORMATTED',       &
-                ACCESS='STREAM',ERR=800,IOSTAT=IERR)
-        ELSE
-          OPEN (NDSR,FILE=FNMPRE(:J)//FNAME,FORM='UNFORMATTED',       &
-                ACCESS='STREAM',ERR=800,IOSTAT=IERR,                  &
-                STATUS='OLD',ACTION='READ')
-        END IF
+          OPEN (NDSR,FILE=FNAME,FORM='UNFORMATTED',       & !HK 
+                !HK ACCESS='STREAM',ERR=800,IOSTAT=IERR)
+                ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR) !HK
+          IF ( IAPROC .EQ. NAPERR ) then
+             WRITE (NDSE,*) ' wrote restart file ',trim(FNAME)
+          end IF
+
+      ELSE  ! READ
+          !OPEN (NDSR,FILE=FNMPRE(:J)//FNAME,FORM='UNFORMATTED',       &
+          !      ACCESS='STREAM',ERR=800,IOSTAT=IERR,                  &
+          !      STATUS='OLD',ACTION='READ')
+         if (runtype /= 'continue') then
+            FNAME = INITFILE
+         end if
+         ! initial file MUST exist, if not exit
+         inquire( file=FNAME, exist=exists)
+         if ( exists ) then
+            IF ( IAPROC .EQ. NAPERR ) then
+               WRITE (NDSE,*) ' reading initial file ',trim(FNAME)
+            end IF
+            OPEN (NDSR, FILE=FNAME, FORM='UNFORMATTED',          &
+                 !ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR, &
+                 ACCESS='STREAM',ERR=800,IOSTAT=IERR,                  &
+                 STATUS='OLD')
+         ELSE
+            error_msg = "required initial file " // trim(FNAME) // "does not exist"
+            call shr_sys_abort(error_msg)
+         END IF
+      END IF
+
+! -- HK end --
 !
 ! test info ---------------------------------------------------------- *
 !

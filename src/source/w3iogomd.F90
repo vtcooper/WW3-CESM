@@ -1865,6 +1865,8 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
               T01(JSEA)= T02(JSEA)
               ENDIF
        !------ QL start -----
+!HK TODO is this affected by the NXXX vs. NSEALM?  Should LAMULT, etc. 
+!        be NSEAML length?
             ! QL, 150525, output Stokes drift and Langmuir numbers
             !USERO(ISEA,1) = HS(ISEA) / MAX ( 0.001 , DW(ISEA) )
             !USERO(ISEA,2) = ASF(ISEA)

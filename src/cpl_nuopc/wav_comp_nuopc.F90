@@ -713,7 +713,7 @@ contains
 !HK in the grid_inp file
 !HK ~/ww3_toolbox/grids/grid_inp/ww3_grid.inp.ww3a
 !HK namelist section:   &OUTS E3D = 1 /
-      flgrd( 3, 1)  = .false.  !1D Freq. Spectrum  !HK EF 
+      flgrd( 3, 1)  = .true.  !1D Freq. Spectrum  !HK EF 
       flgrd( 3, 2)  = .false. !Mean wave dir. a1b1 
       flgrd( 3, 3)  = .false. !Mean dir. spr. a1b1 
       flgrd( 3, 4)  = .false. !Mean wave dir. a2b2 
