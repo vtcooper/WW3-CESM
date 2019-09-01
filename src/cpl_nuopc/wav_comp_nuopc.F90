@@ -1022,9 +1022,10 @@ contains
     !--------------------------------------------------------------------
     ! Realize the actively coupled fields
     !--------------------------------------------------------------------
-
+print*, 'HK before realize_fields wav'
     call realize_fields(gcomp, mesh=Emesh, flds_scalar_name=flds_scalar_name, flds_scalar_num=flds_scalar_num, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+print*, 'HK after realize_fields wav'
 
     !--------------------------------------------------------------------
     ! end redirection of share output to wav log
@@ -1067,9 +1068,10 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
+    real(r8), pointer :: wave_elevation_spectrum(:,:)
     character(len=*),parameter :: subname = '(wav_comp_nuopc:DataInitialize)'
     ! -------------------------------------------------------------------
-
+print*, 'inside DataInitialize wav'
     !--------------------------------------------------------------------
     ! Create export state 
     !--------------------------------------------------------------------
@@ -1082,11 +1084,17 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum', fldptr2d=wave_elevation_spectrum, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+print*, 'HK boop shape wave_elevation_spectrum', shape(wave_elevation_spectrum)
 
     do jsea=1, nseal
        sw_lamult(jsea)  = 1.
        sw_ustokes(jsea) = 0.
        sw_vstokes(jsea) = 0.
+       ! wave_elevation_spectrum (freq,jsea)  
+       wave_elevation_spectrum(:,jsea) = 0 !HK TODO what should this be?
     enddo
 
     ! Set global grid size scalars in export state
