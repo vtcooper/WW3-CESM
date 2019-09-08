@@ -916,15 +916,15 @@
       ! QL, 150525, USSX, USSY, LANGMT, LAPROJ, LASL, LASLPJ, 
       !             ALPHAL, ALPHALS
       ! QL, 160530, LAMULT
-                 WADATS(IMOD)%USSXH(NXXX)                             , &
-                 WADATS(IMOD)%USSYH(NXXX)                             , &
-                 WADATS(IMOD)%LANGMT(NXXX)                            , &
-                 WADATS(IMOD)%LAPROJ(NXXX)                            , &
-                 WADATS(IMOD)%LASL(NXXX)                              , &
-                 WADATS(IMOD)%LASLPJ(NXXX)                            , &
-                 WADATS(IMOD)%ALPHAL(NXXX)                            , &
-                 WADATS(IMOD)%ALPHALS(NXXX)                           , &
-                 WADATS(IMOD)%LAMULT(NXXX)                            , &
+                 WADATS(IMOD)%USSXH(NSEALM)                           , &
+                 WADATS(IMOD)%USSYH(NSEALM)                           , &
+                 WADATS(IMOD)%LANGMT(NSEALM)                          , &
+                 WADATS(IMOD)%LAPROJ(NSEALM)                          , &
+                 WADATS(IMOD)%LASL(NSEALM)                            , &
+                 WADATS(IMOD)%LASLPJ(NSEALM)                          , &
+                 WADATS(IMOD)%ALPHAL(NSEALM)                          , &
+                 WADATS(IMOD)%ALPHALS(NSEALM)                         , &
+                 WADATS(IMOD)%LAMULT(NSEALM)                          , &
 !HK ----------------
                  STAT=ISTAT )
       CHECK_ALLOC_STATUS ( ISTAT )

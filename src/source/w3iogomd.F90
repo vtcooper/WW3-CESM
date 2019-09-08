@@ -1222,7 +1222,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                                  IKP0(NSEAL), IKP1(NSEAL), NKH(NSEAL),&
                                  ILOW, ICEN, IHGH, I, J, LKMS, HKMS,  &
                                  ITL
-      REAL                    :: FXPMC, FACTOR, FACTOR2, EBAND, FKD,  &
+      REAL                    :: FXPMC, FACTOR, EBAND, FKD,           &
                                  FP1STR, FP1TST, FPISTR, AABS, UABS,  &
                                  XL, XH, XL2, XH2, EL, EH, DENOM, KD, &
                                  M1, M2, MA, MB, MC, STEX, STEY, STED
@@ -1257,7 +1257,10 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
       REAL                       USSCO, FT1
       REAL, SAVE              :: HSMIN = 0.01
       LOGICAL                 :: FLOLOC(NOGRP,NGRPP)
-      ! QL
+      ! QL, 150525, FACTOR2
+      !             SWW: angle between wind and waves
+      !             HSL: surface layer depth (=0.2*HML)
+      REAL                    :: FACTOR2
       REAL                    :: SWW !angle between wind and waves
       REAL                    :: HSL !surface layer depth (=0.2*HML) 
       ! QL tmp variables for surface and SL averaged SD
@@ -1371,6 +1374,24 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
       FP1    = UNDEF
       THP1   = UNDEF
+      ! QL, 150525
+      ETUSSX  = 0.
+      ETUSSY  = 0.
+      ETUSCX  = 0.
+      ETUSCY  = 0.
+      ETUSSXH  = 0.
+      ETUSSYH  = 0
+      ! QL, 150525
+      LANGMT = UNDEF
+      LAPROJ = UNDEF
+      LASL   = UNDEF
+      LASLPJ = UNDEF
+      ALPHAL = UNDEF
+      ALPHALS = UNDEF
+      USSX   = 0. 
+      USSY   = 0. 
+      USSXH  = 0. 
+      USSYH  = 0. 
       ! QL, 160530
       LAMULT  = 1. 
 !
@@ -1475,10 +1496,15 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
             ETTPMM(JSEA) = FACTOR2
             TPMS(JSEA) = TPI/SIG(IK)
             END IF
+
+! QL, 150525, get surface layer depth
+          IX    = MAPSF(ISEA,1)
+          IY    = MAPSF(ISEA,2)
+          HSL   = HML(IX,IY)/5.     ! depth over which SD is averaged
  
 !
 ! Directional moments in the last freq. band
-!
+! QL, 150525
           IF (IK.EQ.NK) THEN
             FACTOR2       = SIG(IK)**5/(GRAV**2)/DSII(IK)
             ETUSCX(JSEA)  = ABX(JSEA)*FACTOR*FACTOR2
@@ -1515,8 +1541,34 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
             USSCO=FKD*SIG(IK)*WN(IK,ISEA)*COSH(2.*KD)
             BHD(JSEA) = BHD(JSEA) +                             &
                 GRAV*WN(IK,ISEA) * EBD(IK,JSEA) / (SINH(2.*KD))
-          ELSE
+              ! Surface Stokes Drift, QL, 150525
+              ETUSSX(JSEA)  = ETUSSX(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                   *WN(IK,ISEA)*COSH(2*WN(IK,ISEA)*DW(ISEA))          &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+              ETUSSY(JSEA)  = ETUSSY(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                   *WN(IK,ISEA)*COSH(2*WN(IK,ISEA)*DW(ISEA))          &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+              ! Depth averaged Stokes Drift, QL, 150525
+              ETUSSXH(JSEA)  = ETUSSXH(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                   *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/2./HSL                &
+                   *COSH(2*WN(IK,ISEA)*DW(ISEA))                        &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+              ETUSSYH(JSEA)  = ETUSSYH(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                   *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/2./HSL                &
+                   *COSH(2*WN(IK,ISEA)*DW(ISEA))                        &
+                   /(SINH(WN(IK,ISEA)*DW(ISEA)))**2
+          ELSE ! deep water limit, QL, 150525
             USSCO=FACTOR*SIG(IK)*2.*WN(IK,ISEA)
+            ! Surface Stokes Drift QL, 150525
+            ETUSSX(JSEA)  = ETUSSX(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                     *2.*WN(IK,ISEA)
+            ETUSSY(JSEA)  = ETUSSY(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                     *2.*WN(IK,ISEA)
+            ! Depth averaged Stokes Drift
+            ETUSSXH(JSEA)  = ETUSSXH(JSEA) + ABX(JSEA)*FACTOR*SIG(IK) &
+                     *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/HSL
+            ETUSSYH(JSEA)  = ETUSSYH(JSEA) + ABY(JSEA)*FACTOR*SIG(IK) &
+                     *(1.-EXP(-2.*WN(IK,ISEA)*HSL))/HSL
             END IF
 !
           ABXX(JSEA)   = MAX ( 0. , ABXX(JSEA) ) * FACTOR
@@ -1778,6 +1830,10 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
       DO JSEA=1, NSEAL
         CALL INIT_GET_ISEA(ISEA, JSEA)
+        ! QL, 150525
+        IX    = MAPSF(ISEA,1)
+        IY    = MAPSF(ISEA,2)
+        HSL   = HML(IX,IY)/5.     ! depth over which SD is averaged
 !
 ! 3.a Directional mss parameters
 !     NB: the slope PDF is proportional to ell1=ETYY*EC2-2*ETXY*ECS+ETXX*ES2 = C*EC2-2*B*ECS+A*ES2
@@ -1807,6 +1863,10 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
         SXX(JSEA) = SXX(JSEA) + FTE * ABXX(JSEA) / CG(NK,ISEA)
         SYY(JSEA) = SYY(JSEA) + FTE * ABYY(JSEA) / CG(NK,ISEA)
         SXY(JSEA) = SXY(JSEA) + FTE * ABXY(JSEA) / CG(NK,ISEA)
+
+        ! QL, 150525, tail for SD
+        ETUSSX(JSEA)  = ETUSSX(JSEA) + 2*GRAV*ETUSCX(JSEA)/SIG(NK)
+        ETUSSY(JSEA)  = ETUSSY(JSEA) + 2*GRAV*ETUSCY(JSEA)/SIG(NK)
 !
 ! Tail for surface stokes drift is commented out: very sensitive to tail power
 !
@@ -1868,46 +1928,46 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !HK TODO is this affected by the NXXX vs. NSEALM?  Should LAMULT, etc. 
 !        be NSEAML length?
             ! QL, 150525, output Stokes drift and Langmuir numbers
-            !USERO(ISEA,1) = HS(ISEA) / MAX ( 0.001 , DW(ISEA) )
-            !USERO(ISEA,2) = ASF(ISEA)
+            !USERO(JSEA,1) = HS(JSEA) / MAX ( 0.001 , DW(JSEA) )
+            !USERO(JSEA,2) = ASF(JSEA)
             IF (ETUSSX(JSEA) .NE. 0. .OR. ETUSSY(JSEA) .NE. 0.) THEN
-              USSX(ISEA) = ETUSSX(JSEA)
-              USSY(ISEA) = ETUSSY(JSEA)
-              USSXH(ISEA) = ETUSSXH(JSEA)
-              USSYH(ISEA) = ETUSSYH(JSEA)
-              LANGMT(ISEA) = SQRT ( UST(ISEA) * ASF(ISEA)        &
+              USSX(JSEA) = ETUSSX(JSEA)
+              USSY(JSEA) = ETUSSY(JSEA)
+              USSXH(JSEA) = ETUSSXH(JSEA)
+              USSYH(JSEA) = ETUSSYH(JSEA)
+              LANGMT(JSEA) = SQRT ( UST(JSEA) * ASF(JSEA)        &
                         * SQRT ( DAIR / DWAT )                   &
-                        / SQRT ( USSX(ISEA)**2 + USSY(ISEA)**2 ) )
+                        / SQRT ( USSX(JSEA)**2 + USSY(JSEA)**2 ) )
               ! Calculating Langmuir Number for misaligned wind and waves
               ! see Van Roekel et al., 2012
               ! take z1 = 4 * HS
               ! SWW: angle between Stokes drift and wind
 
               ! no Stokes depth
-              SWW = ATAN2(USSY(ISEA),USSX(ISEA)) - UD(ISEA)
+              SWW = ATAN2(USSY(JSEA),USSX(JSEA)) - UD(JSEA)
               ! ALPHALS: angle between wind and LC direction, Surface
               ! Stokes drift
-              ALPHALS(ISEA) = ATAN( SIN(SWW) / ( LANGMT(ISEA)**2  &
-                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
-              LAPROJ(ISEA) = LANGMT(ISEA) &
-                * SQRT(ABS(COS(ALPHALS(ISEA))) &
-                / ABS(COS(SWW-ALPHALS(ISEA))))
+              ALPHALS(JSEA) = ATAN( SIN(SWW) / ( LANGMT(JSEA)**2  &
+                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
+              LAPROJ(JSEA) = LANGMT(JSEA) &
+                * SQRT(ABS(COS(ALPHALS(JSEA))) &
+                / ABS(COS(SWW-ALPHALS(JSEA))))
               ! Stokes depth
-              SWW = ATAN2(USSYH(ISEA),USSXH(ISEA)) - UD(ISEA)
+              SWW = ATAN2(USSYH(JSEA),USSXH(JSEA)) - UD(JSEA)
               ! ALPHAL: angle between wind and LC direction
-              ALPHAL(ISEA) = ATAN(SIN(SWW) / (LANGMT(ISEA)**2  &
-                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(ISEA)),1.0))+COS(SWW)))
-              LASL(ISEA) = SQRT(UST(ISEA)*ASF(ISEA)         &
+              ALPHAL(JSEA) = ATAN(SIN(SWW) / (LANGMT(JSEA)**2  &
+                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
+              LASL(JSEA) = SQRT(UST(JSEA)*ASF(JSEA)         &
                    * SQRT(DAIR/DWAT)                       &
-                   / SQRT(USSXH(ISEA)**2+USSYH(ISEA)**2))
-              LASLPJ(ISEA) = LASL(ISEA) * SQRT(ABS(COS(ALPHAL(ISEA))) &
-                           / ABS(COS(SWW-ALPHAL(ISEA))))
+                   / SQRT(USSXH(JSEA)**2+USSYH(JSEA)**2))
+              LASLPJ(JSEA) = LASL(JSEA) * SQRT(ABS(COS(ALPHAL(JSEA))) &
+                           / ABS(COS(SWW-ALPHAL(JSEA))))
               ! QL, 160530, LAMULT
-              LAMULT(ISEA) = MIN(5.0, ABS(COS(ALPHAL(ISEA))) * &
-                 SQRT(1.0+(1.5*LASLPJ(ISEA))**(-2)+(5.4*LASLPJ(ISEA))**(-4)))
+              LAMULT(JSEA) = MIN(5.0, ABS(COS(ALPHAL(JSEA))) * &
+                 SQRT(1.0+(1.5*LASLPJ(JSEA))**(-2)+(5.4*LASLPJ(JSEA))**(-4)))
               ! user defined output
-              USERO(ISEA,1) = HML(IX,IY)
-              !USERO(ISEA,2) = COS(ALPHAL(ISEA))
+              USERO(JSEA,1) = HML(IX,IY)
+              !USERO(JSEA,2) = COS(ALPHAL(JSEA))
               END IF
        !----- QL end -----
 !

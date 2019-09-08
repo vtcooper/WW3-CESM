@@ -1106,6 +1106,9 @@ print*, 'HK boop shape wave_elevation_spectrum', shape(wave_elevation_spectrum)
          flds_scalar_name, flds_scalar_num, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
+
+call  state_diagnose(exportState, 'fiveguys', rc)
+
   end subroutine DataInitialize
 
   !=====================================================================
