@@ -417,30 +417,19 @@ enddo
     call state_getfldptr(exportState, 'wave_elevation_spectrum', fldptr2d=wave_elevation_spectrum, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-print*, 'HK shape(LAMULT)', shape(LAMULT)
-print*, 'HK shape(USSX)', shape(USSX), 'shape(USSY)', shape(USSY)
-print*, 'HK size(EF)', size(EF), 'shape(EF)', shape(EF), 'shape(wave_elevation_spectrum)', shape(wave_elevation_spectrum)
-!print*, 'HK extended arrays XUSSX, XUSSY, XEF', shape(XUSSX), shape(XUSSY), shape(XEF)
-print*, 'HK nseal', nseal
-
     !HK This translates the WW3 arrays to the coupler arrays
     do jsea=1, nseal                       !HK jsea is local
        isea = iaproc + (jsea-1)*naproc     !HK isea is global
        ix  = MAPSF(isea,1)  ! global ix
        iy  = MAPSF(isea,2)  ! global iy
        if (MAPSTA(iy,ix) .eq. 1) then  ! active sea point
-           !print*, 'nseal', nseal, 'shape(mapsta)', shape(mapsta), ix,iy
-           !print*,  'shape(mapsf)', shape(mapsf)
           ! QL, 160530, LAMULT now calculated in WW3 (w3iogomd.f90)
-          !HK There are NaNs in LAMULT
           sw_lamult(jsea)  = LAMULT(jsea)
-            !print*, 'LAMULT(isea)', isea, LAMULT(isea)
           sw_ustokes(jsea) = USSX(jsea)
           sw_vstokes(jsea) = USSY(jsea)
           do k = 1,25 ! TODO: genralize
              wave_elevation_spectrum(k,jsea) = EF(jsea,k) 
-!HK wave_elevation_spectrum is UNDEF  - needs ouput flag to be turned on
-!print*, 'wave_elevation_spectrum', wave_elevation_spectrum(k,jsea), k, jsea
+!HK if wave_elevation_spectrum is UNDEF  - needs ouput flag to be turned on
           end do
        else
           sw_lamult(jsea)  = 1.
@@ -655,7 +644,6 @@ print*, 'HK nseal', nseal
 
        if (present(fldptr1d)) then 
          call ESMF_FieldGet(lfield, farrayPtr=fldptr1d, rc=rc)
-print*, 'HK fldname', fldname, shape(fldptr1d)
        else ! 2D
          call ESMF_FieldGet(lfield, farrayPtr=fldptr2d, rc=rc)
        endif

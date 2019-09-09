@@ -1330,7 +1330,6 @@
        END IF
      END IF
  
-print*, 'HK 1332' 
 !
             IF ( FLOUT(2) .AND. NRQPO.NE.0 ) THEN
                 IF ( DSEC21(TIME,TONEXT(:,2)).EQ.0. ) THEN
@@ -1375,9 +1374,7 @@ print*, 'HK 1332'
             TOFRST(1) = -1
             TOFRST(2) =  0
 !
-print*, 'HK NOTYPE', NOTYPE
             DO J=1, NOTYPE
-print*, 'HK J, FLOUT(J)', J, FLOUT(J)
               IF ( FLOUT(J) ) THEN
 !
 ! 4.d Perform output

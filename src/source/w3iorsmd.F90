@@ -395,8 +395,8 @@
       IF ( WRITE ) THEN
           IF ( .NOT.IOSFLG .OR. IAPROC.EQ.NAPRST )                    &
           OPEN (NDSR,FILE=FNAME,FORM='UNFORMATTED',       & !HK 
-                !HK ACCESS='STREAM',ERR=800,IOSTAT=IERR)
-                ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR) !HK
+                ACCESS='STREAM',ERR=800,IOSTAT=IERR)
+                !HK previous version was direct: ACCESS='DIRECT',RECL=LRECL,ERR=800,IOSTAT=IERR) !HK
           IF ( IAPROC .EQ. NAPERR ) then
              WRITE (NDSE,*) ' wrote restart file ',trim(FNAME)
           end IF
