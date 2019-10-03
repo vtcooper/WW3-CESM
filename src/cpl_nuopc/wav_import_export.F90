@@ -131,7 +131,7 @@ contains
 
 print*, 'HK numflds', fldsFrWav_num
 do ii = 1, 5
-  print*, 'HK fldsFrWav', trim(fldsFrWav(ii)%stdname), fldsFrWav(ii)%ungridded_lbound, fldsFrWav(ii)%ungridded_ubound
+  print*, 'HK fldsFrWav ', trim(fldsFrWav(ii)%stdname), fldsFrWav(ii)%ungridded_lbound, fldsFrWav(ii)%ungridded_ubound
 enddo
 
     call fldlist_realize( &

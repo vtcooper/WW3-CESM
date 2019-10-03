@@ -1102,8 +1102,6 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
 
-call  state_diagnose(exportState, 'fiveguys', rc)
-
   end subroutine DataInitialize
 
   !=====================================================================
