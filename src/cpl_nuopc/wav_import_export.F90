@@ -94,6 +94,9 @@ contains
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
     end do
 
+
+    call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO)
+
   end subroutine advertise_fields
 
 !===============================================================================
@@ -143,6 +146,8 @@ enddo
          tag=subname//':WW3Import',&
          mesh=mesh, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO)
 
   end subroutine realize_fields
 
@@ -527,6 +532,8 @@ enddo
                   ESMF_LOGMSG_INFO)
              ! Create the field
              if (fldlist(n)%ungridded_lbound > 0 .and. fldlist(n)%ungridded_ubound > 0) then
+                call ESMF_LogWrite(trim(subname)//trim(tag)//" Field = "//trim(stdname)//" has ungridded dimension", &
+                     ESMF_LOGMSG_INFO)
                 field = ESMF_FieldCreate(mesh, ESMF_TYPEKIND_R8, name=stdname, meshloc=ESMF_MESHLOC_ELEMENT, &
                      ungriddedLbound=(/fldlist(n)%ungridded_lbound/), &
                      ungriddedUbound=(/fldlist(n)%ungridded_ubound/), &
