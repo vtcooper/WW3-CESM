@@ -1066,7 +1066,31 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
-    real(r8), pointer :: wave_elevation_spectrum(:,:)
+    real(r8), pointer :: wave_elevation_spectrum1(:)
+    real(r8), pointer :: wave_elevation_spectrum2(:)
+    real(r8), pointer :: wave_elevation_spectrum3(:)
+    real(r8), pointer :: wave_elevation_spectrum4(:)
+    real(r8), pointer :: wave_elevation_spectrum5(:)
+    real(r8), pointer :: wave_elevation_spectrum6(:)
+    real(r8), pointer :: wave_elevation_spectrum7(:)
+    real(r8), pointer :: wave_elevation_spectrum8(:)
+    real(r8), pointer :: wave_elevation_spectrum9(:)
+    real(r8), pointer :: wave_elevation_spectrum10(:)
+    real(r8), pointer :: wave_elevation_spectrum11(:)
+    real(r8), pointer :: wave_elevation_spectrum12(:)
+    real(r8), pointer :: wave_elevation_spectrum13(:)
+    real(r8), pointer :: wave_elevation_spectrum14(:)
+    real(r8), pointer :: wave_elevation_spectrum15(:)
+    real(r8), pointer :: wave_elevation_spectrum16(:)
+    real(r8), pointer :: wave_elevation_spectrum17(:)
+    real(r8), pointer :: wave_elevation_spectrum18(:)
+    real(r8), pointer :: wave_elevation_spectrum19(:)
+    real(r8), pointer :: wave_elevation_spectrum20(:)
+    real(r8), pointer :: wave_elevation_spectrum21(:)
+    real(r8), pointer :: wave_elevation_spectrum22(:)
+    real(r8), pointer :: wave_elevation_spectrum23(:)
+    real(r8), pointer :: wave_elevation_spectrum24(:)
+    real(r8), pointer :: wave_elevation_spectrum25(:)
     character(len=*),parameter :: subname = '(wav_comp_nuopc:DataInitialize)'
     ! -------------------------------------------------------------------
     !--------------------------------------------------------------------
@@ -1081,15 +1105,86 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call state_getfldptr(exportState, 'wave_elevation_spectrum', fldptr2d=wave_elevation_spectrum, rc=rc)
+    call state_getfldptr(exportState, 'wave_elevation_spectrum1', fldptr1d=wave_elevation_spectrum1, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum2', fldptr1d=wave_elevation_spectrum2, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum3', fldptr1d=wave_elevation_spectrum3, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum4', fldptr1d=wave_elevation_spectrum4, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum5', fldptr1d=wave_elevation_spectrum5, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum6', fldptr1d=wave_elevation_spectrum6, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum7', fldptr1d=wave_elevation_spectrum7, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum8', fldptr1d=wave_elevation_spectrum8, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum9', fldptr1d=wave_elevation_spectrum9, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum10', fldptr1d=wave_elevation_spectrum10, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum11', fldptr1d=wave_elevation_spectrum11, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum12', fldptr1d=wave_elevation_spectrum12, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum13', fldptr1d=wave_elevation_spectrum13, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum14', fldptr1d=wave_elevation_spectrum14, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum15', fldptr1d=wave_elevation_spectrum15, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum16', fldptr1d=wave_elevation_spectrum16, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum17', fldptr1d=wave_elevation_spectrum17, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum18', fldptr1d=wave_elevation_spectrum18, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum19', fldptr1d=wave_elevation_spectrum19, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum20', fldptr1d=wave_elevation_spectrum20, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum21', fldptr1d=wave_elevation_spectrum21, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum22', fldptr1d=wave_elevation_spectrum22, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum23', fldptr1d=wave_elevation_spectrum23, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum24', fldptr1d=wave_elevation_spectrum24, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wave_elevation_spectrum25', fldptr1d=wave_elevation_spectrum25, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     do jsea=1, nseal
        sw_lamult(jsea)  = 1.
        sw_ustokes(jsea) = 0.
        sw_vstokes(jsea) = 0.
-       ! wave_elevation_spectrum (freq,jsea)  
-       wave_elevation_spectrum(:,jsea) = 0 !HK TODO what should this be?
+       wave_elevation_spectrum1(jsea) = 0 
+       wave_elevation_spectrum2(jsea) = 0 
+       wave_elevation_spectrum3(jsea) = 0 
+       wave_elevation_spectrum4(jsea) = 0 
+       wave_elevation_spectrum5(jsea) = 0 
+       wave_elevation_spectrum6(jsea) = 0 
+       wave_elevation_spectrum7(jsea) = 0 
+       wave_elevation_spectrum8(jsea) = 0 
+       wave_elevation_spectrum9(jsea) = 0 
+       wave_elevation_spectrum10(jsea) = 0 
+       wave_elevation_spectrum11(jsea) = 0 
+       wave_elevation_spectrum12(jsea) = 0 
+       wave_elevation_spectrum13(jsea) = 0 
+       wave_elevation_spectrum14(jsea) = 0 
+       wave_elevation_spectrum15(jsea) = 0 
+       wave_elevation_spectrum16(jsea) = 0 
+       wave_elevation_spectrum17(jsea) = 0 
+       wave_elevation_spectrum18(jsea) = 0 
+       wave_elevation_spectrum19(jsea) = 0 
+       wave_elevation_spectrum20(jsea) = 0 
+       wave_elevation_spectrum21(jsea) = 0 
+       wave_elevation_spectrum22(jsea) = 0 
+       wave_elevation_spectrum23(jsea) = 0 
+       wave_elevation_spectrum24(jsea) = 0 
+       wave_elevation_spectrum25(jsea) = 0 
     enddo
 
     ! Set global grid size scalars in export state
