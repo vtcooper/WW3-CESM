@@ -88,7 +88,7 @@ contains
    !call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_hstokes')
     do n = 1, 25
       write(fvalue,'(I2)') n
-      call fldlist_add(fldsFrWav_num, fldsFrWav,'wave_elevation_spectrum'//trim(fvalue))
+      call fldlist_add(fldsFrWav_num, fldsFrWav,'wave_elevation_spectrum'//trim(adjustl(fvalue)))
     enddo
 
     do n = 1,fldsFrWav_num
