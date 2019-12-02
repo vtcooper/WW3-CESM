@@ -499,6 +499,33 @@ enddo
     call state_getfldptr(exportState, 'wave_elevation_spectrum25', fldptr1d=wave_elevation_spectrum25, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
+!HK initialize wave_elevation_spectrum
+       wave_elevation_spectrum1(:) = 0.d0!fillvalue
+       wave_elevation_spectrum2(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum3(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum4(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum5(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum6(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum7(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum8(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum9(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum10(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum11(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum12(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum13(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum14(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum15(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum16(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum17(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum18(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum19(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum20(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum21(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum22(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum23(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum24(:) = 0.d0!fillvalue 
+       wave_elevation_spectrum25(:) = 0.d0!fillvalue
+
     !HK This translates the WW3 arrays to the coupler arrays
     do jsea=1, nseal                       !HK jsea is local
        isea = iaproc + (jsea-1)*naproc     !HK isea is global
@@ -577,32 +604,36 @@ enddo
        sw_lamult(n)  = fillvalue
        sw_ustokes(n) = fillvalue
        sw_vstokes(n) = fillvalue
-       wave_elevation_spectrum1(jsea) = fillvalue
-       wave_elevation_spectrum2(jsea) = fillvalue 
-       wave_elevation_spectrum3(jsea) = fillvalue 
-       wave_elevation_spectrum4(jsea) = fillvalue 
-       wave_elevation_spectrum5(jsea) = fillvalue 
-       wave_elevation_spectrum6(jsea) = fillvalue 
-       wave_elevation_spectrum7(jsea) = fillvalue 
-       wave_elevation_spectrum8(jsea) = fillvalue 
-       wave_elevation_spectrum9(jsea) = fillvalue 
-       wave_elevation_spectrum10(jsea) = fillvalue 
-       wave_elevation_spectrum11(jsea) = fillvalue 
-       wave_elevation_spectrum12(jsea) = fillvalue 
-       wave_elevation_spectrum13(jsea) = fillvalue 
-       wave_elevation_spectrum14(jsea) = fillvalue 
-       wave_elevation_spectrum15(jsea) = fillvalue 
-       wave_elevation_spectrum16(jsea) = fillvalue 
-       wave_elevation_spectrum17(jsea) = fillvalue 
-       wave_elevation_spectrum18(jsea) = fillvalue 
-       wave_elevation_spectrum19(jsea) = fillvalue 
-       wave_elevation_spectrum20(jsea) = fillvalue 
-       wave_elevation_spectrum21(jsea) = fillvalue 
-       wave_elevation_spectrum22(jsea) = fillvalue 
-       wave_elevation_spectrum23(jsea) = fillvalue 
-       wave_elevation_spectrum24(jsea) = fillvalue 
-       wave_elevation_spectrum25(jsea) = fillvalue 
+       wave_elevation_spectrum1 (jsea) = 0.d0!fillvalue
+       wave_elevation_spectrum2 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum3 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum4 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum5 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum6 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum7 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum8 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum9 (jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum10(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum11(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum12(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum13(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum14(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum15(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum16(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum17(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum18(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum19(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum20(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum21(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum22(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum23(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum24(jsea) = 0.d0!fillvalue 
+       wave_elevation_spectrum25(jsea) = 0.d0!fillvalue 
     end do
+
+
+print*, 'HK min max EF', minval(EF), maxval(EF)
+print*, 'HK min max EF only jsea', minval(EF(1:nseal, :)), maxval(EF(1:nseal, :))
 
   end subroutine export_fields
 

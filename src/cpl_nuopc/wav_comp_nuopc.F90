@@ -1156,36 +1156,36 @@ contains
     call state_getfldptr(exportState, 'wave_elevation_spectrum25', fldptr1d=wave_elevation_spectrum25, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    do jsea=1, nseal
-       sw_lamult(jsea)  = 1.
-       sw_ustokes(jsea) = 0.
-       sw_vstokes(jsea) = 0.
-       wave_elevation_spectrum1(jsea) = 0 
-       wave_elevation_spectrum2(jsea) = 0 
-       wave_elevation_spectrum3(jsea) = 0 
-       wave_elevation_spectrum4(jsea) = 0 
-       wave_elevation_spectrum5(jsea) = 0 
-       wave_elevation_spectrum6(jsea) = 0 
-       wave_elevation_spectrum7(jsea) = 0 
-       wave_elevation_spectrum8(jsea) = 0 
-       wave_elevation_spectrum9(jsea) = 0 
-       wave_elevation_spectrum10(jsea) = 0 
-       wave_elevation_spectrum11(jsea) = 0 
-       wave_elevation_spectrum12(jsea) = 0 
-       wave_elevation_spectrum13(jsea) = 0 
-       wave_elevation_spectrum14(jsea) = 0 
-       wave_elevation_spectrum15(jsea) = 0 
-       wave_elevation_spectrum16(jsea) = 0 
-       wave_elevation_spectrum17(jsea) = 0 
-       wave_elevation_spectrum18(jsea) = 0 
-       wave_elevation_spectrum19(jsea) = 0 
-       wave_elevation_spectrum20(jsea) = 0 
-       wave_elevation_spectrum21(jsea) = 0 
-       wave_elevation_spectrum22(jsea) = 0 
-       wave_elevation_spectrum23(jsea) = 0 
-       wave_elevation_spectrum24(jsea) = 0 
-       wave_elevation_spectrum25(jsea) = 0 
-    enddo
+print*, 'called ww3 DataInitialize'
+
+    sw_lamult                (:) = 1.
+    sw_ustokes               (:) = 0.
+    sw_vstokes               (:) = 0.
+    wave_elevation_spectrum1 (:) = 0 
+    wave_elevation_spectrum2 (:) = 0 
+    wave_elevation_spectrum3 (:) = 0 
+    wave_elevation_spectrum4 (:) = 0 
+    wave_elevation_spectrum5 (:) = 0 
+    wave_elevation_spectrum6 (:) = 0 
+    wave_elevation_spectrum7 (:) = 0 
+    wave_elevation_spectrum8 (:) = 0 
+    wave_elevation_spectrum9 (:) = 0 
+    wave_elevation_spectrum10(:) = 0 
+    wave_elevation_spectrum11(:) = 0 
+    wave_elevation_spectrum12(:) = 0 
+    wave_elevation_spectrum13(:) = 0 
+    wave_elevation_spectrum14(:) = 0 
+    wave_elevation_spectrum15(:) = 0 
+    wave_elevation_spectrum16(:) = 0 
+    wave_elevation_spectrum17(:) = 0 
+    wave_elevation_spectrum18(:) = 0 
+    wave_elevation_spectrum19(:) = 0 
+    wave_elevation_spectrum20(:) = 0 
+    wave_elevation_spectrum21(:) = 0 
+    wave_elevation_spectrum22(:) = 0 
+    wave_elevation_spectrum23(:) = 0 
+    wave_elevation_spectrum24(:) = 0 
+    wave_elevation_spectrum25(:) = 0 
 
     ! Set global grid size scalars in export state
     call State_SetScalar(dble(NX), flds_scalar_index_nx, exportState, &
@@ -1313,14 +1313,18 @@ contains
     !------------
     ! Run the wave model for the given interval
     !------------
+    if (masterproc) write(stdout,*)' start wave model' !HK I don't think this gets written
     call w3wave ( 1, timen )
+    if (masterproc) write(stdout,*)' finished wave model'
 
     !------------
     ! Create export state
     !------------
 
+    if (masterproc) write(stdout,*)' start export state wave model'
     call export_fields(gcomp, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (masterproc) write(stdout,*)' finish export state wave model'
 
     !------------
     ! Reset shr logging to original values

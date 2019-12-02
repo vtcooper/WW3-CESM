@@ -453,9 +453,6 @@
       IF ( IIDATA .NE. IMOD ) CALL W3SETI ( IMOD, NDSE, NDST )
  
  
-
-      WRITE(NDSO,*) "start of W3WAVE" 
- 
 !
       ALLOCATE(TAUWX(NSEAL), TAUWY(NSEAL))
 !

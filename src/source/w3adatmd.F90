@@ -2761,10 +2761,8 @@ print*, 'HK NSEALM, NXXX', NSEALM, NXXX
 ! -------------------------------------------------------------------- /
 ! 3.  Set pointers
 !
-print*, 'HK set pointers AINIT', AINIT, 'AINIT2', AINIT2
       IF ( AINIT2 ) THEN
 !
-print*, 'HK inside AINIT2'
           HS     => WADATS(IMOD)%XHS
           WLM    => WADATS(IMOD)%XWLM
           T02    => WADATS(IMOD)%XT02
