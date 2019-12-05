@@ -135,11 +135,6 @@ contains
          mesh=mesh, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-print*, 'HK numflds', fldsFrWav_num
-do ii = 1, 5
-  print*, 'HK fldsFrWav ', trim(fldsFrWav(ii)%stdname), fldsFrWav(ii)%ungridded_lbound, fldsFrWav(ii)%ungridded_ubound
-enddo
-
     call fldlist_realize( &
          state=importState, &
          fldList=fldsToWav, &
