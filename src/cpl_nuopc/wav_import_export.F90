@@ -626,10 +626,6 @@ contains
        wave_elevation_spectrum25(jsea) = 0.d0!fillvalue 
     end do
 
-
-print*, 'HK min max EF', minval(EF), maxval(EF)
-print*, 'HK min max EF only jsea', minval(EF(1:nseal, :)), maxval(EF(1:nseal, :))
-
   end subroutine export_fields
 
   !===============================================================================
