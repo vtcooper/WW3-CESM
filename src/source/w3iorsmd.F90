@@ -738,8 +738,8 @@
                     RPOS  = 1_8 + LRECL*(NREC-1_8)
                     WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) WRITEBUFF
                     WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR)         &   
-                          (LAMULT(ISEA),ISEA=1+(IPART-1)*NSIZE,         &   
-                                          MIN(NSEA,IPART*NSIZE))
+                          (LAMULT(JSEA),JSEA=1+(IPART-1)*NSIZE,         &   
+                                          MIN(NSEAL,IPART*NSIZE))
                     END DO
                 END IF
             END IF
@@ -813,8 +813,8 @@
                 NREC  = NREC + 1 
                 RPOS  = 1_8 + LRECL*(NREC-1_8)
                 READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR)              &   
-                      (LAMULT(ISEA),ISEA=1+(IPART-1)*NSIZE,             &   
-                                      MIN(NSEA,IPART*NSIZE))
+                      (LAMULT(JSEA),JSEA=1+(IPART-1)*NSIZE,             &   
+                                      MIN(NSEAL,IPART*NSIZE))
                 END DO
             ELSE
               TLEV(1) = -1

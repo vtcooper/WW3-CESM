@@ -1313,18 +1313,14 @@ print*, 'called ww3 DataInitialize'
     !------------
     ! Run the wave model for the given interval
     !------------
-    if (masterproc) write(stdout,*)' start wave model' !HK I don't think this gets written
     call w3wave ( 1, timen )
-    if (masterproc) write(stdout,*)' finished wave model'
 
     !------------
     ! Create export state
     !------------
 
-    if (masterproc) write(stdout,*)' start export state wave model'
     call export_fields(gcomp, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    if (masterproc) write(stdout,*)' finish export state wave model'
 
     !------------
     ! Reset shr logging to original values
