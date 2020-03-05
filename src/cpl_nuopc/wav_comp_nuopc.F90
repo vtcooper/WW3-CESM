@@ -1066,6 +1066,8 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
+    real(r8), pointer :: wav_tauice1(:)
+    real(r8), pointer :: wav_tauice2(:)
     real(r8), pointer :: wave_elevation_spectrum1(:)
     real(r8), pointer :: wave_elevation_spectrum2(:)
     real(r8), pointer :: wave_elevation_spectrum3(:)
@@ -1104,6 +1106,10 @@ contains
     call state_getfldptr(exportState, 'Sw_ustokes', sw_ustokes, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(exportState, 'Sw_vstokes', sw_vstokes, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wav_tauice1', wav_tauice1, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(exportState, 'wav_tauice2', wav_tauice2, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(exportState, 'wave_elevation_spectrum1', fldptr1d=wave_elevation_spectrum1, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -1156,36 +1162,36 @@ contains
     call state_getfldptr(exportState, 'wave_elevation_spectrum25', fldptr1d=wave_elevation_spectrum25, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-print*, 'called ww3 DataInitialize'
-
     sw_lamult                (:) = 1.
     sw_ustokes               (:) = 0.
     sw_vstokes               (:) = 0.
-    wave_elevation_spectrum1 (:) = 0 
-    wave_elevation_spectrum2 (:) = 0 
-    wave_elevation_spectrum3 (:) = 0 
-    wave_elevation_spectrum4 (:) = 0 
-    wave_elevation_spectrum5 (:) = 0 
-    wave_elevation_spectrum6 (:) = 0 
-    wave_elevation_spectrum7 (:) = 0 
-    wave_elevation_spectrum8 (:) = 0 
-    wave_elevation_spectrum9 (:) = 0 
-    wave_elevation_spectrum10(:) = 0 
-    wave_elevation_spectrum11(:) = 0 
-    wave_elevation_spectrum12(:) = 0 
-    wave_elevation_spectrum13(:) = 0 
-    wave_elevation_spectrum14(:) = 0 
-    wave_elevation_spectrum15(:) = 0 
-    wave_elevation_spectrum16(:) = 0 
-    wave_elevation_spectrum17(:) = 0 
-    wave_elevation_spectrum18(:) = 0 
-    wave_elevation_spectrum19(:) = 0 
-    wave_elevation_spectrum20(:) = 0 
-    wave_elevation_spectrum21(:) = 0 
-    wave_elevation_spectrum22(:) = 0 
-    wave_elevation_spectrum23(:) = 0 
-    wave_elevation_spectrum24(:) = 0 
-    wave_elevation_spectrum25(:) = 0 
+    wav_tauice1              (:) = 0.
+    wav_tauice2              (:) = 0.
+    wave_elevation_spectrum1 (:) = 0. 
+    wave_elevation_spectrum2 (:) = 0. 
+    wave_elevation_spectrum3 (:) = 0. 
+    wave_elevation_spectrum4 (:) = 0. 
+    wave_elevation_spectrum5 (:) = 0. 
+    wave_elevation_spectrum6 (:) = 0. 
+    wave_elevation_spectrum7 (:) = 0. 
+    wave_elevation_spectrum8 (:) = 0. 
+    wave_elevation_spectrum9 (:) = 0. 
+    wave_elevation_spectrum10(:) = 0. 
+    wave_elevation_spectrum11(:) = 0. 
+    wave_elevation_spectrum12(:) = 0. 
+    wave_elevation_spectrum13(:) = 0. 
+    wave_elevation_spectrum14(:) = 0. 
+    wave_elevation_spectrum15(:) = 0. 
+    wave_elevation_spectrum16(:) = 0. 
+    wave_elevation_spectrum17(:) = 0. 
+    wave_elevation_spectrum18(:) = 0. 
+    wave_elevation_spectrum19(:) = 0. 
+    wave_elevation_spectrum20(:) = 0. 
+    wave_elevation_spectrum21(:) = 0. 
+    wave_elevation_spectrum22(:) = 0. 
+    wave_elevation_spectrum23(:) = 0. 
+    wave_elevation_spectrum24(:) = 0. 
+    wave_elevation_spectrum25(:) = 0. 
 
     ! Set global grid size scalars in export state
     call State_SetScalar(dble(NX), flds_scalar_index_nx, exportState, &

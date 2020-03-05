@@ -86,6 +86,8 @@ contains
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_ustokes')
     call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_vstokes')
    !call fldlist_add(fldsFrWav_num, fldsFrWav, 'Sw_hstokes')
+    call fldlist_add(fldsFrWav_num, fldsFrWav, 'wav_tauice1')
+    call fldlist_add(fldsFrWav_num, fldsFrWav, 'wav_tauice2')
     do n = 1, 25
       write(fvalue,'(I2)') n
       call fldlist_add(fldsFrWav_num, fldsFrWav,'wave_elevation_spectrum'//trim(adjustl(fvalue)))
@@ -379,7 +381,7 @@ contains
     !---------------------------------------------------------------------------
 
     use shr_const_mod , only : fillvalue=>SHR_CONST_SPVAL
-    use w3adatmd      , only : LAMULT, USSX, USSY, EF
+    use w3adatmd      , only : LAMULT, USSX, USSY, EF, TAUICE
     !HK trying to use extended arrays use w3adatmd      , only : XUSSX, XUSSY, XEF
     use w3odatmd      , only : naproc, iaproc
     use w3gdatmd      , only : nseal, MAPSTA, MAPFS, MAPSF
@@ -394,6 +396,8 @@ contains
     real(r8), pointer :: sw_lamult(:)
     real(r8), pointer :: sw_ustokes(:)
     real(r8), pointer :: sw_vstokes(:)
+    real(r8), pointer :: wav_tauice1(:)
+    real(r8), pointer :: wav_tauice2(:)
     ! d2 is location, d1 is frequency  - 25 1d variables
     real(r8), pointer :: wave_elevation_spectrum1(:)   
     real(r8), pointer :: wave_elevation_spectrum2(:)   
@@ -440,6 +444,12 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call state_getfldptr(exportState, 'Sw_vstokes', fldptr1d=sw_vstokes, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call state_getfldptr(exportState, 'wav_tauice1', fldptr1d=wav_tauice1, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call state_getfldptr(exportState, 'wav_tauice2', fldptr1d=wav_tauice2, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! wave_eleveation_spectrum as 25 variables
@@ -531,6 +541,8 @@ contains
           sw_lamult(jsea)  = LAMULT(jsea)
           sw_ustokes(jsea) = USSX(jsea)
           sw_vstokes(jsea) = USSY(jsea)
+          wav_tauice1(jsea) = TAUICE(jsea,1) ! tau ice is 2D
+          wav_tauice2(jsea) = TAUICE(jsea,2) ! tau ice is 2D
 !HK if wave_elevation_spectrum is UNDEF  - needs ouput flag to be turned on
           ! wave_elevation_spectrum as 25 variables
           wave_elevation_spectrum1(jsea) = EF(jsea,1) 
@@ -562,31 +574,33 @@ contains
           sw_lamult(jsea)  = 1.
           sw_ustokes(jsea) = 0.
           sw_vstokes(jsea) = 0.
-          wave_elevation_spectrum1(jsea) = 0 
-          wave_elevation_spectrum2(jsea) = 0 
-          wave_elevation_spectrum3(jsea) = 0 
-          wave_elevation_spectrum4(jsea) = 0 
-          wave_elevation_spectrum5(jsea) = 0 
-          wave_elevation_spectrum6(jsea) = 0 
-          wave_elevation_spectrum7(jsea) = 0 
-          wave_elevation_spectrum8(jsea) = 0 
-          wave_elevation_spectrum9(jsea) = 0 
-          wave_elevation_spectrum10(jsea) = 0 
-          wave_elevation_spectrum11(jsea) = 0 
-          wave_elevation_spectrum12(jsea) = 0 
-          wave_elevation_spectrum13(jsea) = 0 
-          wave_elevation_spectrum14(jsea) = 0 
-          wave_elevation_spectrum15(jsea) = 0 
-          wave_elevation_spectrum16(jsea) = 0 
-          wave_elevation_spectrum17(jsea) = 0 
-          wave_elevation_spectrum18(jsea) = 0 
-          wave_elevation_spectrum19(jsea) = 0 
-          wave_elevation_spectrum20(jsea) = 0 
-          wave_elevation_spectrum21(jsea) = 0 
-          wave_elevation_spectrum22(jsea) = 0 
-          wave_elevation_spectrum23(jsea) = 0 
-          wave_elevation_spectrum24(jsea) = 0 
-          wave_elevation_spectrum25(jsea) = 0 
+          wav_tauice1(jsea) = 0.
+          wav_tauice2(jsea) = 0.
+          wave_elevation_spectrum1(jsea) = 0. 
+          wave_elevation_spectrum2(jsea) = 0. 
+          wave_elevation_spectrum3(jsea) = 0. 
+          wave_elevation_spectrum4(jsea) = 0. 
+          wave_elevation_spectrum5(jsea) = 0. 
+          wave_elevation_spectrum6(jsea) = 0. 
+          wave_elevation_spectrum7(jsea) = 0. 
+          wave_elevation_spectrum8(jsea) = 0. 
+          wave_elevation_spectrum9(jsea) = 0. 
+          wave_elevation_spectrum10(jsea) = 0. 
+          wave_elevation_spectrum11(jsea) = 0. 
+          wave_elevation_spectrum12(jsea) = 0. 
+          wave_elevation_spectrum13(jsea) = 0. 
+          wave_elevation_spectrum14(jsea) = 0. 
+          wave_elevation_spectrum15(jsea) = 0. 
+          wave_elevation_spectrum16(jsea) = 0. 
+          wave_elevation_spectrum17(jsea) = 0. 
+          wave_elevation_spectrum18(jsea) = 0. 
+          wave_elevation_spectrum19(jsea) = 0. 
+          wave_elevation_spectrum20(jsea) = 0. 
+          wave_elevation_spectrum21(jsea) = 0. 
+          wave_elevation_spectrum22(jsea) = 0. 
+          wave_elevation_spectrum23(jsea) = 0. 
+          wave_elevation_spectrum24(jsea) = 0. 
+          wave_elevation_spectrum25(jsea) = 0. 
        endif
        ! sw_htokes(jsea) = ??
     enddo
@@ -599,6 +613,8 @@ contains
        sw_lamult(n)  = fillvalue
        sw_ustokes(n) = fillvalue
        sw_vstokes(n) = fillvalue
+       wav_tauice1(n)     = fillvalue
+       wav_tauice2(n)     = fillvalue
        wave_elevation_spectrum1 (jsea) = fillvalue
        wave_elevation_spectrum2 (jsea) = fillvalue 
        wave_elevation_spectrum3 (jsea) = fillvalue 
