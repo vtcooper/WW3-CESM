@@ -1931,43 +1931,52 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
             !USERO(JSEA,1) = HS(JSEA) / MAX ( 0.001 , DW(JSEA) )
             !USERO(JSEA,2) = ASF(JSEA)
             IF (ETUSSX(JSEA) .NE. 0. .OR. ETUSSY(JSEA) .NE. 0.) THEN
+
               USSX(JSEA) = ETUSSX(JSEA)
               USSY(JSEA) = ETUSSY(JSEA)
               USSXH(JSEA) = ETUSSXH(JSEA)
-              USSYH(JSEA) = ETUSSYH(JSEA)
-              LANGMT(JSEA) = SQRT ( UST(JSEA) * ASF(JSEA)        &
-                        * SQRT ( DAIR / DWAT )                   &
-                        / SQRT ( USSX(JSEA)**2 + USSY(JSEA)**2 ) )
-              ! Calculating Langmuir Number for misaligned wind and waves
-              ! see Van Roekel et al., 2012
-              ! take z1 = 4 * HS
-              ! SWW: angle between Stokes drift and wind
+              USSYH(JSEA) = ETUSSYH(JSEA) 
 
-              ! no Stokes depth
-              SWW = ATAN2(USSY(JSEA),USSX(JSEA)) - UD(JSEA)
-              ! ALPHALS: angle between wind and LC direction, Surface
-              ! Stokes drift
-              ALPHALS(JSEA) = ATAN( SIN(SWW) / ( LANGMT(JSEA)**2  &
-                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
-              LAPROJ(JSEA) = LANGMT(JSEA) &
-                * SQRT(ABS(COS(ALPHALS(JSEA))) &
-                / ABS(COS(SWW-ALPHALS(JSEA))))
-              ! Stokes depth
-              SWW = ATAN2(USSYH(JSEA),USSXH(JSEA)) - UD(JSEA)
-              ! ALPHAL: angle between wind and LC direction
-              ALPHAL(JSEA) = ATAN(SIN(SWW) / (LANGMT(JSEA)**2  &
-                /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
-              LASL(JSEA) = SQRT(UST(JSEA)*ASF(JSEA)         &
-                   * SQRT(DAIR/DWAT)                       &
-                   / SQRT(USSXH(JSEA)**2+USSYH(JSEA)**2))
-              LASLPJ(JSEA) = LASL(JSEA) * SQRT(ABS(COS(ALPHAL(JSEA))) &
-                           / ABS(COS(SWW-ALPHAL(JSEA))))
-              ! QL, 160530, LAMULT
-              LAMULT(JSEA) = MIN(5.0, ABS(COS(ALPHAL(JSEA))) * &
-                 SQRT(1.0+(1.5*LASLPJ(JSEA))**(-2)+(5.4*LASLPJ(JSEA))**(-4)))
-              ! user defined output
-              USERO(JSEA,1) = HML(IX,IY)
-              !USERO(JSEA,2) = COS(ALPHAL(JSEA))
+              ! HK this check is to divide by zeror error with gx17
+              !    is there a better way to do this check?
+              IF( SQRT(USSX(JSEA)**2 + USSY(JSEA)**2) .GT. 0) THEN
+               IF( SQRT(USSXH(JSEA)**2+USSYH(JSEA)**2) .GT. 0) THEN
+
+                  LANGMT(JSEA) = SQRT ( UST(JSEA) * ASF(JSEA)        &
+                            * SQRT ( DAIR / DWAT )                   &
+                            / SQRT ( USSX(JSEA)**2 + USSY(JSEA)**2 ) )
+                  ! Calculating Langmuir Number for misaligned wind and waves
+                  ! see Van Roekel et al., 2012
+                  ! take z1 = 4 * HS
+                  ! SWW: angle between Stokes drift and wind
+
+                  ! no Stokes depth
+                  SWW = ATAN2(USSY(JSEA),USSX(JSEA)) - UD(JSEA)
+                  ! ALPHALS: angle between wind and LC direction, Surface
+                  ! Stokes drift
+                  ALPHALS(JSEA) = ATAN( SIN(SWW) / ( LANGMT(JSEA)**2  &
+                    /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
+                  LAPROJ(JSEA) = LANGMT(JSEA) &
+                    * SQRT(ABS(COS(ALPHALS(JSEA))) &
+                    / ABS(COS(SWW-ALPHALS(JSEA))))
+                  ! Stokes depth
+                  SWW = ATAN2(USSYH(JSEA),USSXH(JSEA)) - UD(JSEA)
+                  ! ALPHAL: angle between wind and LC direction
+                  ALPHAL(JSEA) = ATAN(SIN(SWW) / (LANGMT(JSEA)**2  &
+                    /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
+                  LASL(JSEA) = SQRT(UST(JSEA)*ASF(JSEA)         &
+                       * SQRT(DAIR/DWAT)                       &
+                       / SQRT(USSXH(JSEA)**2+USSYH(JSEA)**2))
+                  LASLPJ(JSEA) = LASL(JSEA) * SQRT(ABS(COS(ALPHAL(JSEA))) &
+                               / ABS(COS(SWW-ALPHAL(JSEA))))
+                  ! QL, 160530, LAMULT
+                  LAMULT(JSEA) = MIN(5.0, ABS(COS(ALPHAL(JSEA))) * &
+                     SQRT(1.0+(1.5*LASLPJ(JSEA))**(-2)+(5.4*LASLPJ(JSEA))**(-4)))
+                  ! user defined output
+                  USERO(JSEA,1) = HML(IX,IY)
+                  !USERO(JSEA,2) = COS(ALPHAL(JSEA)
+               END IF
+              END IF
               END IF
        !----- QL end -----
 !
