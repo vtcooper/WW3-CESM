@@ -1060,7 +1060,7 @@
 !
 ! 6) Wave-ocean layer
 !
-print*, 'HK NSEALM, NXXX', NSEALM, NXXX
+!print*, 'HK NSEALM, NXXX', NSEALM, NXXX
       ALLOCATE ( WADATS(IMOD)%SXX   (NSEALM) ,                        &
                  WADATS(IMOD)%SYY   (NSEALM) ,                        &
                  WADATS(IMOD)%SXY   (NSEALM) ,                        &

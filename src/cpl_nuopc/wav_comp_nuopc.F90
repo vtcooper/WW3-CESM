@@ -1268,7 +1268,7 @@ contains
        ! output every outfreq hours
        histwr = .true.
     else
-       call ESMF_ClockGetAlarm(clock, alarmname='alarm_restart', alarm=alarm, rc=rc)
+       call ESMF_ClockGetAlarm(clock, alarmname='alarm_history', alarm=alarm, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
        if (ESMF_AlarmIsRinging(alarm, rc=rc)) then
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -1279,6 +1279,7 @@ contains
           histwr = .false.
        endif
     end if
+
 
     !------------
     ! Determine time info 
@@ -1349,6 +1350,7 @@ contains
     type(ESMF_Clock)         :: mclock, dclock
     type(ESMF_Time)          :: mcurrtime, dcurrtime
     type(ESMF_Time)          :: mstoptime
+    type(ESMF_Time)          :: mstarttime
     type(ESMF_TimeInterval)  :: mtimestep, dtimestep
     character(len=256)       :: cvalue
     character(len=256)       :: restart_option ! Restart option units
@@ -1398,6 +1400,9 @@ contains
 
     if (alarmCount == 0) then
 
+       call ESMF_ClockGet(mclock, startTime=mStartTime,  rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
        call ESMF_GridCompGet(gcomp, name=name, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
        call ESMF_LogWrite(subname//'setting alarms for' // trim(name), ESMF_LOGMSG_INFO)
@@ -1419,7 +1424,7 @@ contains
        call alarmInit(mclock, restart_alarm, restart_option, &
             opt_n   = restart_n,           &
             opt_ymd = restart_ymd,         &
-            RefTime = mcurrTime,           &
+            RefTime = mCurrTime,           &
             alarmname = 'alarm_restart', rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
@@ -1443,38 +1448,38 @@ contains
        call alarmInit(mclock, stop_alarm, stop_option, &
             opt_n   = stop_n,           &
             opt_ymd = stop_ymd,         &
-            RefTime = mcurrTime,           &
+            RefTime = mCurrTime,       &
             alarmname = 'alarm_stop', rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        call ESMF_AlarmSet(stop_alarm, clock=mclock, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
+       !----------------
+       ! History alarm
+       !----------------
+       call NUOPC_CompAttributeGet(gcomp, name="history_option", value=history_option, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+       call NUOPC_CompAttributeGet(gcomp, name="history_n", value=cvalue, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       read(cvalue,*) history_n
+       call NUOPC_CompAttributeGet(gcomp, name="history_ymd", value=cvalue, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       read(cvalue,*) history_ymd
+
+       call alarmInit(mclock, history_alarm, history_option, &
+            opt_n   = history_n,           &
+            opt_ymd = history_ymd,         &
+            RefTime = mStartTime,          &
+            alarmname = 'alarm_history', rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+       call ESMF_AlarmSet(history_alarm, clock=mclock, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+
     end if
-
-    !----------------
-    ! History alarm
-    !----------------
-    call NUOPC_CompAttributeGet(gcomp, name="history_option", value=history_option, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-    call NUOPC_CompAttributeGet(gcomp, name="history_n", value=cvalue, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    read(cvalue,*) history_n
-
-    call NUOPC_CompAttributeGet(gcomp, name="history_ymd", value=cvalue, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    read(cvalue,*) history_ymd
-
-    call alarmInit(mclock, history_alarm, history_option, &
-         opt_n   = history_n,           &
-         opt_ymd = history_ymd,         &
-         RefTime = mcurrTime,           &
-         alarmname = 'alarm_history', rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-    call ESMF_AlarmSet(history_alarm, clock=mclock, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     !--------------------------------
     ! Advance model clock to trigger alarms then reset model clock back to currtime

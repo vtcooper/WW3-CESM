@@ -234,6 +234,7 @@ contains
     time0(2) = hh*10000 + mm*100 + ss
     time = time0
 
+
     ! Determine global data 
 
     call state_getfldptr(importState, 'So_u', fldptr1d=so_u, rc=rc)
@@ -307,7 +308,7 @@ contains
     ! fill with special values as default, these should not be used in practice
     ! set time for input data to time0 and timen (shouldn't matter)
 
-    !HK flags is now INFLAGS1
+    !HK flags is now INFLAGS1  INFLAGS(1-5) is true
     def_value = 0.0
     if (INFLAGS1(1)) then 
        TLN  = timen
@@ -367,6 +368,7 @@ contains
        enddo
     enddo
 100 format(a,i6,2x,d21.14)
+
 
     call ESMF_LogWrite(trim(subname)//": done", ESMF_LOGMSG_INFO)
 

@@ -2376,6 +2376,9 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !/
       USE W3SERVMD, ONLY: EXTCDE
       USE W3ODATMD, only : IAPROC
+      !HK cesm restarts
+      USE W3CESMMD, ONLY : CASENAME, INST_SUFFIX
+      USE NETCDF
 !
       IMPLICIT NONE
 !/
@@ -2394,9 +2397,22 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                                  MGRPP, ISEA, MOSWLL, IK, IFI, IFJ
       INTEGER, ALLOCATABLE    :: MAPTMP(:,:)
       REAL                    :: AUX1(NSEA), AUX2(NSEA),              &
-                                 AUX3(NSEA), AUX4(NSEA)
+                                 AUX3(NSEA), AUX4(NSEA), AUXE(NSEA,0:NOSWLL)
       CHARACTER(LEN=30)       :: IDTST, TNAME
       CHARACTER(LEN=10)       :: VERTST
+
+      !HK cesm history files
+      REAL,    ALLOCATABLE    :: AUX2D1(:,:),AUX2D2(:,:),AUX2D3(:,:),AUX3DE(:,:,:)
+      LOGICAL                 :: WAUX1, WAUX2, WAUX3, WAUXE
+      INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC
+      INTEGER                 :: VARID1,VARID2,VARID3,VARIDE,NCID,NCLOOP
+      CHARACTER(LEN=16)       :: FLDSTR1,FLDSTR2,FLDSTR3,FLDSTRE
+      CHARACTER(LEN=16)       :: UNITSTR1,UNITSTR2,UNITSTR3,UNITSTRE
+      CHARACTER(LEN=128)      :: LNSTR1,LNSTR2,LNSTR3,LNSTRE
+      INTEGER                 :: DIMID(3)
+      CHARACTER(LEN=256)      :: FNAME
+      LOGICAL                 :: EXISTS
+
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -2511,6 +2527,48 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
 ! Fields ---------------------------------------------- *
 !
+
+
+!HK cesm history file
+      ALLOCATE ( AUX2D1(NX,NY),AUX2D2(NX,NY),AUX2D3(NX,NY),AUX3DE(NX,NY,0:NOSWLL) )
+      YY =  TIME(1)/10000
+      MM = (TIME(1)-YY*10000)/100
+      DD = (TIME(1)-YY*10000-MM*100)
+      HH = TIME(2)/10000
+      MN = (TIME(2)-HH*10000)/100
+      SS = (TIME(2)-HH*10000-MN*100)
+      TOTSEC = HH*3600+MN*60+SS
+      if (len_trim(inst_suffix) > 0) then 
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)&
+              &//'.ww3'//trim(inst_suffix)//'.hi.', &
+              YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
+      else 
+         WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
+              YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
+      ENDIF
+      INQUIRE(FILE=TRIM(FNAME),EXIST=EXISTS)
+      IF (.NOT.EXISTS) THEN 
+         IERR = NF90_CREATE(TRIM(FNAME),NF90_CLOBBER,NCID)
+         CALL HANDLE_ERR(IERR,'CREATE')
+         IERR = NF90_DEF_DIM(NCID,'NX',NX,dimid(1))
+         CALL HANDLE_ERR(IERR,'DEF_DIMID1')
+         IERR = NF90_DEF_DIM(NCID,'NY',NY,dimid(2))
+         CALL HANDLE_ERR(IERR,'DEF_DIMID2')
+         IERR = NF90_DEF_DIM(NCID,'NOSWLL',NOSWLL+1,dimid(3))
+         CALL HANDLE_ERR(IERR,'DEF_DIMID3')
+      ELSE 
+         IERR = NF90_OPEN(TRIM(FNAME),NF90_WRITE,NCID)
+         CALL HANDLE_ERR(IERR,'OPEN')
+         IERR = NF90_INQ_DIMID(NCID,'NX',dimid(1))
+         CALL HANDLE_ERR(IERR,'INQ_DIMID1')
+         IERR = NF90_INQ_DIMID(NCID,'NY',dimid(2))
+         CALL HANDLE_ERR(IERR,'INQ_DIMID2')
+         IERR = NF90_INQ_DIMID(NCID,'NOSWLL',dimid(3))
+         CALL HANDLE_ERR(IERR,'INQ_DIMID3')
+      ENDIF
+!HK end
+
+
 ! Initialization ---------------------------------------------- *
 !
       IF ( WRITE ) THEN
@@ -2675,20 +2733,54 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
         END IF
 !
 ! Actual output  ---------------------------------------------- *
-      DO IFI=1, NOGRP
-       DO IFJ=1, NGRPP
+
+      !HK following ncar:
+      ! 1st loop step  define netcdf variables and 
+      ! attributes
+      ! 2nd loop step, write variables
+      NC: DO NCLOOP = 1,2 
+      IF (NCLOOP == 1) THEN 
+        IERR = NF90_REDEF(NCID)
+      ENDIF
+      IF (NCLOOP == 2) THEN 
+        IERR = NF90_ENDDEF(NCID)
+      ENDIF
+
+      IFI_LOOP: DO IFI=1, NOGRP
+       IFJ_LOOP: DO IFJ=1, NGRPP
  
         IF ( FLOGRD(IFI,IFJ) ) THEN
 !
             IF ( WRITE ) THEN
+
+                WAUX1 = .FALSE.
+                WAUX2 = .FALSE.
+                WAUX3 = .FALSE.
+                WAUXE = .FALSE.
+
 !
 !     Section 1)
 !
                 IF ( IFI .EQ. 1 .AND. IFJ .EQ. 1 ) THEN
-                    WRITE ( NDSOG ) DW(1:NSEA)
+                    !WRITE ( NDSOG ) DW(1:NSEA)
+                    AUX1(1:NSEA) = DW(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'DW'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Water depth'
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) CX(1:NSEA)
-                    WRITE ( NDSOG ) CY(1:NSEA)
+                    !WRITE ( NDSOG ) CX(1:NSEA)
+                    !WRITE ( NDSOG ) CY(1:NSEA)
+                    AUX1(1:NSEA) = CX(1:NSEA)
+                    AUX2(1:NSEA) = CY(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'CX'
+                    FLDSTR2 = 'CY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Mean current, x-component'
+                    LNSTR2 = 'Mean current, y-component'
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 3 ) THEN
                     DO ISEA=1, NSEA
                       IF (UA(ISEA) .NE.UNDEF) THEN
@@ -2699,107 +2791,234 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                         AUX2(ISEA) = UNDEF
                        END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    !WRITE ( NDSOG ) AUX1
+                    !WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'UAX'
+                    FLDSTR2 = 'UAY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Mean wind, x-component'
+                    LNSTR2 = 'Mean wind, y-component'
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) AS(1:NSEA)
+                    !WRITE ( NDSOG ) AS(1:NSEA)
+                    AUX1(1:NSEA) = AS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'AS'
+                    UNITSTR1 = 'deg C'
+                    LNSTR1 = 'Air-sea temperature difference'
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) WLV(1:NSEA)
+                    !WRITE ( NDSOG ) WLV(1:NSEA)
+                    AUX1(1:NSEA) = WLV(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'WLV'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Water levels'
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 6 ) THEN
-                    WRITE ( NDSOG ) ICE(1:NSEA)
+                    !WRITE ( NDSOG ) ICE(1:NSEA)
+                    AUX1(1:NSEA) = ICE(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'ICE'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'Ice coverage'
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 7 ) THEN
-                    WRITE ( NDSOG ) BERG(1:NSEA)
+                    !WRITE ( NDSOG ) BERG(1:NSEA)
+                    AUX1(1:NSEA) = BERG(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'BERG'
+                    UNITSTR1 = '1'
+                    LNSTR1 = ''
  
 !
 !     Section 2)
 !
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 1 ) THEN
-                    WRITE ( NDSOG ) HS(1:NSEA)
+                    !WRITE ( NDSOG ) HS(1:NSEA)
+                    AUX1(1:NSEA) = HS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HS'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Significant wave height'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) WLM(1:NSEA)
+                    !WRITE ( NDSOG ) WLM(1:NSEA)
+                    AUX1(1:NSEA) = WLM(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'WLM'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Mean wave length'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) T02(1:NSEA)
+                    !WRITE ( NDSOG ) T02(1:NSEA)
+                    AUX1(1:NSEA) = T02(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'T02'
+                    UNITSTR1 = 's'
+                    LNSTR1 = 'Mean wave period'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) T0M1(1:NSEA)
+                    !WRITE ( NDSOG ) T0M1(1:NSEA)
+                    AUX1(1:NSEA) = T0M1(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'T0M1'
+                    UNITSTR1 = 's'
+                    LNSTR1 = 'Mean wave period'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) T01(1:NSEA)
+                    !WRITE ( NDSOG ) T01(1:NSEA)
+                    AUX1(1:NSEA) = T01(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'T01'
+                    UNITSTR1 = 's'
+                    LNSTR1 = 'Mean wave period'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 6 ) THEN
-                    WRITE ( NDSOG ) FP0(1:NSEA)
+                    !WRITE ( NDSOG ) FP0(1:NSEA)
+                    AUX1(1:NSEA) = FP0(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'FP0'
+                    UNITSTR1 = 's'
+                    LNSTR1 = 'Mean wave period'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 7 ) THEN
-                    WRITE ( NDSOG ) THM(1:NSEA)
+                    !WRITE ( NDSOG ) THM(1:NSEA)
+                    AUX1(1:NSEA) = THM(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THM'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Mean wave direction'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 8 ) THEN
-                    WRITE ( NDSOG ) THS(1:NSEA)
+                    !WRITE ( NDSOG ) THS(1:NSEA)
+                    AUX1(1:NSEA) = THS(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THS'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Mean directional spread'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 9 ) THEN
-                    WRITE ( NDSOG ) THP0(1:NSEA)
+                    !WRITE ( NDSOG ) THP0(1:NSEA)
+                    AUX1(1:NSEA) = THP0(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'THP0'
+                    UNITSTR1 = 'rad'
+                    LNSTR1 = 'Peak direction'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 10 ) THEN
-                    WRITE ( NDSOG ) HSIG(1:NSEA)
+                    !WRITE ( NDSOG ) HSIG(1:NSEA)
+                    AUX1(1:NSEA) = HSIG(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HSIG'
+                    UNITSTR1 = '1'
+                    LNSTR1 = ''
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 11 ) THEN
-                    WRITE ( NDSOG ) STMAXE(1:NSEA)
+                    !WRITE ( NDSOG ) STMAXE(1:NSEA)
+                    AUX1(1:NSEA) = STMAXE(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'STMAXE'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Max surface elev STE'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 12 ) THEN
-                    WRITE ( NDSOG ) STMAXD(1:NSEA)
+                    !WRITE ( NDSOG ) STMAXD(1:NSEA)
+                    AUX1(1:NSEA) = STMAXD(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'STMAXD'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'St Dev Max surface elev STE'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 13 ) THEN
-                    WRITE ( NDSOG ) HMAXE(1:NSEA)
+                    !WRITE ( NDSOG ) HMAXE(1:NSEA)
+                    AUX1(1:NSEA) = HMAXE(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HMAXE'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Max wave height STE'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 14 ) THEN
-                    WRITE ( NDSOG ) HCMAXE(1:NSEA)
+                    !WRITE ( NDSOG ) HCMAXE(1:NSEA)
+                    AUX1(1:NSEA) = HCMAXE(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HCMAXE'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Max wave height from crest STE'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 15 ) THEN
-                    WRITE ( NDSOG ) HMAXD(1:NSEA)
+                    !WRITE ( NDSOG ) HMAXD(1:NSEA)
+                    AUX1(1:NSEA) = HMAXD(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HMAXD'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'St Dev of MXC (STE)'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 16 ) THEN
-                    WRITE ( NDSOG ) HCMAXD(1:NSEA)
+                    !WRITE ( NDSOG ) HCMAXD(1:NSEA)
+                    AUX1(1:NSEA) = HCMAXD(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'HCMAXD'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'St Dev of MXHC (STE)'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 17 ) THEN
-                    WRITE ( NDSOG ) WBT(1:NSEA)
+                    !WRITE ( NDSOG ) WBT(1:NSEA)
+                    AUX1(1:NSEA) = WBT(1:NSEA)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'WBT'
+                    UNITSTR1 = 'm'
+                    LNSTR1 = 'Dominant wave breaking probability b'
 !
 !     Section 3)
 !
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 1 ) THEN
-                    !HK how does this compare to the netcdf post processing?
-                    WRITE ( NDSOG ) EF(1:NSEA,E3DF(2,1):E3DF(3,1))
+                    !WRITE ( NDSOG ) EF(1:NSEA,E3DF(2,1):E3DF(3,1))
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) TH1M(1:NSEA,E3DF(2,2):E3DF(3,2))
+                    !WRITE ( NDSOG ) TH1M(1:NSEA,E3DF(2,2):E3DF(3,2))
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) STH1M(1:NSEA,E3DF(2,3):E3DF(3,3))
+                    !WRITE ( NDSOG ) STH1M(1:NSEA,E3DF(2,3):E3DF(3,3))
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) TH2M(1:NSEA,E3DF(2,4):E3DF(3,4))
+                    !WRITE ( NDSOG ) TH2M(1:NSEA,E3DF(2,4):E3DF(3,4))
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) STH2M(1:NSEA,E3DF(2,5):E3DF(3,5))
+                    !WRITE ( NDSOG ) STH2M(1:NSEA,E3DF(2,5):E3DF(3,5))
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 6) THEN
-                    WRITE ( NDSOG ) WN(1:NK,1:NSEA)
+                    !WRITE ( NDSOG ) WN(1:NK,1:NSEA)
 !
 !     Section 4)
 !
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 1 ) THEN
-                    WRITE ( NDSOG ) PHS(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PHS(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PHS(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PHS'
+                    UNITSTRE = 'm'
+                    LNSTRE = 'Wave height of partitions'
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) PTP(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PTP(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PTP(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PTP'
+                    UNITSTRE = 's'
+                    LNSTRE = 'Peak wave period of partitions'
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) PLP(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PLP(1:NSEA,0:NOSWLL)
+                    AUXE(1:NSEA,0:NOSWLL) = PLP(1:NSEA,0:NOSWLL)
+                    WAUXE = .TRUE.
+                    FLDSTRE = 'PLP'
+                    UNITSTRE = 'm'
+                    LNSTRE = 'Peak wave length of partitions'
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) PDIR(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PDIR(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) PSI(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PSI(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 6 ) THEN
-                    WRITE ( NDSOG ) PWS(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PWS(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 7 ) THEN
-                    WRITE ( NDSOG ) PTHP0(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PTHP0(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 8  ) THEN
-                    WRITE ( NDSOG ) PQP(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PQP(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 9  ) THEN
-                    WRITE ( NDSOG ) PPE(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PPE(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 10 ) THEN
-                    WRITE ( NDSOG ) PGW(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PGW(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 11 ) THEN
-                    WRITE ( NDSOG ) PSW(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PSW(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 12 ) THEN
-                    WRITE ( NDSOG ) PTM1(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PTM1(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 13 ) THEN
-                    WRITE ( NDSOG ) PT1(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PT1(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 14 ) THEN
-                    WRITE ( NDSOG ) PT2(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PT2(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 15 ) THEN
-                    WRITE ( NDSOG ) PEP(1:NSEA,0:NOSWLL)
+                    !WRITE ( NDSOG ) PEP(1:NSEA,0:NOSWLL)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 16 ) THEN
-                    WRITE ( NDSOG ) PWST(1:NSEA)
+                    !WRITE ( NDSOG ) PWST(1:NSEA)
                   ELSE IF ( IFI .EQ. 4 .AND. IFJ .EQ. 17 ) THEN
-                    WRITE ( NDSOG ) PNR(1:NSEA)
+                    !WRITE ( NDSOG ) PNR(1:NSEA)
 !
 !     Section 5)
 !
@@ -2817,66 +3036,74 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                           AUX2(ISEA) = UNDEF
                         END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    !WRITE ( NDSOG ) AUX1
+                    !WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'ASFX'
+                    FLDSTR2 = 'ASFY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Skin friction velocity, x-component'
+                    LNSTR2 = 'Skin friction velocity, y-component'
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) CHARN(1:NSEA)
+                    !WRITE ( NDSOG ) CHARN(1:NSEA)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) CGE(1:NSEA)
+                    !WRITE ( NDSOG ) CGE(1:NSEA)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) PHIAW(1:NSEA)
+                    !WRITE ( NDSOG ) PHIAW(1:NSEA)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) TAUWIX(1:NSEA)
-                    WRITE ( NDSOG ) TAUWIY(1:NSEA)
+                    !WRITE ( NDSOG ) TAUWIX(1:NSEA)
+                    !WRITE ( NDSOG ) TAUWIY(1:NSEA)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 6 ) THEN
-                    WRITE ( NDSOG ) TAUWNX(1:NSEA)
-                    WRITE ( NDSOG ) TAUWNY(1:NSEA)
+                    !WRITE ( NDSOG ) TAUWNX(1:NSEA)
+                    !WRITE ( NDSOG ) TAUWNY(1:NSEA)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 7 ) THEN
-                    WRITE ( NDSOG ) WHITECAP(1:NSEA,1)
+                    !WRITE ( NDSOG ) WHITECAP(1:NSEA,1)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 8 ) THEN
-                    WRITE ( NDSOG ) WHITECAP(1:NSEA,2)
+                    !WRITE ( NDSOG ) WHITECAP(1:NSEA,2)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 9 ) THEN
-                    WRITE ( NDSOG ) WHITECAP(1:NSEA,3)
+                    !WRITE ( NDSOG ) WHITECAP(1:NSEA,3)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 10 ) THEN
-                    WRITE ( NDSOG ) WHITECAP(1:NSEA,4)
+                    !WRITE ( NDSOG ) WHITECAP(1:NSEA,4)
                   ELSE IF ( IFI .EQ. 5 .AND. IFJ .EQ. 11 ) THEN
-                    WRITE ( NDSOG ) TWS(1:NSEA)
+                    !WRITE ( NDSOG ) TWS(1:NSEA)
 !
 !     Section 6)
 !
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 1 ) THEN
-                    WRITE ( NDSOG ) SXX(1:NSEA)
-                    WRITE ( NDSOG ) SYY(1:NSEA)
-                    WRITE ( NDSOG ) SXY(1:NSEA)
+                    !WRITE ( NDSOG ) SXX(1:NSEA)
+                    !WRITE ( NDSOG ) SYY(1:NSEA)
+                    !WRITE ( NDSOG ) SXY(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) TAUOX(1:NSEA)
-                    WRITE ( NDSOG ) TAUOY(1:NSEA)
+                    !WRITE ( NDSOG ) TAUOX(1:NSEA)
+                    !WRITE ( NDSOG ) TAUOY(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 3  ) THEN
-                    WRITE ( NDSOG ) BHD(1:NSEA)
+                    !WRITE ( NDSOG ) BHD(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) PHIOC(1:NSEA)
+                    !WRITE ( NDSOG ) PHIOC(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) TUSX(1:NSEA)
-                    WRITE ( NDSOG ) TUSY(1:NSEA)
+                    !WRITE ( NDSOG ) TUSX(1:NSEA)
+                    !WRITE ( NDSOG ) TUSY(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 6 ) THEN
-                    WRITE ( NDSOG ) USSX(1:NSEA)
-                    WRITE ( NDSOG ) USSY(1:NSEA)
+                    !WRITE ( NDSOG ) USSX(1:NSEA)
+                    !WRITE ( NDSOG ) USSY(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 7 ) THEN
-                    WRITE ( NDSOG ) PRMS(1:NSEA)
-                    WRITE ( NDSOG ) TPMS(1:NSEA)
+                    !WRITE ( NDSOG ) PRMS(1:NSEA)
+                    !WRITE ( NDSOG ) TPMS(1:NSEA)
                   ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 8 ) THEN
-                    WRITE ( NDSOG ) US3D(1:NSEA,   US3DF(2):US3DF(3))
-                    WRITE ( NDSOG ) US3D(1:NSEA,NK+US3DF(2):NK+US3DF(3))
+                    !WRITE ( NDSOG ) US3D(1:NSEA,   US3DF(2):US3DF(3))
+                    !WRITE ( NDSOG ) US3D(1:NSEA,NK+US3DF(2):NK+US3DF(3))
                  ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ.  9 ) THEN
-                    WRITE ( NDSOG ) P2SMS(1:NSEA,P2MSF(2):P2MSF(3))
+                    !WRITE ( NDSOG ) P2SMS(1:NSEA,P2MSF(2):P2MSF(3))
                  ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 10 ) THEN
-                    WRITE ( NDSOG ) TAUICE(1:NSEA,1)
-                    WRITE ( NDSOG ) TAUICE(1:NSEA,2)
+                    !WRITE ( NDSOG ) TAUICE(1:NSEA,1)
+                    !WRITE ( NDSOG ) TAUICE(1:NSEA,2)
                  ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 11 ) THEN
-                    WRITE ( NDSOG ) PHICE(1:NSEA)
+                    !WRITE ( NDSOG ) PHICE(1:NSEA)
                  ELSE IF ( IFI .EQ. 6 .AND. IFJ .EQ. 12 ) THEN
-                    WRITE ( NDSOG ) USSP(1:NSEA,   1:USSPF(2))
-                    WRITE ( NDSOG ) USSP(1:NSEA,NK+1:NK+USSPF(2))
+                    !WRITE ( NDSOG ) USSP(1:NSEA,   1:USSPF(2))
+                    !WRITE ( NDSOG ) USSP(1:NSEA,NK+1:NK+USSPF(2))
 !
 !     Section 7)
 !
@@ -2894,6 +3121,14 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     WRITE ( NDSOG ) AUX2
                     !WRITE ( NDSOG ) ABA(1:NSEA)
                     !WRITE ( NDSOG ) ABD(1:NSEA)
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'ABAX'
+                    FLDSTR2 = 'ABAY'
+                    UNITSTR1 = 'm'
+                    UNITSTR2 = 'm'
+                    LNSTR1 = 'Near bottom rms wave excursion amplitude, x-component'
+                    LNSTR2 = 'Near bottom rms wave excursion amplitude, y-component'
                   ELSE IF ( IFI .EQ. 7 .AND. IFJ .EQ. 2 ) THEN
                     DO ISEA=1, NSEA
                       IF ( UBA(ISEA) .NE. UNDEF ) THEN
@@ -2904,55 +3139,153 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                           AUX2(ISEA) = UNDEF
                         END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+                    !WRITE ( NDSOG ) AUX1
+                    !WRITE ( NDSOG ) AUX2
+                    WAUX1 = .TRUE.
+                    WAUX2 = .TRUE.
+                    FLDSTR1 = 'UBAX'
+                    FLDSTR2 = 'UBAY'
+                    UNITSTR1 = 'm/s'
+                    UNITSTR2 = 'm/s'
+                    LNSTR1 = 'Near bottom rms wave velocity, x-component'
+                    LNSTR2 = 'Near bottom rms wave velocity, y-component'
 !                    WRITE ( NDSOG ) UBA(1:NSEA)
 !                    WRITE ( NDSOG ) UBD(1:NSEA)
                   ELSE IF ( IFI .EQ. 7 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) BEDFORMS(1:NSEA,1)
-                    WRITE ( NDSOG ) BEDFORMS(1:NSEA,2)
-                    WRITE ( NDSOG ) BEDFORMS(1:NSEA,3)
+                    !WRITE ( NDSOG ) BEDFORMS(1:NSEA,1)
+                    !WRITE ( NDSOG ) BEDFORMS(1:NSEA,2)
+                    !WRITE ( NDSOG ) BEDFORMS(1:NSEA,3)
                   ELSE IF ( IFI .EQ. 7 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) PHIBBL(1:NSEA)
+                    !WRITE ( NDSOG ) PHIBBL(1:NSEA)
                   ELSE IF ( IFI .EQ. 7 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) TAUBBL(1:NSEA,1)
-                    WRITE ( NDSOG ) TAUBBL(1:NSEA,2)
+                    !WRITE ( NDSOG ) TAUBBL(1:NSEA,1)
+                    !WRITE ( NDSOG ) TAUBBL(1:NSEA,2)
 !
 !     Section 8)
 !
                   ELSE IF ( IFI .EQ. 8 .AND. IFJ .EQ. 1 ) THEN
-                    WRITE ( NDSOG ) MSSX(1:NSEA)
-                    WRITE ( NDSOG ) MSSY(1:NSEA)
+                    !WRITE ( NDSOG ) MSSX(1:NSEA)
+                    !WRITE ( NDSOG ) MSSY(1:NSEA)
                   ELSE IF ( IFI .EQ. 8 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) MSCX(1:NSEA)
-                    WRITE ( NDSOG ) MSCY(1:NSEA)
+                    !WRITE ( NDSOG ) MSCX(1:NSEA)
+                    !WRITE ( NDSOG ) MSCY(1:NSEA)
                   ELSE IF ( IFI .EQ. 8 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) MSSD(1:NSEA)
+                    !WRITE ( NDSOG ) MSSD(1:NSEA)
                   ELSE IF ( IFI .EQ. 8 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) MSCD(1:NSEA)
+                    !WRITE ( NDSOG ) MSCD(1:NSEA)
                   ELSE IF ( IFI .EQ. 8 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) QP(1:NSEA)
+                    !WRITE ( NDSOG ) QP(1:NSEA)
 !
 !     Section 9)
 !
                   ELSE IF ( IFI .EQ. 9 .AND. IFJ .EQ. 1 ) THEN
-                    WRITE ( NDSOG ) DTDYN(1:NSEA)
+                    !WRITE ( NDSOG ) DTDYN(1:NSEA)
                   ELSE IF ( IFI .EQ. 9 .AND. IFJ .EQ. 2 ) THEN
-                    WRITE ( NDSOG ) FCUT(1:NSEA)
+                    !WRITE ( NDSOG ) FCUT(1:NSEA)
                   ELSE IF ( IFI .EQ. 9 .AND. IFJ .EQ. 3 ) THEN
-                    WRITE ( NDSOG ) CFLXYMAX(1:NSEA)
+                    !WRITE ( NDSOG ) CFLXYMAX(1:NSEA)
                   ELSE IF ( IFI .EQ. 9 .AND. IFJ .EQ. 4 ) THEN
-                    WRITE ( NDSOG ) CFLTHMAX(1:NSEA)
+                    !WRITE ( NDSOG ) CFLTHMAX(1:NSEA)
                   ELSE IF ( IFI .EQ. 9 .AND. IFJ .EQ. 5 ) THEN
-                    WRITE ( NDSOG ) CFLKMAX(1:NSEA)
+                   !WRITE ( NDSOG ) CFLKMAX(1:NSEA)
 !
 !     Section 10)
 !
                   ELSE IF ( IFI .EQ. 10 ) THEN
-                    WRITE ( NDSOG ) USERO(1:NSEA,IFJ)
+                    !WRITE ( NDSOG ) USERO(1:NSEA,IFJ)
+                    AUX1(1:NSEA) = USERO(1:NSEA,2)
+                    WAUX1 = .TRUE.
+                    FLDSTR1 = 'USERO'
+                    UNITSTR1 = '1'
+                    LNSTR1 = 'User defined variable'
 !
                   END IF
 !
+!     HK cesm restarts
+                  IF (NCLOOP == 1) THEN
+                    !--- no error checking here in case file/vars exists already ---
+                    IF (WAUX1) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR1),NF90_FLOAT,DIMID(1:2),VARID1)
+                      IERR = NF90_PUT_ATT(NCID,VARID1,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARID1,"units",UNITSTR1)
+                      IERR = NF90_PUT_ATT(NCID,VARID1,"long_name",LNSTR1)
+                    ENDIF
+                    IF (WAUX2) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR2),NF90_FLOAT,DIMID(1:2),VARID2)
+                      IERR = NF90_PUT_ATT(NCID,VARID2,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARID2,"units",UNITSTR2)
+                      IERR = NF90_PUT_ATT(NCID,VARID2,"long_name",LNSTR2)
+                    ENDIF
+                    IF (WAUX3) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR3),NF90_FLOAT,DIMID(1:2),VARID3)
+                      IERR = NF90_PUT_ATT(NCID,VARID3,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARID3,"units",UNITSTR3)
+                      IERR = NF90_PUT_ATT(NCID,VARID3,"long_name",LNSTR3)
+                    ENDIF
+                    IF (WAUXE) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTRE),NF90_FLOAT,DIMID(1:3),VARIDE)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"units",UNITSTRE)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"long_name",LNSTRE)
+                    ENDIF
+
+                  ELSEIF (NCLOOP == 2) THEN
+
+                    IF (WAUX1) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstr1)
+!                      call shr_sys_flush(ndso)
+                      WRITE ( NDSOG ) AUX1(1:NSEA)
+                      AUX2D1 = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX2D1(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX1(ISEA)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTR1),VARID1)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D1_'//TRIM(FLDSTR1))
+                      IERR = NF90_PUT_VAR(NCID,VARID1,AUX2D1)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D1_'//TRIM(FLDSTR1))
+                    ENDIF
+                    IF (WAUX2) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstr2)
+!                      call shr_sys_flush(ndso)
+                      WRITE ( NDSOG ) AUX2(1:NSEA)
+                      AUX2D2 = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX2D2(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX2(ISEA)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTR2),VARID2)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D2_'//TRIM(FLDSTR2))
+                      IERR = NF90_PUT_VAR(NCID,VARID2,AUX2D2)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D2_'//TRIM(FLDSTR2))
+                    ENDIF
+                    IF (WAUX3) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstr3)
+!                      call shr_sys_flush(ndso)
+                      WRITE ( NDSOG ) AUX3(1:NSEA)
+                      AUX2D3 = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX2D3(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX3(ISEA)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTR3),VARID3)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D3_'//TRIM(FLDSTR3))
+                      IERR = NF90_PUT_VAR(NCID,VARID3,AUX2D3)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX2D3_'//TRIM(FLDSTR3))
+                    ENDIF
+                    IF (WAUXE) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstre)
+!                      call shr_sys_flush(ndso)
+                      WRITE ( NDSOG ) AUXE(1:NSEA,0:NOSWLL)
+                      AUX3DE = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX3DE(MAPSF(ISEA,1),MAPSF(ISEA,2),0:NOSWLL) = AUXE(ISEA,0:NOSWLL)
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTRE),VARIDE)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D1_'//TRIM(FLDSTRE))
+                      IERR = NF90_PUT_VAR(NCID,VARIDE,AUX3DE)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX3DE_'//TRIM(FLDSTRE))
+                    ENDIF
+
+                ENDIF !NC 
+
               ELSE
 !
 !     Start of reading ......
@@ -3271,8 +3604,16 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
 ! End of IFI and IFJ loops
 !
-         END DO
-        END DO
+         END DO IFJ_LOOP
+        END DO IFI_LOOP
+      END DO NC
+
+      IERR = NF90_CLOSE(NCID)
+      CALL HANDLE_ERR(IERR,'CLOSE')
+
+      DEALLOCATE(AUX2D1,AUX2D2,AUX2D3,AUX3DE)
+
+
 !
 ! Flush the buffers for write
 !
@@ -3783,4 +4124,22 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !/
       END SUBROUTINE CALC_WBT
 !/ ------------------------------------------------------------------- /
+      SUBROUTINE HANDLE_ERR(IERR,STRING)
+!/ Begin  HANDLE_ERR ----------------------------------------------------- /
+      USE W3ODATMD, ONLY: NDSE 
+      USE W3SERVMD, ONLY: EXTCDE
+      USE NETCDF
+      IMPLICIT NONE 
+      INTEGER         ,INTENT(IN) :: IERR 
+      CHARACTER(LEN=*),INTENT(IN) :: STRING
+
+      IF (IERR /= NF90_NOERR) then 
+         WRITE(NDSE,*) "*** WAVEWATCH III netCDF error: ",trim(string),':',trim(nf90_strerror(IERR))
+         CALL EXTCDE ( 49 )
+      ENDIF
+!/ End of HANDLE_ERR ----------------------------------------------------- /
+      END SUBROUTINE HANDLE_ERR
+!/
+!/ End of module W3IOGOMD -------------------------------------------- /
+!/
       END MODULE W3IOGOMD
