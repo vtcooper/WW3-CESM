@@ -921,13 +921,25 @@ contains
                   npts, x, y, pnames, iprt, prtfrm, mpi_comm )
     call shr_sys_flush(ndso)
 
+
+   print*, 'HK pre coupler: ',  dtmax, dtcfl, dtcfli, dtmin
+
+    ! HK overwriting dt values
     ! overwrite dt values with variables from coupler
     ! is this a problem with any things being set in w3init?
-    dtmax  = real(dtime_sync)
-    dtcfl  = real(dtime_sync) / 2. !checked by adrean
-    dtcfli = real(dtime_sync)      !checked by adrean
-    dtmin  = real(dtime_sync) / 12 !checked by adrean
+    !HKdtmax  = real(dtime_sync)
+    !HKdtcfl  = real(dtime_sync) / 2. !checked by adrean
+    !HKdtcfli = real(dtime_sync)      !checked by adrean
+    !HKdtmin  = real(dtime_sync) / 12 !checked by adrean
 
+! gx17
+!180.0000       180.0000       180.0000       15.00000 
+    dtmax  = 180.0000 
+    dtcfl  = 180.0000
+    dtcfli = 180.0000
+    dtmin  = 15.00000
+
+   print*, 'HK post coupler: ',  dtmax, dtcfl, dtcfli, dtmin
     call mpi_barrier ( mpi_comm, ierr )
 
     !--------------------------------------------------------------------
@@ -1513,6 +1525,7 @@ contains
     ! Finalize routine
     !--------------------------------
 
+   print*, 'HK model finalize: ',  dtmax, dtcfl, dtcfli, dtmin
     rc = ESMF_SUCCESS
     call ESMF_LogWrite(subname//' called', ESMF_LOGMSG_INFO)
 
