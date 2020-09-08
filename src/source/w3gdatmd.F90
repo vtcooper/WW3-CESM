@@ -1690,6 +1690,8 @@
       STEDU  => GRIDS(IMOD)%STEDU
       BTBETA => GRIDS(IMOD)%BTBETA
 !
+
+print*, 'HK w3gdatmd: dtmax, dtcfl, dtcfli, dtmin', dtmax, dtcfl, dtcfli, dtmin 
       GINIT  => GRIDS(IMOD)%GINIT
       GUGINIT  => GRIDS(IMOD)%GUGINIT
       FLDRY  => GRIDS(IMOD)%FLDRY

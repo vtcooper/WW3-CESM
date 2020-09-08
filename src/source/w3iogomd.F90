@@ -2397,19 +2397,20 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                                  MGRPP, ISEA, MOSWLL, IK, IFI, IFJ
       INTEGER, ALLOCATABLE    :: MAPTMP(:,:)
       REAL                    :: AUX1(NSEA), AUX2(NSEA),              &
-                                 AUX3(NSEA), AUX4(NSEA), AUXE(NSEA,0:NOSWLL)
+                                 AUX3(NSEA), AUX4(NSEA), AUXE(NSEA,0:NOSWLL), &
+                                 AUXEF(NSEA,E3DF(2,1):E3DF(3,1))
       CHARACTER(LEN=30)       :: IDTST, TNAME
       CHARACTER(LEN=10)       :: VERTST
-
       !HK cesm history files
       REAL,    ALLOCATABLE    :: AUX2D1(:,:),AUX2D2(:,:),AUX2D3(:,:),AUX3DE(:,:,:)
-      LOGICAL                 :: WAUX1, WAUX2, WAUX3, WAUXE
+      REAL,    ALLOCATABLE    :: AUX3DEF(:,:,:)
+      LOGICAL                 :: WAUX1, WAUX2, WAUX3, WAUXE, WAUXEF
       INTEGER                 :: YY,MM,DD,HH,MN,SS,TOTSEC
       INTEGER                 :: VARID1,VARID2,VARID3,VARIDE,NCID,NCLOOP
       CHARACTER(LEN=16)       :: FLDSTR1,FLDSTR2,FLDSTR3,FLDSTRE
       CHARACTER(LEN=16)       :: UNITSTR1,UNITSTR2,UNITSTR3,UNITSTRE
       CHARACTER(LEN=128)      :: LNSTR1,LNSTR2,LNSTR3,LNSTRE
-      INTEGER                 :: DIMID(3)
+      INTEGER                 :: DIMID(4), EF_LEN
       CHARACTER(LEN=256)      :: FNAME
       LOGICAL                 :: EXISTS
 
@@ -2531,6 +2532,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 
 !HK cesm history file
       ALLOCATE ( AUX2D1(NX,NY),AUX2D2(NX,NY),AUX2D3(NX,NY),AUX3DE(NX,NY,0:NOSWLL) )
+      ALLOCATE ( AUX3DEF(NX,NY,E3DF(2,1):E3DF(3,1)) )
       YY =  TIME(1)/10000
       MM = (TIME(1)-YY*10000)/100
       DD = (TIME(1)-YY*10000-MM*100)
@@ -2538,6 +2540,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
       MN = (TIME(2)-HH*10000)/100
       SS = (TIME(2)-HH*10000-MN*100)
       TOTSEC = HH*3600+MN*60+SS
+      EF_LEN=E3DF(3,1)-E3DF(2,1)+1
       if (len_trim(inst_suffix) > 0) then 
          WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)&
               &//'.ww3'//trim(inst_suffix)//'.hi.', &
@@ -2556,6 +2559,8 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
          CALL HANDLE_ERR(IERR,'DEF_DIMID2')
          IERR = NF90_DEF_DIM(NCID,'NOSWLL',NOSWLL+1,dimid(3))
          CALL HANDLE_ERR(IERR,'DEF_DIMID3')
+         IERR = NF90_DEF_DIM(NCID,'FREQ', EF_LEN,dimid(4)) !EF_LEN=25
+         CALL HANDLE_ERR(IERR,'DEF_DIMID4')
       ELSE 
          IERR = NF90_OPEN(TRIM(FNAME),NF90_WRITE,NCID)
          CALL HANDLE_ERR(IERR,'OPEN')
@@ -2565,6 +2570,8 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
          CALL HANDLE_ERR(IERR,'INQ_DIMID2')
          IERR = NF90_INQ_DIMID(NCID,'NOSWLL',dimid(3))
          CALL HANDLE_ERR(IERR,'INQ_DIMID3')
+         IERR = NF90_INQ_DIMID(NCID,'FREQ',dimid(4)) !EF_LEN=25
+         CALL HANDLE_ERR(IERR,'INQ_DIMID4')
       ENDIF
 !HK end
 
@@ -2757,6 +2764,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                 WAUX2 = .FALSE.
                 WAUX3 = .FALSE.
                 WAUXE = .FALSE.
+                WAUXEF = .FALSE.
 
 !
 !     Section 1)
@@ -2957,6 +2965,11 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 1 ) THEN
                     !WRITE ( NDSOG ) EF(1:NSEA,E3DF(2,1):E3DF(3,1))
+                    AUXEF(1:NSEA,E3DF(2,1):E3DF(3,1)) = EF(1:NSEA,E3DF(2,1):E3DF(3,1))
+                    WAUXEF = .TRUE.
+                    FLDSTRE = 'EF'
+                    UNITSTRE = '1'
+                    LNSTRE = '1D spectral density'
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 2 ) THEN
                     !WRITE ( NDSOG ) TH1M(1:NSEA,E3DF(2,2):E3DF(3,2))
                   ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 3 ) THEN
@@ -3228,6 +3241,12 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                       IERR = NF90_PUT_ATT(NCID,VARIDE,"units",UNITSTRE)
                       IERR = NF90_PUT_ATT(NCID,VARIDE,"long_name",LNSTRE)
                     ENDIF
+                    IF (WAUXEF) THEN
+                      IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTRE),NF90_FLOAT,(/DIMID(1),DIMID(2),DIMID(4)/),VARIDE)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"_FillValue",UNDEF)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"units",UNITSTRE)
+                      IERR = NF90_PUT_ATT(NCID,VARIDE,"long_name",LNSTRE)
+                   ENDIF
 
                   ELSEIF (NCLOOP == 2) THEN
 
@@ -3283,6 +3302,20 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                       IERR = NF90_PUT_VAR(NCID,VARIDE,AUX3DE)
                       CALL HANDLE_ERR(IERR,'PUT_VAR_AUX3DE_'//TRIM(FLDSTRE))
                     ENDIF
+                    IF (WAUXEF) THEN
+!                      write(ndso,*) 'w3iogo write ',trim(fldstre)
+!                      call shr_sys_flush(ndso)
+                      WRITE ( NDSOG ) AUXEF(1:NSEA,E3DF(2,1):E3DF(3,1))
+                      AUX3DEF = UNDEF
+                      DO ISEA=1, NSEA
+                         AUX3DEF(MAPSF(ISEA,1),MAPSF(ISEA,2),E3DF(2,1):E3DF(3,1)) = AUXEF(ISEA,E3DF(2,1):E3DF(3,1))
+                      ENDDO
+                      IERR = NF90_INQ_VARID(NCID,TRIM(FLDSTRE),VARIDE)
+                      CALL HANDLE_ERR(IERR,'INQ_VARID_AUX2D1_'//TRIM(FLDSTRE))
+                      IERR = NF90_PUT_VAR(NCID,VARIDE,AUX3DEF)
+                      CALL HANDLE_ERR(IERR,'PUT_VAR_AUX3DE_'//TRIM(FLDSTRE))
+                    ENDIF
+
 
                 ENDIF !NC 
 
@@ -3611,7 +3644,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
       IERR = NF90_CLOSE(NCID)
       CALL HANDLE_ERR(IERR,'CLOSE')
 
-      DEALLOCATE(AUX2D1,AUX2D2,AUX2D3,AUX3DE)
+      DEALLOCATE(AUX2D1,AUX2D2,AUX2D3,AUX3DE,AUX3DEF)
 
 
 !
