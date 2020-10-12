@@ -155,7 +155,7 @@ module wav_comp_nuopc
   use w3wdatmd              , only: time, w3ndat, w3dimw, w3setw
   use w3adatmd
   !HK flags is now inflags1
-  use w3idatmd              , only: inflags1, w3seti, w3ninp
+  use w3idatmd              , only: inflags1, inflags2, w3seti, w3ninp
   use w3idatmd              , only: TC0, CX0, CY0, TCN, CXN, CYN !HK, NX, NY
   use w3idatmd              , only: TW0, WX0, WY0, DT0, TWN, WXN, WYN, DTN
   use w3idatmd              , only: TIN, ICEI, TLN, WLEV, HML
@@ -562,7 +562,7 @@ contains
     inflags1(1:5) = .true.
     !      flags(1:4) = .true.   !changed by Adrean (lev,curr,wind,ice on)
     !      flags(3:4) = .true.   !changed by Adrean (wind,ice on)
-
+    inflags2(4) = .true. ! LR
     !--------------------------------------------------------------------
     ! Set time frame
     !--------------------------------------------------------------------
@@ -932,10 +932,10 @@ contains
 
     ! gx17
    !180.0000       180.0000       180.0000       15.00000 
-    dtmax  = 180.0000 
-    dtcfl  = 180.0000
-    dtcfli = 180.0000
-    dtmin  = 15.00000
+    dtmax  = 1800.0000 ! LR 
+    dtcfl  = 600.0000
+    dtcfli = 1800.0000
+    dtmin  = 1800.00000
 
     call mpi_barrier ( mpi_comm, ierr )
 

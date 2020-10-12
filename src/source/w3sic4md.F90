@@ -377,7 +377,6 @@
 ! 1.  Make calculations ---------------------------------------------- /
 !
 ! 1.a Calculate WN_I
-print*, 'HK IC4METHOD', IC4METHOD 
       SELECT CASE (IC4METHOD)
  
         CASE (1) ! IC4M1 : Exponential fit to Wadhams et al. 1988
