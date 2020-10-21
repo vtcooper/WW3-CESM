@@ -562,7 +562,16 @@ contains
     inflags1(1:5) = .true.
     !      flags(1:4) = .true.   !changed by Adrean (lev,curr,wind,ice on)
     !      flags(3:4) = .true.   !changed by Adrean (wind,ice on)
-    inflags2(4) = .true. ! LR
+
+    ! LR - I don't understand the difference between inflags1 and inflags2
+    ! I am setting them both here to get thickness and floe size import to waves
+    ! and to turn on attenuation
+    inflags1(-7) = .true. ! LR thickness 
+    inflags1(-3) = .true. ! LR floe size 
+    inflags2(-7) = .true. ! LR thickness
+    inflags2(-3) = .true. ! LR floe size
+
+    inflags2(4) = .true.  ! LR
     !--------------------------------------------------------------------
     ! Set time frame
     !--------------------------------------------------------------------

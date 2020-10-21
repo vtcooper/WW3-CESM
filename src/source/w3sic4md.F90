@@ -350,14 +350,16 @@
 !   We cannot remove the other use of INFLAGS below,
 !   because we would get 'array not allocated' error for the methods
 !   that don't use MUDV, etc. and don't have MUDV allocated.
- 
+
+
+
       IF (INFLAGS2(-7)) ICECOEF1 = ICEP1(IX,IY) ! a.k.a. IC1
       IF (INFLAGS2(-6)) ICECOEF2 = ICEP2(IX,IY) ! etc.
       IF (INFLAGS2(-5)) ICECOEF3 = ICEP3(IX,IY)
       IF (INFLAGS2(-4)) ICECOEF4 = ICEP4(IX,IY)
       IF (INFLAGS2(-3)) ICECOEF5 = ICEP5(IX,IY)
       IF (INFLAGS2(4))  iceconc  = ICEI(IX,IY)    ! CMB 
-
+ 
 ! Borrow from Smud (error if BT8 or BT9)
       IF (INFLAGS2(-2)) ICECOEF6 = MUDD(IX,IY) ! a.k.a. MDN
       IF (INFLAGS2(-1)) ICECOEF7 = MUDT(IX,IY) ! a.k.a. MTH

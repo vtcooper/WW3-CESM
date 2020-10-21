@@ -65,6 +65,8 @@ contains
     call fldlist_add(fldsToWav_num, fldsToWav, 'Sa_v'       )
     call fldlist_add(fldsToWav_num, fldsToWav, 'Sa_tbot'    )
     call fldlist_add(fldsToWav_num, fldsToWav, 'Si_ifrac'   )
+    call fldlist_add(fldsToWav_num, fldsToWav, 'Si_thick'   )
+    call fldlist_add(fldsToWav_num, fldsToWav, 'Si_floediam')
     call fldlist_add(fldsToWav_num, fldsToWav, 'So_t'       )
     call fldlist_add(fldsToWav_num, fldsToWav, 'So_u'       )
     call fldlist_add(fldsToWav_num, fldsToWav, 'So_v'       )
@@ -160,7 +162,8 @@ contains
     !---------------------------------------------------------------------------
 
     use w3gdatmd    , only: nseal, MAPSTA, MAPFS, MAPSF, NX, NY
-    use w3idatmd    , only: CX0, CY0, CXN, CYN, DT0, DTN, ICEI, HML, WLEV, INFLAGS1
+    use w3idatmd    , only: CX0, CY0, CXN, CYN, DT0, DTN, ICEI, HML, WLEV, INFLAGS1, &
+                            ICEP1, ICEP5
     use w3idatmd    , only: TC0, TCN, TLN, TIN, TW0, TWN, WX0, WY0, WXN, WYN
     use w3odatmd    , only: naproc, iaproc, napout
     use w3wdatmd    , only: time
@@ -185,6 +188,8 @@ contains
     real(r8)          :: sa_v_global(nx*ny)
     real(r8)          :: sa_tbot_global(nx*ny)
     real(r8)          :: si_ifrac_global(nx*ny)
+    real(r8)          :: si_thick_global(nx*ny)
+    real(r8)          :: si_floediam_global(nx*ny)
     real(r8)          :: temp_global(nx*ny)
     real(r8), pointer :: so_u(:)
     real(r8), pointer :: so_v(:)
@@ -194,6 +199,8 @@ contains
     real(r8), pointer :: sa_v(:)
     real(r8), pointer :: sa_tbot(:)
     real(r8), pointer :: si_ifrac(:)
+    real(r8), pointer :: si_thick(:)
+    real(r8), pointer :: si_floediam(:)
     integer           :: n, ix, iy, isea
     real(r8)          :: def_value
     integer           :: time0(2) ! starting time of the run interval
@@ -253,6 +260,12 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call state_getfldptr(importState, 'Si_ifrac', fldptr1d=si_ifrac, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(importState, 'Si_thick', fldptr1d=si_thick, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call state_getfldptr(importState, 'Si_floediam', fldptr1d=si_floediam, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+
 
     so_u_global(:)       = 0._r8
     so_v_global(:)       = 0._r8
@@ -262,6 +275,10 @@ contains
     sa_v_global          = 0._r8
     sa_tbot_global       = 0._r8
     si_ifrac_global      = 0._r8
+    si_thick_global      = 0._r8
+    si_floediam_global   = 0._r8
+
+
 
     do n = 1, nseal
        isea = iaproc + (n-1)*naproc
@@ -276,6 +293,9 @@ contains
        sa_v_global       (ix + (iy-1)*nx) = sa_v(n)
        sa_tbot_global    (ix + (iy-1)*nx) = sa_tbot(n)
        si_ifrac_global   (ix + (iy-1)*nx) = si_ifrac(n)
+       si_thick_global   (ix + (iy-1)*nx) = si_thick(n)
+       si_floediam_global(ix + (iy-1)*nx) = si_floediam(n)
+
     end do
 
     call ESMF_VMAllReduce(vm, sendData=so_u_global, recvData=temp_global, count=nx*ny, reduceflag=ESMF_REDUCE_SUM, rc=rc)
@@ -301,6 +321,13 @@ contains
 
     call ESMF_VMAllReduce(vm, sendData=si_ifrac_global, recvData=temp_global, count=nx*ny, reduceflag=ESMF_REDUCE_SUM, rc=rc)
     si_ifrac_global(:) = temp_global(:)
+
+    call ESMF_VMAllReduce(vm, sendData=si_thick_global, recvData=temp_global, count=nx*ny, reduceflag=ESMF_REDUCE_SUM, rc=rc)
+    si_thick_global(:) = temp_global(:)
+
+    call ESMF_VMAllReduce(vm, sendData=si_floediam_global, recvData=temp_global, count=nx*ny, reduceflag=ESMF_REDUCE_SUM, rc=rc)
+    si_floediam_global(:) = temp_global(:)
+
 
     ! input fields associated with W3FLDG calls in ww3_shel.ftn
     ! these arrays are global, just fill the local cells for use later
@@ -336,6 +363,15 @@ contains
        TIN  = timen       ! time for ice field
        ICEI = def_value   ! ice frac
     endif
+    if (INFLAGS1(-7)) then
+       TIN  = timen       ! time for ice field
+       ICEP1 = def_value   ! ice thickness
+    end if
+    if (INFLAGS1(-3)) then
+       TIN  = timen       ! time for ice field
+       ICEP5 = def_value   ! ice floe size
+    end if
+
 
     ! use these loops for global copy
     n = 0
@@ -362,6 +398,12 @@ contains
           if (INFLAGS1(4)) then
              ICEI(ix,iy) = si_ifrac_global(n) ! ice frac
           endif
+          if (INFLAGS1(-7)) then
+             ICEP1(ix,iy) = si_thick_global(n) ! ice thickness
+          end if
+          if (INFLAGS1(-3)) then
+             ICEP5(ix,iy) = si_floediam_global(n) ! ice floe diameter
+          end if
           if (INFLAGS1(5)) then
              HML(ix,iy) = max(so_bldepth_global(n), 5.) ! ocn mixing layer depth
           endif
