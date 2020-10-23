@@ -1962,8 +1962,22 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                   ! Stokes depth
                   SWW = ATAN2(USSYH(JSEA),USSXH(JSEA)) - UD(JSEA)
                   ! ALPHAL: angle between wind and LC direction
-                  ALPHAL(JSEA) = ATAN(SIN(SWW) / (LANGMT(JSEA)**2  &
+                  
+                  ! LR check for divide by zero
+                  if ((LANGMT(JSEA)**2  &
+                    /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)).eq.0.) then
+                      print *, 'LR warning denom 0.'
+                      ! This appears to be a decimal precision error
+                      ! The first term in equals minus the second term to 6 decimal places
+                      ! The denominator should be a very small number (e-7)
+                      ! ATAN(sin(sww)/small number) tends to pi/2 
+                      ! So I hardcoded this here.
+                      ALPHAL(JSEA) = -1.5707956594501575
+                  else
+
+                      ALPHAL(JSEA) = ATAN(SIN(SWW) / (LANGMT(JSEA)**2  &
                     /0.4*LOG(MAX(ABS(HML(IX,IY)/4./HS(JSEA)),1.0))+COS(SWW)))
+                  end if
                   LASL(JSEA) = SQRT(UST(JSEA)*ASF(JSEA)         &
                        * SQRT(DAIR/DWAT)                       &
                        / SQRT(USSXH(JSEA)**2+USSYH(JSEA)**2))
