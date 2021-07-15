@@ -985,7 +985,6 @@
  
 ! 2.  Main loop over sea points -------------------------------------- *
 
-      print *, 'LR FLFLOE ',FLFLOE 
       DO ISEA=1, NSEA
 !
         IX        = MAPSF(ISEA,1)

@@ -669,7 +669,7 @@
                   RPOS  = 1_8 + LRECL*(NREC-1_8)
                   WRITEBUFF(:) = 0.
                   WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) WRITEBUFF
-                  WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) TLEV, TICE
+                  WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) TLEV, TICE, TIC1, TIC5
  
                   DO IPART=1,NPART
                     NREC  = NREC + 1
@@ -685,6 +685,22 @@
                     WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) WRITEBUFF
                     WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR)         &
                           (ICE(ISEA),ISEA=1+(IPART-1)*NSIZE,          &
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1
+                    RPOS  = 1_8 + LRECL*(NREC-1_8)
+                    WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) WRITEBUFF
+                    WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR)         &
+                          (ICEH(ISEA),ISEA=1+(IPART-1)*NSIZE,          &
+                                          MIN(NSEA,IPART*NSIZE))
+                    END DO
+                  DO IPART=1,NPART
+                    NREC  = NREC + 1
+                    RPOS  = 1_8 + LRECL*(NREC-1_8)
+                    WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR) WRITEBUFF
+                    WRITE (NDSR,POS=RPOS,ERR=803,IOSTAT=IERR)         &
+                          (ICEF(ISEA),ISEA=1+(IPART-1)*NSIZE,          &
                                           MIN(NSEA,IPART*NSIZE))
                     END DO
                   ALLOCATE ( MAPTMP(NY,NX) )
@@ -746,7 +762,7 @@
         ELSE
           IF (TYPE.EQ.'FULL') THEN
               RPOS = 1_8 + LRECL*(NREC-1_8)
-              READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR) TLEV, TICE
+              READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR) TLEV, TICE, TIC1, TIC5
               DO IPART=1,NPART
                 NREC  = NREC + 1
                 RPOS = 1_8 + LRECL*(NREC-1_8)
@@ -759,6 +775,20 @@
                 RPOS = 1_8 + LRECL*(NREC-1_8)
                 READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR)              &
                       (ICE(ISEA),ISEA=1+(IPART-1)*NSIZE,              &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1
+                RPOS = 1_8 + LRECL*(NREC-1_8)
+                READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR)              &
+                      (ICEH(ISEA),ISEA=1+(IPART-1)*NSIZE,              &
+                                      MIN(NSEA,IPART*NSIZE))
+                END DO
+              DO IPART=1,NPART
+                NREC  = NREC + 1
+                RPOS = 1_8 + LRECL*(NREC-1_8)
+                READ (NDSR,POS=RPOS,ERR=802,IOSTAT=IERR)              &
+                      (ICEF(ISEA),ISEA=1+(IPART-1)*NSIZE,              &
                                       MIN(NSEA,IPART*NSIZE))
                 END DO
               ALLOCATE ( MAPTMP(NY,NX) )

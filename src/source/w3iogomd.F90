@@ -269,7 +269,7 @@
       END SUBROUTINE W3FLGRDUPDT
 !/ ------------------------------------------------------------------- /
       SUBROUTINE W3READFLGRD ( NDSI , NDSO, NDSS, NDSEN, COMSTR,      &
-                               FLG1D, FLG2D, IAPROC, NAPOUT, IERR)
+                               FLG1D, FLG2D, IAPROC, NAPOUT, IERR) !CMB moved to nuopc_cap
 !/
 !/                  +-----------------------------------+
 !/                  | WAVEWATCH III           NOAA/NCEP |
@@ -2402,8 +2402,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !/
       USE W3SERVMD, ONLY: EXTCDE
       USE W3ODATMD, only : IAPROC
-      !HK cesm restarts
-      USE W3CESMMD, ONLY : CASENAME, INST_SUFFIX
+      USE W3CESMMD, ONLY : CASENAME, INST_SUFFIX    !CMB naming from cesm restarts
       USE NETCDF
 !
       IMPLICIT NONE
@@ -2475,6 +2474,17 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
             END IF
         END IF
 !
+
+!CMB skip all this hideous out_grd unformatted output since it is being replaced
+!CMB with netcdf, though it is only partially done. netcdf works but is 
+!CMB bizarrely complex due to legacy code
+!CMB I think there once were 7 different output files so each had
+!CMB records of same dimensions only (ie "grid" or "frequency" records were separate)
+!CMB This is not a problem in netcdf. I think Helen had mashed all the 
+!CMB unformatted output into a single unformatted file to start her process.
+!CMB But then never finished really getting rid of the horid unformatted stuff
+     IF (.FALSE.) THEN
+
 ! open file ---------------------------------------------------------- *
 ! ( IPASS = 1 )
 !
@@ -2527,7 +2537,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
             END IF
 !
-        END IF
+      END IF  
 !
 ! TIME and flags ----------------------------------------------------- *
 !
@@ -2551,6 +2561,8 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
           MAPST2 = (MAPTMP-MAPSTA) / 8
         END IF
       DEALLOCATE ( MAPTMP )
+   END IF  ! CMB conditional to eliminate the out_grd output
+
 !
 ! Fields ---------------------------------------------- *
 !
@@ -2575,6 +2587,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
          WRITE(FNAME,'(A,I4.4,A,I2.2,A,I2.2,A,I5.5,A)') trim(CASENAME)//'.ww3.hi.', &
               YY,'-',MM,'-',DD,'-',TOTSEC,'.nc'
       ENDIF
+      ! write(*, *) 'w3iogomd: writing history ', FNAME
       INQUIRE(FILE=TRIM(FNAME),EXIST=EXISTS)
       IF (.NOT.EXISTS) THEN 
          IERR = NF90_CREATE(TRIM(FNAME),NF90_CLOBBER,NCID)
@@ -2627,8 +2640,6 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                 IF ( FLOGRD( 2,16) ) HCMAXD(ISEA) = UNDEF
                 IF ( FLOGRD( 2,17) ) WBT   (ISEA) = UNDEF
 !
-!HK EF flags for output fields
-!   EF is sent to the coupler for CICE
                 IF ( FLOGRD( 3, 1) ) EF   (ISEA,:) = UNDEF
                 IF ( FLOGRD( 3, 2) ) TH1M (ISEA,:) = UNDEF
                 IF ( FLOGRD( 3, 3) ) STH1M(ISEA,:) = UNDEF
@@ -2771,26 +2782,26 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
       ! 1st loop step  define netcdf variables and 
       ! attributes
       ! 2nd loop step, write variables
-      NC: DO NCLOOP = 1,2 
-      IF (NCLOOP == 1) THEN 
-        IERR = NF90_REDEF(NCID)
-      ENDIF
-      IF (NCLOOP == 2) THEN 
-        IERR = NF90_ENDDEF(NCID)
-      ENDIF
+      NC_LOOP: DO NCLOOP = 1,2 
+        IF (NCLOOP == 1) THEN 
+          IERR = NF90_REDEF(NCID)
+        ENDIF
+        IF (NCLOOP == 2) THEN 
+          IERR = NF90_ENDDEF(NCID)
+        ENDIF
 
-      IFI_LOOP: DO IFI=1, NOGRP
-       IFJ_LOOP: DO IFJ=1, NGRPP
+        IFI_LOOP: DO IFI=1, NOGRP
+          IFJ_LOOP: DO IFJ=1, NGRPP
  
         IF ( FLOGRD(IFI,IFJ) ) THEN
 !
             IF ( WRITE ) THEN
 
-                WAUX1 = .FALSE.
-                WAUX2 = .FALSE.
-                WAUX3 = .FALSE.
-                WAUXE = .FALSE.
-                WAUXEF = .FALSE.
+                WAUX1 = .FALSE.  !CMB vars with dims (nx,ny) shoved into AUX1
+                WAUX2 = .FALSE.  !CMB y-component of vars with dims (nx,ny) shoved into AUX2
+                WAUX3 = .FALSE.  !CMB unused
+                WAUXE = .FALSE.  !CMB wave height of partition vars with dims of NOSWLL, a mess
+                WAUXEF = .FALSE. !CMB for vars with dims of (Freq,nx,ny) shoved into AUXEF
 
 !
 !     Section 1)
@@ -2801,7 +2812,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'DW'
                     UNITSTR1 = 'm'
-                    LNSTR1 = 'Water depth'
+                    LNSTR1 = 'Water depth'  !CMB should use IDOUT here, see w3odatmd
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 2 ) THEN
                     !WRITE ( NDSOG ) CX(1:NSEA)
                     !WRITE ( NDSOG ) CY(1:NSEA)
@@ -2815,7 +2826,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     UNITSTR2 = 'm/s'
                     LNSTR1 = 'Mean current, x-component'
                     LNSTR2 = 'Mean current, y-component'
-                  ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 3 ) THEN
+                  ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 3 ) THEN  
                     DO ISEA=1, NSEA
                       IF (UA(ISEA) .NE.UNDEF) THEN
                           AUX1(ISEA) = UA(ISEA)*COS(UD(ISEA))
@@ -2849,7 +2860,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     FLDSTR1 = 'WLV'
                     UNITSTR1 = 'm'
                     LNSTR1 = 'Water levels'
-                  ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 6 ) THEN
+                  ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 6 ) THEN  
                     !WRITE ( NDSOG ) ICE(1:NSEA)
                     AUX1(1:NSEA) = ICE(1:NSEA)
                     WAUX1 = .TRUE.
@@ -2867,7 +2878,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
 !     Section 2)
 !
-                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 1 ) THEN
+                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 1 ) THEN 
                     !WRITE ( NDSOG ) HS(1:NSEA)
                     AUX1(1:NSEA) = HS(1:NSEA)
                     WAUX1 = .TRUE.
@@ -2881,21 +2892,21 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     FLDSTR1 = 'WLM'
                     UNITSTR1 = 'm'
                     LNSTR1 = 'Mean wave length'
-                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 3 ) THEN
+                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 3 ) THEN 
                     !WRITE ( NDSOG ) T02(1:NSEA)
                     AUX1(1:NSEA) = T02(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'T02'
                     UNITSTR1 = 's'
                     LNSTR1 = 'Mean wave period'
-                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 4 ) THEN
+                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 4 ) THEN 
                     !WRITE ( NDSOG ) T0M1(1:NSEA)
                     AUX1(1:NSEA) = T0M1(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'T0M1'
                     UNITSTR1 = 's'
                     LNSTR1 = 'Mean wave period'
-                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 5 ) THEN
+                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 5 ) THEN 
                     !WRITE ( NDSOG ) T01(1:NSEA)
                     AUX1(1:NSEA) = T01(1:NSEA)
                     WAUX1 = .TRUE.
@@ -2907,8 +2918,8 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     AUX1(1:NSEA) = FP0(1:NSEA)
                     WAUX1 = .TRUE.
                     FLDSTR1 = 'FP0'
-                    UNITSTR1 = 's'
-                    LNSTR1 = 'Mean wave period'
+                    UNITSTR1 = 'Hz'
+                    LNSTR1 = 'Peak frequency'
                   ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 7 ) THEN
                     !WRITE ( NDSOG ) THM(1:NSEA)
                     AUX1(1:NSEA) = THM(1:NSEA)
@@ -2916,7 +2927,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     FLDSTR1 = 'THM'
                     UNITSTR1 = 'rad'
                     LNSTR1 = 'Mean wave direction'
-                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 8 ) THEN
+                  ELSE IF ( IFI .EQ. 2 .AND. IFJ .EQ. 8 ) THEN 
                     !WRITE ( NDSOG ) THS(1:NSEA)
                     AUX1(1:NSEA) = THS(1:NSEA)
                     WAUX1 = .TRUE.
@@ -2989,7 +3000,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
 !     Section 3)
 !
-                  ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 1 ) THEN
+                  ELSE IF ( IFI .EQ. 3 .AND. IFJ .EQ. 1 ) THEN 
                     !WRITE ( NDSOG ) EF(1:NSEA,E3DF(2,1):E3DF(3,1))
                     AUXEF(1:NSEA,E3DF(2,1):E3DF(3,1)) = EF(1:NSEA,E3DF(2,1):E3DF(3,1))
                     WAUXEF = .TRUE.
@@ -3156,8 +3167,8 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                           AUX2(ISEA) = UNDEF
                         END IF
                       END DO
-                    WRITE ( NDSOG ) AUX1
-                    WRITE ( NDSOG ) AUX2
+!CMB error I think                    WRITE ( NDSOG ) AUX1
+!CMB error I think                    WRITE ( NDSOG ) AUX2
                     !WRITE ( NDSOG ) ABA(1:NSEA)
                     !WRITE ( NDSOG ) ABD(1:NSEA)
                     WAUX1 = .TRUE.
@@ -3240,16 +3251,19 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
                   END IF
 !
-!     HK cesm restarts
+!     HK cesm history
                   IF (NCLOOP == 1) THEN
+!                    write(ndse,*) 'CMB w3iogo NCLOOP=',NCLOOP, WAUX1, WAUX2, WAUX3,WAUXE,WAUXEF
                     !--- no error checking here in case file/vars exists already ---
                     IF (WAUX1) THEN
+!                      write(ndse,*) 'CMB w3iogo NCLOOP=1, WAUX1=T, FLDSTR1, VARID1', TRIM(FLDSTR1), VARID1
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR1),NF90_FLOAT,DIMID(1:2),VARID1)
                       IERR = NF90_PUT_ATT(NCID,VARID1,"_FillValue",UNDEF)
                       IERR = NF90_PUT_ATT(NCID,VARID1,"units",UNITSTR1)
                       IERR = NF90_PUT_ATT(NCID,VARID1,"long_name",LNSTR1)
                     ENDIF
                     IF (WAUX2) THEN
+!                      write(ndse,*) 'CMB w3iogo NCLOOP=1, WAUX2=T, FLDSTR2, VARID2', TRIM(FLDSTR2), VARID2
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTR2),NF90_FLOAT,DIMID(1:2),VARID2)
                       IERR = NF90_PUT_ATT(NCID,VARID2,"_FillValue",UNDEF)
                       IERR = NF90_PUT_ATT(NCID,VARID2,"units",UNITSTR2)
@@ -3268,6 +3282,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                       IERR = NF90_PUT_ATT(NCID,VARIDE,"long_name",LNSTRE)
                     ENDIF
                     IF (WAUXEF) THEN
+!                      write(ndse,*) 'CMB w3iogo NCLOOP=1, WAUXEF=T, FLDSTRE, VARIDE', TRIM(FLDSTRE), VARIDE
                       IERR = NF90_DEF_VAR(NCID,TRIM(FLDSTRE),NF90_FLOAT,(/DIMID(1),DIMID(2),DIMID(4)/),VARIDE)
                       IERR = NF90_PUT_ATT(NCID,VARIDE,"_FillValue",UNDEF)
                       IERR = NF90_PUT_ATT(NCID,VARIDE,"units",UNITSTRE)
@@ -3276,10 +3291,11 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 
                   ELSEIF (NCLOOP == 2) THEN
 
+!                    write(ndse,*) 'CMB w3iogo write NCLOOP=',NCLOOP, WAUX1, WAUX2, WAUX3,WAUXE,WAUXEF
                     IF (WAUX1) THEN
 !                      write(ndso,*) 'w3iogo write ',trim(fldstr1)
 !                      call shr_sys_flush(ndso)
-                      WRITE ( NDSOG ) AUX1(1:NSEA)
+!CMB                      WRITE ( NDSOG ) AUX1(1:NSEA)
                       AUX2D1 = UNDEF
                       DO ISEA=1, NSEA
                          AUX2D1(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX1(ISEA)
@@ -3292,7 +3308,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     IF (WAUX2) THEN
 !                      write(ndso,*) 'w3iogo write ',trim(fldstr2)
 !                      call shr_sys_flush(ndso)
-                      WRITE ( NDSOG ) AUX2(1:NSEA)
+!CMB                      WRITE ( NDSOG ) AUX2(1:NSEA)
                       AUX2D2 = UNDEF
                       DO ISEA=1, NSEA
                          AUX2D2(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX2(ISEA)
@@ -3305,7 +3321,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     IF (WAUX3) THEN
 !                      write(ndso,*) 'w3iogo write ',trim(fldstr3)
 !                      call shr_sys_flush(ndso)
-                      WRITE ( NDSOG ) AUX3(1:NSEA)
+!CMB                      WRITE ( NDSOG ) AUX3(1:NSEA)
                       AUX2D3 = UNDEF
                       DO ISEA=1, NSEA
                          AUX2D3(MAPSF(ISEA,1),MAPSF(ISEA,2)) = AUX3(ISEA)
@@ -3318,7 +3334,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     IF (WAUXE) THEN
 !                      write(ndso,*) 'w3iogo write ',trim(fldstre)
 !                      call shr_sys_flush(ndso)
-                      WRITE ( NDSOG ) AUXE(1:NSEA,0:NOSWLL)
+!CMB                      WRITE ( NDSOG ) AUXE(1:NSEA,0:NOSWLL)
                       AUX3DE = UNDEF
                       DO ISEA=1, NSEA
                          AUX3DE(MAPSF(ISEA,1),MAPSF(ISEA,2),0:NOSWLL) = AUXE(ISEA,0:NOSWLL)
@@ -3331,7 +3347,7 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
                     IF (WAUXEF) THEN
 !                      write(ndso,*) 'w3iogo write ',trim(fldstre)
 !                      call shr_sys_flush(ndso)
-                      WRITE ( NDSOG ) AUXEF(1:NSEA,E3DF(2,1):E3DF(3,1))
+!CMB                      WRITE ( NDSOG ) AUXEF(1:NSEA,E3DF(2,1):E3DF(3,1))
                       AUX3DEF = UNDEF
                       DO ISEA=1, NSEA
                          AUX3DEF(MAPSF(ISEA,1),MAPSF(ISEA,2),E3DF(2,1):E3DF(3,1)) = AUXEF(ISEA,E3DF(2,1):E3DF(3,1))
@@ -3345,12 +3361,13 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 
                 ENDIF !NC 
 
-              ELSE
+              ELSE IF (.FALSE.) THEN !CMB this was never called since loop is NCLOOP=1,2   force skip as precaution since NDSOG no longer exists
 !
 !     Start of reading ......
 !
 !     Section 1)
 !
+                write(ndse,*) 'CMB w3iogo READ ',IFI,IFJ  
                 IF ( IFI .EQ. 1 .AND. IFJ .EQ. 1 ) THEN
                     READ (NDSOG,END=801,ERR=802,IOSTAT=IERR) DW(1:NSEA)
                   ELSE IF ( IFI .EQ. 1 .AND. IFJ .EQ. 2 ) THEN
@@ -3661,11 +3678,11 @@ print*, 'HK::ALERT inside W3FLGRDFLAG'
 !
           END IF
 !
-! End of IFI and IFJ loops
+! End of IFI, IFJ, and NCLOOP loops
 !
          END DO IFJ_LOOP
         END DO IFI_LOOP
-      END DO NC
+      END DO NC_LOOP
 
       IERR = NF90_CLOSE(NCID)
       CALL HANDLE_ERR(IERR,'CLOSE')

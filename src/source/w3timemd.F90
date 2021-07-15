@@ -71,7 +71,7 @@
 !
       INTEGER, PRIVATE        :: PRFTB(8)
       LOGICAL, PRIVATE        :: FLPROF = .FALSE.
-      LOGICAL, PUBLIC         :: NOLEAP
+      LOGICAL, PUBLIC         :: NOLEAP = .TRUE.  ! CMB
 !
       CONTAINS
 !/ ------------------------------------------------------------------- /
@@ -259,9 +259,9 @@
       LEAP = MOD(NY,400).EQ.0 .OR.                              &
               ( MOD(NY,4).EQ.0 .AND. MOD(NY,100).NE.0 )
       ! Add override for simulations with no leap years
-      IF (NOLEAP) then
+!      IF (NOLEAP) then  ! CMB seems to be not working when I made NOLEAP=.true., still getting leap day
          LEAP = .false.
-      ENDIF
+!      ENDIF
 !
 ! M = -1, change month if necessary :
 !
@@ -489,9 +489,9 @@
       LEAP = MOD(NY,400).EQ.0 .OR.                              &
               ( MOD(NY,4).EQ.0 .AND. MOD(NY,100).NE.0 )
       !Allow override for NoLeap simulations
-      IF (NOLEAP) THEN
+!     IF (NOLEAP) THEN  ! CMB seems to be not working when I made NOLEAP=.true., still getting leap day
          LEAP=.false.
-      ENDIF
+!      ENDIF
 !
 ! Loop over months :
 !

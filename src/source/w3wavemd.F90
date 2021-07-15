@@ -451,8 +451,6 @@
       IF ( IWDATA .NE. IMOD ) CALL W3SETW ( IMOD, NDSE, NDST )
       IF ( IADATA .NE. IMOD ) CALL W3SETA ( IMOD, NDSE, NDST )
       IF ( IIDATA .NE. IMOD ) CALL W3SETI ( IMOD, NDSE, NDST )
- 
- 
 !
       ALLOCATE(TAUWX(NSEAL), TAUWY(NSEAL))
 !
@@ -601,6 +599,21 @@
         END IF
 !
 ! 1.e Ice floe interval
+!
+! CMB needed for IS4METHOD=8 (not just for scattering anymore)
+       IF ( FLIC5 ) THEN
+           IF ( TIC5(1) .GE. 0 ) THEN
+               DTI50   = DSEC21 ( TIC5 , TI5 )
+           ELSE
+               DTI50   = 1.
+           END IF
+       IF ( DTI50 .LT. 0. ) THEN
+          IF ( IAPROC .EQ. NAPERR ) WRITE (NDSE,1006)
+             CALL EXTCDE ( 5 )
+          END IF
+       ELSE
+          DTI50   = 0.
+       END IF
 !
 ! 2.  Determine next time from ending and output --------------------- /
 !     time and get corresponding time step.
@@ -837,7 +850,6 @@
                 ELSE
                   IDACT(11:11) = 'I'
                 END IF
- 
 !
               IF ( IDACT(11:11).NE.' ' ) THEN
                   CALL W3UIC1 ( FLFRST )
@@ -852,7 +864,27 @@
 !
 ! 3.3.3 Update ice floe diameter
 !
- 
+! CMB needed for IS4METHOD=8 (not just for scattering anymore)
+               IF ( FLIC5 .AND. DTI50.NE.0. ) THEN
+                   IF ( TIC5(1).GE.0 ) THEN
+                       IF ( DTI50 .LT. 0. ) THEN
+                           IDACT(14:14) = 'B'
+                         ELSE
+                           DTTST  = DSEC21 ( TIME, TI5 )
+                           IF ( DTTST .LE. 0.5*DTI50 ) IDACT(14:14) = 'U'
+                         END IF
+                     ELSE
+                       IDACT(14:14) = 'I'
+                     END IF
+!
+                   IF ( IDACT(14:14).NE.' ' ) THEN
+                    CALL W3UIC5( FLFRST )
+                       DTI50   = 0.
+                       FLACT  = .TRUE.
+                       FLMAP  = .TRUE.
+                     END IF
+!
+                 END IF
 !
 ! 3.4 Transform grid (if new water level).
 !
@@ -1266,15 +1298,15 @@
 !
         IF ( TOFRST(1)  .EQ. -1 ) THEN
             DTTST  = 1.
-          ELSE
+        ELSE
             DTTST   = DSEC21 ( TIME, TOFRST )
-          END IF
+        END IF
 !
         IF ( TDN(1)  .EQ. -1 ) THEN
             DTTST1 = 1.
-          ELSE
+        ELSE
             DTTST1  = DSEC21 ( TIME, TDN )
-          END IF
+        END IF
 !
         DTTST2 = DSEC21 ( TIME, TEND )
         FLAG_O = .NOT.SKIP_O .OR. ( SKIP_O .AND. DTTST2.NE.0. )
@@ -1283,17 +1315,17 @@
 !
 ! 4.b Processing and MPP preparations
 !
-            IF ( FLOUT(1) ) THEN
+          IF ( FLOUT(1) ) THEN
                 FLOUTG = DSEC21(TIME,TONEXT(:,1)).EQ.0.
-              ELSE
+          ELSE
                 FLOUTG = .FALSE.
-              END IF
+          END IF
 !
-            IF ( FLOUT(7) ) THEN
+          IF ( FLOUT(7) ) THEN
                 FLOUTG2 = DSEC21(TIME,TONEXT(:,7)).EQ.0.
-              ELSE
+          ELSE
                 FLOUTG2 = .FALSE.
-              END IF
+          END IF
 !
           FLPART = .FALSE.
           IF ( FLOUT(1) .AND. FLPFLD )                               &
@@ -1301,67 +1333,81 @@
           IF ( FLOUT(6) )                                            &
                FLPART = FLPART .OR. DSEC21(TIME,TONEXT(:,6)).EQ.0.
 !
-            IF ( LOCAL .AND. FLPART ) CALL W3CPRT ( IMOD )
-            IF ( LOCAL .AND. (FLOUTG .OR. FLOUTG2) )                   &
+          IF ( LOCAL .AND. FLPART ) CALL W3CPRT ( IMOD )
+          IF ( LOCAL .AND. (FLOUTG .OR. FLOUTG2) )                   &
                  CALL W3OUTG ( VA, FLPFLD, FLOUTG, FLOUTG2 )
 !
-            FLGMPI = .FALSE.
-            NRQMAX = 0
+          FLGMPI = .FALSE.
+          NRQMAX = 0
 !
-     IF ( ( ( DSEC21(TIME,TONEXT(:,1)).EQ.0. ) .OR.     &
-            ( DSEC21(TIME,TONEXT(:,7)).EQ.0. ) ).and.   &
-          (FLOUT(1) .OR.  FLOUT(7)) ) THEN
-       IF (.NOT. LPDLIB .or. (GTYPE.ne.UNGTYPE)) THEN
-         IF (NRQGO.NE.0 ) THEN
-           CALL MPI_STARTALL ( NRQGO, IRQGO , IERR_MPI )
+! CMB notes
+! dsec21 computes the difference between time1, time2 in sec
+! pretty sure tonext always equal to time on the hour
+! so this is getting called every hour
+! seems like it only needs to be done when histwr=T though 
+! so am chaning
+!          IF ( ( ( DSEC21(TIME,TONEXT(:,1)).EQ.0. ) .OR.     &
+!               ( DSEC21(TIME,TONEXT(:,7)).EQ.0. ) ).and.   &
+          IF (  histwr .and.  &
+               (FLOUT(1) .OR.  FLOUT(7)) ) THEN
+           IF (.NOT. LPDLIB .or. (GTYPE.ne.UNGTYPE)) THEN
+             IF (NRQGO.NE.0 ) THEN
+               CALL MPI_STARTALL ( NRQGO, IRQGO , IERR_MPI )
+              write(*,*) 'CMB histwr mpi_startall', histwr, NRQGO, IERR_MPI
  
-           FLGMPI(0) = .TRUE.
-           NRQMAX    = MAX ( NRQMAX , NRQGO )
-         END IF
+               FLGMPI(0) = .TRUE.
+               NRQMAX    = MAX ( NRQMAX , NRQGO )
+             END IF
 !
-         IF (NRQGO2.NE.0 ) THEN
-           CALL MPI_STARTALL ( NRQGO2, IRQGO2, IERR_MPI )
-           FLGMPI(1) = .TRUE.
-           NRQMAX    = MAX ( NRQMAX , NRQGO2 )
-         END IF
-       ELSE
-       END IF
-     END IF
+! CMB note made this condition on mastertask since only wait on mastertask
+! probably no change since NRQGO2=0 when not mastertask
+             IF ((NRQGO2.NE.0 ) .and. (IAPROC .eq. NAPFLD)) THEN
+               CALL MPI_STARTALL ( NRQGO2, IRQGO2, IERR_MPI )
+              write(*,*) 'CMB histwr mpi_startall 2', histwr, NRQGO2, IERR_MPI
+               FLGMPI(1) = .TRUE.
+               NRQMAX    = MAX ( NRQMAX , NRQGO2 )
+             END IF
+           ELSE
+           END IF
+          END IF
  
 !
-            IF ( FLOUT(2) .AND. NRQPO.NE.0 ) THEN
+          IF ( FLOUT(2) .AND. NRQPO.NE.0 ) THEN
                 IF ( DSEC21(TIME,TONEXT(:,2)).EQ.0. ) THEN
                     CALL MPI_STARTALL ( NRQPO, IRQPO1, IERR_MPI )
                     FLGMPI(2) = .TRUE.
                     NRQMAX    = MAX ( NRQMAX , NRQPO )
                   END IF
-              END IF
+          END IF
 !
-            IF ( FLOUT(4) .AND. NRQRS.NE.0 ) THEN
+! CMB added conditional on rstwr
+! not sure this is need here anyway since startall is also done in w3iors
+          IF (( FLOUT(4) .AND. NRQRS.NE.0 ) .and. rstwr) THEN
                 IF ( DSEC21(TIME,TONEXT(:,4)).EQ.0. ) THEN
                     CALL MPI_STARTALL ( NRQRS, IRQRS , IERR_MPI )
+                    write(*,*) 'CMB rstwr mpi_startall', rstwr, NRQRS, IERR_MPI
                     FLGMPI(4) = .TRUE.
                     NRQMAX    = MAX ( NRQMAX , NRQRS )
                   END IF
-              END IF
+          END IF
 !
-            IF ( FLOUT(5) .AND. NRQBP.NE.0 ) THEN
+          IF ( FLOUT(5) .AND. NRQBP.NE.0 ) THEN
                 IF ( DSEC21(TIME,TONEXT(:,5)).EQ.0. ) THEN
                     CALL MPI_STARTALL ( NRQBP , IRQBP1, IERR_MPI )
                     FLGMPI(5) = .TRUE.
                     NRQMAX    = MAX ( NRQMAX , NRQBP )
                   END IF
-              END IF
+          END IF
 !
-            IF ( FLOUT(5) .AND. NRQBP2.NE.0 .AND.                &
+          IF ( FLOUT(5) .AND. NRQBP2.NE.0 .AND.                &
                  IAPROC.EQ.NAPBPT) THEN
                 IF ( DSEC21(TIME,TONEXT(:,5)).EQ.0. ) THEN
                     CALL MPI_STARTALL (NRQBP2,IRQBP2,IERR_MPI)
                     NRQMAX    = MAX ( NRQMAX , NRQBP2 )
                   END IF
-              END IF
+          END IF
 !
-           IF ( NRQMAX .NE. 0 ) ALLOCATE                         &
+          IF ( NRQMAX .NE. 0 ) ALLOCATE                         &
                                  ( STATIO(MPI_STATUS_SIZE,NRQMAX) )
  
  
@@ -1369,10 +1415,10 @@
 ! 4.c Reset next output time
  
 !
-            TOFRST(1) = -1
-            TOFRST(2) =  0
+          TOFRST(1) = -1
+          TOFRST(2) =  0
 !
-            DO J=1, NOTYPE
+          DO J=1, NOTYPE
               IF ( FLOUT(J) ) THEN
 !
 ! 4.d Perform output
@@ -1382,17 +1428,17 @@
 !
                   ! QL, 160601, add history file flag
                   IF ( DTTST .EQ. 0. ) THEN
-                      IF ( ( J .EQ. 1 ) .OR. ( J .EQ. 7 ) .AND. HISTWR) THEN
-                          IF ( IAPROC .EQ. NAPFLD ) THEN
+                      IF ( (( J .EQ. 1 ) .OR. ( J .EQ. 7 )) .AND. HISTWR) THEN
+                          CALL MPI_WAITALL( NRQGO, IRQGO, STATIO, IERR_MPI )
+                          FLGMPI(0) = .FALSE.
+                write(*,*) 'w3wavemd: hist flag 1', j, histwr, time, IERR_MPI
+                          IF ( IAPROC .EQ. NAPFLD ) THEN 
                               IF ( FLGMPI(1) ) CALL MPI_WAITALL  &
                                  ( NRQGO2, IRQGO2, STATIO, IERR_MPI )
                               FLGMPI(1) = .FALSE.
-                              IF ( J .EQ. 1 ) CALL W3IOGO             &
+                write(*,*) 'w3wavemd: hist flag 2', j, histwr, time, IERR_MPI
+                              IF ( J .EQ. 1 ) CALL W3IOGO             &  !for master only????
                                  ( 'WRITE', NDS(7), ITEST, IMOD )
-                            END IF
- 
-                          IF ( J .EQ. 7 ) THEN
- 
                           END IF
  
                         ELSE IF ( J .EQ. 2 ) THEN
@@ -1414,6 +1460,7 @@
                           CALL W3IOTR ( NDS(11), NDS(12), VA, IMOD )
                         ! QL, 150823, add restart flag  
                         ELSE IF ( J .EQ. 4 .AND. RSTWR ) THEN
+                           !CMB why not waitall? seems to be done on w3iors
                           CALL W3IORS ('HOT', NDS(6), XXX, ITEST, IMOD )
                         ELSE IF ( J .EQ. 5 ) THEN
                           IF ( IAPROC .EQ. NAPBPT ) THEN
@@ -1453,11 +1500,13 @@
 !
                 END IF
 !
-              END DO
+            END DO
  
 !
             IF ( FLGMPI(0) ) CALL MPI_WAITALL                    &
                              ( NRQGO, IRQGO , STATIO, IERR_MPI )
+            IF ( FLGMPI(1) .and. ( IAPROC .EQ. NAPFLD ) ) CALL MPI_WAITALL   & 
+                             ( NRQGO2, IRQGO2 , STATIO, IERR_MPI )   !CMB added
             IF ( FLGMPI(2) ) CALL MPI_WAITALL                    &
                              ( NRQPO, IRQPO1, STATIO, IERR_MPI )
             IF ( FLGMPI(4) ) CALL MPI_WAITALL                    &
@@ -1471,7 +1520,7 @@
 !
 !!/MPI            IF (FLDRY) CALL MPI_BARRIER (MPI_COMM_WAVE,IERR_MPI)
 !
-          END IF
+          END IF !CMB IF ( DTTST.LE.0. .AND. DTTST1.NE.0. .AND. FLAG_O )
  
  
 !
@@ -1557,6 +1606,8 @@
                '     NEW ICE FIELD BEFORE OLD ICE FIELD '/)
  1005 FORMAT (/' *** WAVEWATCH III ERROR IN W3WAVE :'/                &
                '     NEW IC1 FIELD BEFORE OLD IC1 FIELD '/)
+ 1006 FORMAT (/' *** WAVEWATCH III ERROR IN W3WAVE :'/                &
+               '     NEW IC5 FIELD BEFORE OLD IC5 FIELD '/)
  1030 FORMAT (/' *** WAVEWATCH III WARING IN W3WAVE :'/               &
                '     AT LEAST ONE PROCESSOR HAS 0 ACTIVE POINTS',     &
                    ' IN GRID',I3)

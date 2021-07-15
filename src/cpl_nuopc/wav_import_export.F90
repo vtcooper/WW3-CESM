@@ -164,7 +164,7 @@ contains
     use w3gdatmd    , only: nseal, MAPSTA, MAPFS, MAPSF, NX, NY
     use w3idatmd    , only: CX0, CY0, CXN, CYN, DT0, DTN, ICEI, HML, WLEV, INFLAGS1, &
                             ICEP1, ICEP5
-    use w3idatmd    , only: TC0, TCN, TLN, TIN, TW0, TWN, WX0, WY0, WXN, WYN
+    use w3idatmd    , only: TC0, TCN, TLN, TIN, TI1, TI5, TW0, TWN, WX0, WY0, WXN, WYN
     use w3odatmd    , only: naproc, iaproc, napout
     use w3wdatmd    , only: time
     
@@ -364,11 +364,11 @@ contains
        ICEI = def_value   ! ice frac
     endif
     if (INFLAGS1(-7)) then
-       TIN  = timen       ! time for ice field
+       TI1  = timen       ! time for ice field
        ICEP1 = def_value   ! ice thickness
     end if
     if (INFLAGS1(-3)) then
-       TIN  = timen       ! time for ice field
+       TI5  = timen       ! time for ice field
        ICEP5 = def_value   ! ice floe size
     end if
 

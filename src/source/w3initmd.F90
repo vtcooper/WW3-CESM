@@ -543,6 +543,11 @@
 ! 1.d Dataset unit numbers
 !
 !!/WW3DEBUGMPI     CALL TEST_MPI_STATUS("Case 6")
+!CMB These four NDS files are all sent to stdout, according to wav_comp_nuop 
+    ! NDS(1) ! OUTPUT LOG: General output unit number ("log file") (NDS0)
+    ! NDS(2) ! OUTPUT LOG: Error output unit number (NDSE)
+    ! NDS(3) ! OUTPUT LOG: Test output unit number (NDST)
+    ! NDS(4) ! OUTPUT LOG: Unit for 'direct' output (SCREEN)
       NDS    = MDS
       NDSO   = NDS(1)
       NDSE   = NDS(2)
@@ -757,14 +762,19 @@
 ! 4.  Set-up output times -------------------------------------------- *
 ! 4.a Unpack ODAT
 !
-      DO J=1, NOTYPE
+      DO J=1, NOTYPE  ! CMB, FYI NOTYPE=7 is hardwired in w3odatmd.F90
         J0 = (J-1)*5
         TONEXT(1,J) =        ODAT(J0+1)
         TONEXT(2,J) =        ODAT(J0+2)
         DTOUT (  J) = REAL ( ODAT(J0+3) )
         TOLAST(1,J) =        ODAT(J0+4)
         TOLAST(2,J) =        ODAT(J0+5)
+! CMB 
+        IF ( IAPROC .EQ. NAPLOG ) THEN
+           write(ndso,*) 'CMB distribute odat ', j, TONEXT(:,J), DTOUT (  J)
+        END IF
       END DO
+
 !
 ! 4.b Check if output available
 !
@@ -788,7 +798,8 @@
 !
       FLOUT(2) = NPT .GT. 0
 !
-      FLOUT(3) = .TRUE.
+!CMB ???      FLOUT(3) = .TRUE.
+      FLOUT(3) = .FALSE.
 !
       FLOUT(4) = .TRUE.
 !
@@ -829,7 +840,7 @@
             TLST = TOLAST(:,J)
 !
             DO
-              DTTST   = DSEC21 ( TIME , TOUT )
+              DTTST   = DSEC21 ( TIME , TOUT )  ! diff in sec btween two times
               IF ( ( J.NE.4 .AND. DTTST.LT.0. ) .OR.                  &
                    ( J.EQ.4 .AND. DTTST.LE.0. ) ) THEN
                   CALL TICK21 ( TOUT, DTOUT(J) )
@@ -862,9 +873,22 @@
 !
           END IF
 !
-        END DO
-!
  
+        END DO
+
+! CMB trying to figure out this insanity
+! 1 & 4 are T, rest are F
+! 1 is supposed to be gridded
+! 4 is supposed to be restart
+
+      IF ( IAPROC .EQ. NAPLOG ) THEN
+         do J=1,NOTYPE
+           write(ndso,*) 'CMB hist out ', J, FLOUT(J), TONEXT(:,J)
+         end do
+      END IF
+
+!
+
 !
 ! 4.d Preprocessing for point output.
 !

@@ -152,6 +152,7 @@ module wav_comp_nuopc
   !/ ------------------------------------------------------------------- /
   
   use w3gdatmd
+!  use w3gdatmd              , only: NX, NY
   use w3wdatmd              , only: time, w3ndat, w3dimw, w3setw
   use w3adatmd
   !HK flags is now inflags1
@@ -159,9 +160,8 @@ module wav_comp_nuopc
   use w3idatmd              , only: TC0, CX0, CY0, TCN, CXN, CYN !HK, NX, NY
   use w3idatmd              , only: TW0, WX0, WY0, DT0, TWN, WXN, WYN, DTN
   use w3idatmd              , only: TIN, ICEI, TLN, WLEV, HML
-  use w3odatmd              , only: w3nout, w3seto, naproc, iaproc, napout, naperr
+  use w3odatmd              , only: w3nout, w3seto, naproc, iaproc, napout, naperr, nds !cmb
   use w3odatmd              , only: idout, fnmpre, iostyp, nogrp, ngrpp, noge !HK
-  use w3gdatmd              , only: NX, NY
   use w3initmd
   use w3wavemd
   use w3iopomd
@@ -184,7 +184,7 @@ module wav_comp_nuopc
   use shr_mpi_mod           , only : shr_mpi_bcast
   use shr_kind_mod          , only : r8=>shr_kind_r8, i8=>shr_kind_i8, cl=>shr_kind_cl, cs=>shr_kind_cs
   use shr_file_mod          , only : shr_file_getLogUnit, shr_file_setLogUnit, shr_file_getunit
-  use shr_cal_mod           , only : shr_cal_ymd2date
+  use shr_cal_mod           , only : shr_cal_ymd2date, shr_cal_advDateInt  ! CMB
   use wav_import_export     , only : advertise_fields, realize_fields, import_fields, export_fields
   use wav_import_export     , only : state_getfldptr
   use wav_shr_methods       , only : chkerr, state_setscalar, state_getscalar, state_diagnose, alarmInit
@@ -399,6 +399,7 @@ contains
     integer                        :: unitn            ! namelist unit number
     integer                        :: ndso, ndse, nds(13), ntrace(2), time0(2)
     integer                        :: timen(2), nh(4), iprt(6)
+    integer                        :: J0  ! CMB
     integer                        :: odat(35) !HK odat is 35
     integer                        :: i,j,npts
     integer                        :: ierr
@@ -415,7 +416,7 @@ contains
     logical                        :: prtfrm, flt
     logical                        :: flgrd(nogrp,ngrpp) !HK flags for gridded output
     logical                        :: flgrd2(nogrp,ngrpp) !HK flags for coupling output
-    logical                        :: flg(nogrp)  !HK  flags for whole group?
+    logical                        :: flg(nogrp)  !HK  flags for whole group?, probably eliminated now
     logical                        :: flg2(nogrp) !HK  flags for whole group?
     character(len=23)              :: dtme21
     integer                        :: iam, mpi_comm
@@ -469,13 +470,10 @@ contains
     !
     ! The following units are referenced in module w3wavemd for output
     ! NDS( 6) ! OUTPUT DATA: restart(N).ww3 file (model restart) unit number
-    ! NDS( 7) ! unit for output for FLOUT(1) flag
-    ! NDS( 8) ! unit for output for FLOUT(2) flag
-    ! NDS(11) ! unit for output for FLOUT(3) flag
-    ! NDS(12) ! unit for output for FLOUT(3) flag
-    ! NDS(13) ! unit for output for FLOUT(6) flag
-    ! NDS(10) ! unit for output for FLOUT(5) flag
-
+    ! NDS( 7) ! unit for output for FLOUT(1) flag   out_grd grid unformmatted output
+    ! NDS( 8) ! unit for output for FLOUT(2) flag   point unformmatted output
+    ! etc through 13
+    !
     !----------------------------------------------------------------------------
     ! determine instance information
     !----------------------------------------------------------------------------
@@ -616,6 +614,7 @@ contains
 
     call stme21 ( time0 , dtme21 )
     if ( iaproc .eq. napout ) write (ndso,931) dtme21
+    if ( iaproc .eq. napout ) write (ndso,*) 'start_ymd, stop_ymd = ',start_ymd, stop_ymd
     call shr_sys_flush(ndso)
     time = time0
 
@@ -638,14 +637,17 @@ contains
     !                     1-5  Data for OTYPE = 1; gridded fields.
     !                     6-10 Id.  for OTYPE = 2; point output.
     !                    11-15 Id.  for OTYPE = 3; track point output.
-    !                    16-20 Id.  for OTYPE = 4; restart files.
+    !                    16-20 Id.  for OTYPE = 4; restart files. (CMB I do not think this is right)
     !                    21-25 Id.  for OTYPE = 5; boundary data.
+    !                    26-30 Id.  for OTYPE = 6; ?
+    !                    31-35 Id.  for OTYPE = 7; coupled fields
     ! FLGRD   L.A.   I   Flags for gridded output.
     ! NPT     Int.   I   Number of output points
     ! X/YPT   R.A.   I   Coordinates of output points.
     ! PNAMES  C.A.   I   Output point names.
 
-    do j=1, 6
+! CMB changed odat so all 35 values are initialized here
+    do j=1, 7
        odat(5*(j-1)+3) = 0
     end do
 
@@ -663,16 +665,15 @@ contains
     !     160601, output interval is set to coupling interval, so that
     !             variables calculated in W3IOGO could be updated at
     !             every coupling interval
-    odat(1) = time(1)     ! YYYYMMDD for first output
-    odat(2) = time(2)     ! HHMMSS for first output
-    odat(3) = dtime_sync  ! output interval in sec ! changed by Adrean
-    odat(4) = 99990101    ! YYYYMMDD for last output
-    odat(5) = 0           ! HHMMSS for last output
-    odat(16) = time(1)    ! YYYYMMDD for first output
-    odat(17) = time(2)    ! HHMMSS for first output
-    odat(18) = dtime_sync ! output interval in sec
-    odat(19) = 99990101   ! YYYYMMDD for last output
-    odat(20) = 0          ! HHMMSS for last output
+! CMB changed odat so all 35 values are set, only permitting one frequency controlled by histwr
+    do J=1, 7
+      J0 = (j-1)*5
+      odat(J0+1) = time(1)     ! YYYYMMDD for first output
+      odat(J0+2) = time(2)     ! HHMMSS for first output
+      odat(J0+3) = dtime_sync  ! output interval in sec ! changed by Adrean
+      odat(J0+4) = 99990101    ! YYYYMMDD for last output
+      odat(J0+5) = 0           ! HHMMSS for last output
+    end do
 
 !HK --------------- start 2D version -----------------
     !HK output index is now a in a 2D array
@@ -685,12 +686,15 @@ contains
 ! 1) Forcing fields
 !
 !
+      flgrd = .false.   ! gridded fields
+      flgrd2 = .false.  ! coupled fields, w3init w3iog are not ready to deal with these yet
+
       flgrd( 1, 1)  = .false. ! Water depth       
       flgrd( 1, 2)  = .false. ! Current vel.       
       flgrd( 1, 3)  = .true. ! Wind speed
       flgrd( 1, 4)  = .false. ! Air-sea temp. dif.  
       flgrd( 1, 5)  = .false. ! Water level         
-      flgrd( 1, 6)  = .false. ! Ice concentration   
+      flgrd( 1, 6)  = .true. ! Ice concentration   
       flgrd( 1, 7)  = .false. ! Iceberg damp coeffic
 
 ! 2) Standard mean wave parameters
@@ -701,8 +705,8 @@ contains
       flgrd( 2, 3)  = .true. ! Mean wave period(+2)
       flgrd( 2, 4)  = .true. ! Mean wave period(-1)
       flgrd( 2, 5)  = .true. ! Mean wave period(+1)
-      flgrd( 2, 6)  = .false. ! Peak frequency      
-      flgrd( 2, 7)  = .false. ! Mean wave dir. a1b1 
+      flgrd( 2, 6)  = .true. ! Peak frequency      
+      flgrd( 2, 7)  = .true. ! Mean wave dir. a1b1 
       flgrd( 2, 8)  = .false. ! Mean dir. spr. a1b1 
       flgrd( 2, 9)  = .false. ! Peak direction      
       flgrd( 2, 10)  = .false. !Infragravity height
@@ -858,6 +862,7 @@ contains
 !HK    flgrd(38) = .false. !  38. Langmuir number (La_SL,Proj)
 !HK    flgrd(39) = .false. !  39. Enhancement factor with La_SL,Proj
 
+!CMB document which fields to be output to first hist file in wav.log
     if ( iaproc .eq. napout ) then
        flt = .true.
        do i=1, nogrp
@@ -923,7 +928,7 @@ contains
     allocate ( x(1), y(1), pnames(1) )
     pnames(1) = ' '
 
-    !HK flgrd2 is flags for coupling output
+    !HK flgrd2 is flags for coupling output, not ready yet so keep .false.
     !HK 1 is model number
     !HK IsMulti does not appear to be used, setting to .true.
     call w3init ( 1, .true., 'ww3', nds, ntrace, odat, flgrd, flgrd2, flg, flg2, &
@@ -1280,26 +1285,6 @@ contains
     endif
 
     !------------
-    ! Determine if time to write restart
-    !------------
-    if (outfreq .gt. 0 .and. mod(hh, outfreq) .eq. 0 ) then
-       ! output every outfreq hours
-       histwr = .true.
-    else
-       call ESMF_ClockGetAlarm(clock, alarmname='alarm_history', alarm=alarm, rc=rc)
-       if (ChkErr(rc,__LINE__,u_FILE_u)) return
-       if (ESMF_AlarmIsRinging(alarm, rc=rc)) then
-          if (ChkErr(rc,__LINE__,u_FILE_u)) return
-          histwr = .true.
-          call ESMF_AlarmRingerOff( alarm, rc=rc )
-          if (ChkErr(rc,__LINE__,u_FILE_u)) return
-       else
-          histwr = .false.
-       endif
-    end if
-
-
-    !------------
     ! Determine time info 
     !------------
 
@@ -1316,6 +1301,7 @@ contains
     timen(1) = ymd
     timen(2) = hh*10000 + mm*100 + ss
 
+    ! CMB this is identical to previous course, dumb to call it twice
     call ESMF_ClockGetNextTime(clock, nextTime=ETime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_TimeGet( ETime, yy=yy, mm=mm, dd=dd, s=tod, rc=rc )
@@ -1328,6 +1314,29 @@ contains
     time0(2) = hh*10000 + mm*100 + ss
 
     time = time0
+
+    !------------
+    ! Determine if time to write history
+    !------------
+    if (outfreq .gt. 0 .and. mod(hh, outfreq) .eq. 0 ) then
+       ! output every outfreq hours
+       histwr = .true.
+    else
+       histwr = .false.
+       call ESMF_ClockGetAlarm(clock, alarmname='alarm_history', alarm=alarm, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       if (ESMF_AlarmIsRinging(alarm, rc=rc)) then
+          if (ChkErr(rc,__LINE__,u_FILE_u)) return
+          histwr = .true.
+          call ESMF_AlarmRingerOff( alarm, rc=rc )
+          if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       else
+          histwr = .false.
+       endif
+    end if
+
+!    write(stdout,*) 'CMB wav_comp_nuopc time', time, timen
+!    write(stdout,*) 'ww3 hist flag ', histwr, outfreq, hh, mod(hh, outfreq)
 
     !------------
     ! Obtain import data from import state
