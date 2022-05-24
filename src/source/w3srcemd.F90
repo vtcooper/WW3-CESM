@@ -269,9 +269,11 @@
 !           1 as included in source terms                   ( W3SDSn )
 !           2 optional dissipation due to different physics ( W3SWLn )
 !         d Bottom friction.                                ( W3SBTn )
+!         e Unresolved obstacles
+!         f Ice interaction (moved here)                    ( W3SIC4 ) ! VTC
 !       3.  Calculate cut-off frequencie(s)
-!       4.  Summation of source terms and diagonal term and time step.
-!       5.  Increment spectrum.
+!       4.  Summation of source terms and diagonal term and time step. ! VTC
+!       5.  Increment spectrum.                                        ! VTC
 !       6.  Add tail
 !         a Mean wave parameters and cut-off                ( W3SPRn )
 !         b 'Seeding' of spectrum.                          ( !/SEED )
@@ -581,8 +583,8 @@
  
  
 !
-          CALL W3SDB1 ( IX, SPEC, DEPTH, EMEAN, FMEAN, WNMEAN, CG1,       &
-                                                   LBREAK, VSDB, VDDB )
+          CALL W3SDB1 ( IX, SPEC, DEPTH, EMEAN, FMEAN, WNMEAN, CG1,  &
+                                                LBREAK, VSDB, VDDB )
 !
 ! 2.c2   optional dissipation parameterisations
 !
@@ -593,6 +595,10 @@
 ! 2.e Unresolved Obstacles Source Term
 !
 ! 2.f Additional sources.
+!
+!     Ice interaction (moved here from 10.1)                         ! VTC
+        IF ( INFLAGS2(4).AND.ICE.GT.0 ) CALL W3SIC4 ( SPEC,DEPTH, CG1, &
+                                                   IX, IY, VSIC, VDIC )
 !
 ! 2.g Dump training data if necessary
 !
@@ -614,7 +620,7 @@
 !             SIN = (1-ICE)**ISCALEIN*SIN and SDS=(1-ICE)**ISCALEDS*SDS ------------------ *
 !     INFLAGS2(4) is true if ice concentration was ever read during
 !             this simulation
-        IF ( INFLAGS2(4) ) THEN
+        IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN            ! VTC added .AND... for consistency
           VSNL(1:NSPECH) = ICESCALENL * VSNL(1:NSPECH)
           VDNL(1:NSPECH) = ICESCALENL * VDNL(1:NSPECH)
           VSLN(1:NSPECH) = ICESCALELN * VSLN(1:NSPECH)
@@ -622,6 +628,8 @@
           VDIN(1:NSPECH) = ICESCALEIN * VDIN(1:NSPECH)
           VSDS(1:NSPECH) = ICESCALEDS * VSDS(1:NSPECH)
           VDDS(1:NSPECH) = ICESCALEDS * VDDS(1:NSPECH)
+          VSIC(1:NSPECH) = ICE        * VSIC(1:NSPECH)         ! VTC added 2 lines here
+          VDIC(1:NSPECH) = ICE        * VDIC(1:NSPECH)         ! **************
           END IF
 !
         NKI    = MAX ( 2 , MIN ( NKH1 ,                           &
@@ -633,7 +641,11 @@
           VS(IS) = VSLN(IS) + VSIN(IS) + VSNL(IS)  &
                  + VSDS(IS) + VSBT(IS)
           VD(IS) =  VDIN(IS) + VDNL(IS)  &
-                 + VDDS(IS) + VDBT(IS)
+                 + VDDS(IS) + VDBT(IS) 
+          IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN          ! VTC added if statement 
+            VS(IS) = VS(IS) + VSIC(IS)                  !
+            VD(IS) = VD(IS) + VDIC(IS)                  ! 
+            END IF                                      ! **********************
           DAMAX  = MIN ( DAM(IS) , MAX ( XREL*SPECINIT(IS) , AFILT ) )
           AFAC   = 1. / MAX( 1.E-10 , ABS(VS(IS)/DAMAX) )
           DT     = MIN ( DT , AFAC / ( MAX ( 1.E-10,                  &
@@ -755,7 +767,15 @@
              / MAX ( 1. , (1.-HDT*VDBT(IS))) ! semi-implict integration scheme
            PHINL = PHINL + VSNL(IS)* DT * FACTOR                      &
              / MAX ( 1. , (1.-HDT*VDNL(IS))) ! semi-implict integration scheme
-           IF (VSIN(IS).GT.0.) WHITECAP(3) = WHITECAP(3) + SPEC(IS)  * FACTOR
+
+           IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN                         ! VTC add IF **
+              PHICE = PHICE + VSIC(IS) * DT * FACTOR                  & ! statement
+                / MAX ( 1. , (1.-HDT*VDIC(IS))) ! semi-implicit integration 
+              TAUICE(:) = TAUICE(:) - FACTOR2*COSI(:)*VSIC(IS) * DT   & ! 
+                / MAX ( 1. , (1.-HDT*VDIC(IS)))                         ! 
+             END IF                                                     ! *************
+
+           IF (VSIN(IS).GT.0.) WHITECAP(3) = WHITECAP(3)+SPEC(IS)*FACTOR
            HSTOT = HSTOT + SPEC(IS) * FACTOR
            END DO
          END DO
@@ -765,7 +785,8 @@
        TAUWIY= TAUWIY+ TAUWY * DRAT *DT
        TAUWNX= TAUWNX+ TAUWAX * DRAT *DT
        TAUWNY= TAUWNY+ TAUWAY * DRAT *DT
-       ! MISSING: TAIL TO BE ADDED ?
+       ! MISSING: TAIL TO BE ADDED ? 
+
 !
 ! 6.  Add tail ------------------------------------------------------- *
 !   a Mean parameters
@@ -812,8 +833,7 @@
         CALL W3SIN4 ( SPEC, CG1, WN2, U10ABS, USTAR, DRAT, AS,      &
                       U10DIR, Z0, CD, TAUWX, TAUWY, TAUWAX, TAUWAY, &
                       VSIN, VDIN, LLWS, IX, IY, BRLAMBDA )
- 
-!
+
 ! 7.  Check if integration complete ---------------------------------- *
 !
           IF (srce_call .eq. srce_imp_post) THEN
@@ -865,13 +885,14 @@
 !
 ! Transformation in momentum flux in m^2 / s^2
 !
-      TAUOX=(GRAV*MWXFINISH+TAUWIX-TAUBBL(1))/DTG
-      TAUOY=(GRAV*MWYFINISH+TAUWIY-TAUBBL(2))/DTG
+      TAUOX=(GRAV*MWXFINISH+TAUWIX-TAUBBL(1)-TAUICE(1))/DTG    ! VTC add 'TAUICE'
+      TAUOY=(GRAV*MWYFINISH+TAUWIY-TAUBBL(2)-TAUICE(2))/DTG    ! ****************
       TAUWIX=TAUWIX/DTG
       TAUWIY=TAUWIY/DTG
       TAUWNX=TAUWNX/DTG
       TAUWNY=TAUWNY/DTG
       TAUBBL(:)=TAUBBL(:)/DTG
+      TAUICE(:)=TAUICE(:)/DTG                                  ! VTC move
 !
 ! Transformation in wave energy flux in W/m^2=kg / s^3
 !
@@ -879,62 +900,66 @@
       PHIAW =DWAT*GRAV*PHIAW /DTG
       PHINL =DWAT*GRAV*PHINL /DTG
       PHIBBL=DWAT*GRAV*PHIBBL/DTG
+      PHICE =-1.*DWAT*GRAV*PHICE/DTG                           ! VTC move
 !
-! 10.1  Adds ice scattering and dissipation: implicit integration---------------- *
+! 10.1  Adds ice scattering and dissipation: implicit integration---------------- * 
+! ********  VTC moved section up ********
 !     INFLAGS2(4) is true if ice concentration was ever read during
 !             this simulation
 !
- 
-      IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN
- 
-         IF (IICEDISP) THEN
-           ICECOEF2 = 1E-6
-           CALL LIU_FORWARD_DISPERSION (ICEH,ICECOEF2,DEPTH, &
-                                        SIG,WN_R,CG_ICE,ALPHA_LIU)
+! 
+!      IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN
+! 
+!         IF (IICEDISP) THEN
+!           ICECOEF2 = 1E-6
+!           CALL LIU_FORWARD_DISPERSION (ICEH,ICECOEF2,DEPTH, &
+!                                        SIG,WN_R,CG_ICE,ALPHA_LIU)
 !
-      IF (IICESMOOTH) THEN
-        END IF
-     ELSE
-      WN_R=WN1
-      CG_ICE=CG1
-     END IF
+!      IF (IICESMOOTH) THEN
+!        END IF
+!     ELSE
+!      WN_R=WN1
+!      CG_ICE=CG1
+!     END IF
 !
-     R(:)=1 ! In case IC2 is defined but not IS2
+!     R(:)=1 ! In case IC2 is defined but not IS2
 !
- 
-      CALL W3SIC4 ( SPEC,DEPTH, CG1,       IX, IY, VSIC, VDIC )
+! 
+!      CALL W3SIC4 ( SPEC,DEPTH, CG1,       IX, IY, VSIC, VDIC )   ! VTC moved to 2.f
 !
-   SPEC2 = SPEC
+!   SPEC2 = SPEC
 !
-   TAUICE(:) = 0.
-   PHICE = 0.
-   DO IK=1,NK
-     IS = 1+(IK-1)*NTH
+!   TAUICE(:) = 0.
+!   PHICE = 0.
+!   DO IK=1,NK
+!     IS = 1+(IK-1)*NTH
 !
 ! First part of ice term integration: dissipation part
 !
-     ATT=1.
-             ATT=EXP(ICE*VDIC(IS)*DTG)
-             SPEC(1+(IK-1)*NTH:NTH+(IK-1)*NTH) = ATT*SPEC2(1+(IK-1)*NTH:NTH+(IK-1)*NTH)
+!     ATT=1.
+!             ATT=EXP(ICE*VDIC(IS)*DTG)
+!             SPEC(1+(IK-1)*NTH:NTH+(IK-1)*NTH) = ATT*SPEC2(1+(IK-1)*NTH:NTH+(IK-1)*NTH)
 !
 ! Second part of ice term integration: scattering including re-distribution in directions
 !
 ! 10.2  Fluxes of energy and momentum due to ice effects
 !
-             FACTOR = DDEN(IK)/CG1(IK)                    !Jacobian to get energy in band
-             FACTOR2= FACTOR*GRAV*WN1(IK)/SIG(IK)         ! coefficient to get momentum
-             DO ITH = 1,NTH
-               IS = ITH+(IK-1)*NTH
-               PHICE = PHICE + (SPEC(IS)-SPEC2(IS)) * FACTOR
-               COSI(1)=ECOS(IS)
-               COSI(2)=ESIN(IS)
-               TAUICE(:) = TAUICE(:) - (SPEC(IS)-SPEC2(IS))*FACTOR2*COSI(:)
-               END DO
-             END DO
-           PHICE =-1.*DWAT*GRAV*PHICE /DTG
-           TAUICE(:)=TAUICE(:)/DTG
-           ELSE
-           END IF
+!             FACTOR = DDEN(IK)/CG1(IK)                    !Jacobian to get energy in band
+!             FACTOR2= FACTOR*GRAV*WN1(IK)/SIG(IK)         ! coefficient to get momentum
+!             DO ITH = 1,NTH
+!               IS = ITH+(IK-1)*NTH
+!               PHICE = PHICE + (SPEC(IS)-SPEC2(IS)) * FACTOR
+!               COSI(1)=ECOS(IS)
+!               COSI(2)=ESIN(IS)
+!               TAUICE(:) = TAUICE(:) - (SPEC(IS)-SPEC2(IS))*FACTOR2*COSI(:)
+!               END DO
+!             END DO
+!           PHICE =-1.*DWAT*GRAV*PHICE /DTG
+!           TAUICE(:)=TAUICE(:)/DTG
+!           ELSE
+!           END IF
+!
+! *** end section VTC moved ***
 !
 ! - - - - - - - - - - - - - - - - - - - - - -
 ! 11. Sea state dependent stress routine calls
