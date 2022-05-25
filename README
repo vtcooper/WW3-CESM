@@ -2,12 +2,18 @@ Vince Cooper, vcooper@uw.edu
 
 Past changes from other branches include:
 -w3srcemd.F90: Remove timesplitting numerical approach to integrating the S_ice source term.
-
-New changes for this branch include:
 -wave_comp_nuopc.F90: change dtmin to allow subcycling
 -w3sic4md.F90: correction to alpha and WN_I factor of 2
 -w3wavemd.F90: suppress write statements cluttering the log files
 -Not in github: change to cice namelist user_nl_cice to use 'ml' wave solver
 
-Note: VTC original case named cesm23iw_dtice100_test_alpha2ki_ml
+
+New changes for this branch include:
+-w3srcemd.F90: S_ln is not damped in ice
+-w3sic4md.F90: manually changed IC4M8 (custom) to have attenuation of IC4Mx
+
+Note: VTC original case named cesm23iw_ic4m1. 
+Model very rarely crashes. Solve it by reducing DTG in wav_comp_nuopc.F90, then run through
+the problem timestep, then do a clean build and change DTG back to original value.
+
 

@@ -633,6 +633,9 @@
          I = MIN (ILEVTAIL-1, INT(XK))
          DELK1= MIN (1. ,XK-FLOAT(I))
          DELK2=1. - DELK1
+!        write(*,*) 'VTC w3src4md DELTAIL DELALP DELUST XK XJ', DELTAIL, DELALP, DELUST ! VTC
+!        VTC note: this seems to be cause of seg fault, but can be avoided by reduce
+!                  the timestep in wav_comp_nuopc.F90
          TAU1 =((TAUHFT2(IND,J,I)*DELI2+TAUHFT2(IND+1,J,I)*DELI1 )*DELJ2 &
                +(TAUHFT2(IND,J+1,I)*DELI2+TAUHFT2(IND+1,J+1,I)*DELI1)*DELJ1)*DELK2 &
               +((TAUHFT2(IND,J,I+1)*DELI2+TAUHFT2(IND+1,J,I+1)*DELI1 )*DELJ2 &
