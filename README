@@ -10,6 +10,7 @@ Past changes from other branches (rm_timesplit, enable_subcycle) include:
 New changes for this branch include:
 -wav_camp_nuopc.F90: reduced dtmin to 20 seconds (10 seconds slowed down model too much)
 -w3sic4md.F90: manually changed IC4M8 (custom) to have attenuation of IC4Mx.
+-w3srcemd.F90: S_in enhanced in ice
 
 Note: VTC original case named cesm23iw_dtice100_w-nl-hf. Name is bad because this was
 originally an experimental case. It should be named cesm23iw_ic4m2. Alas.

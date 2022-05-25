@@ -450,7 +450,7 @@
       DEPTH  = MAX ( DMIN , D_INP )
       IKS1 = 1
       ICESCALELN = 1. !MAX(0.,MIN(1.,1.-ICE*ICESCALES(1)))  ! no reduction by ice
-      ICESCALEIN = MAX(0.,MIN(1.,1.-ICE*ICESCALES(2)))  
+      ICESCALEIN = MAX(0.,MIN(1.,1.-0.5*ICE*ICESCALES(2)))  ! VTC wind input
       ICESCALENL = MAX(0.,MIN(1.,1.-ICE*ICESCALES(3)))  
       ICESCALEDS = MAX(0.,MIN(1.,1.-ICE*ICESCALES(4)))      
       IS1=(IKS1-1)*NTH+1
