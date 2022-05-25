@@ -11,6 +11,7 @@ Past changes from other branches include:
 New changes for this branch include:
 -w3srcemd.F90: S_ln is not damped in ice
 -w3sic4md.F90: manually changed IC4M8 (custom) to have attenuation of IC4Mx
+-w3srcemd.F90: S_in enhanced in ice
 
 Note: VTC original case named cesm23iw_ic4m1. 
 Model very rarely crashes. Solve it by reducing DTG in wav_comp_nuopc.F90, then run through
