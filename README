@@ -11,9 +11,9 @@ Past changes from other branches include:
 New changes for this branch include:
 -w3srcemd.F90: S_ln is not damped in ice
 -wav_comp_nuopc.F90: reduced subcycling dtmin to 20 seconds
--w3sic4md.F90: manually changed IC4M8 (custom) to have attenuation of IC4Mx
+-w3sic4md.F90: manually changed IC4M8 (custom) to have attenuation of Meylan et al. (2021)
 
-Note: VTC original case named cesm23iw_ic4mx. 
+Note: VTC original case named cesm23iw_fsd-t2t4.
 Model very rarely crashes. Solve it by reducing DTG in wav_comp_nuopc.F90, then run through
 the problem timestep, then do a clean build and change DTG back to original value.
 

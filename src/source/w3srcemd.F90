@@ -621,11 +621,11 @@
 !     INFLAGS2(4) is true if ice concentration was ever read during
 !             this simulation
         IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN            ! VTC added .AND... for consistency
-          VSNL(1:NSPECH) = ICESCALENL * VSNL(1:NSPECH)    ! VTC removing ice scaling for
-          VDNL(1:NSPECH) = ICESCALENL * VDNL(1:NSPECH)    ! nonlinear and wind input.
-          VSLN(1:NSPECH) = ICESCALELN * VSLN(1:NSPECH)    ! also removing for linear input. 
-          VSIN(1:NSPECH) = ICESCALEIN * VSIN(1:NSPECH)    ! 
-          VDIN(1:NSPECH) = ICESCALEIN * VDIN(1:NSPECH)    ! 
+          VSNL(1:NSPECH) = ICESCALENL * VSNL(1:NSPECH)    
+          VDNL(1:NSPECH) = ICESCALENL * VDNL(1:NSPECH)   
+          VSLN(1:NSPECH) = ICESCALELN * VSLN(1:NSPECH)    ! changed ICESCALELN above
+          VSIN(1:NSPECH) = ICESCALEIN * VSIN(1:NSPECH)     
+          VDIN(1:NSPECH) = ICESCALEIN * VDIN(1:NSPECH)     
           VSDS(1:NSPECH) = ICESCALEDS * VSDS(1:NSPECH)    ! keep reduced wc dissipation
           VDDS(1:NSPECH) = ICESCALEDS * VDDS(1:NSPECH)    ! (see Rogers et al 2016)
           VSIC(1:NSPECH) = ICE        * VSIC(1:NSPECH)         ! VTC added 2 lines here
