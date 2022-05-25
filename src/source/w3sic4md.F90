@@ -492,7 +492,7 @@
            ! TPI/SIG is period
 
            ! VTC change: removed scattering, replaced with IC4 manually ********
-           ! ic4m6
+           ! ic4m7
 
            HICE=ICECOEF1 ! For this method, ICECOEF1=ice thickness
            DO IK=1,NK
