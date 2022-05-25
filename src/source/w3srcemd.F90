@@ -449,10 +449,10 @@
 !
       DEPTH  = MAX ( DMIN , D_INP )
       IKS1 = 1
-      ICESCALELN = MAX(0.,MIN(1.,1.-ICE*ICESCALES(1)))
-      ICESCALEIN = MAX(0.,MIN(1.,1.-ICE*ICESCALES(2)))
-      ICESCALENL = MAX(0.,MIN(1.,1.-ICE*ICESCALES(3)))
-      ICESCALEDS = MAX(0.,MIN(1.,1.-ICE*ICESCALES(4)))
+      ICESCALELN = 1. !MAX(0.,MIN(1.,1.-ICE*ICESCALES(1)))  ! no reduction by ice
+      ICESCALEIN = MAX(0.,MIN(1.,1.-ICE*ICESCALES(2)))  
+      ICESCALENL = MAX(0.,MIN(1.,1.-ICE*ICESCALES(3)))  
+      ICESCALEDS = MAX(0.,MIN(1.,1.-ICE*ICESCALES(4)))      
       IS1=(IKS1-1)*NTH+1
 !
       VSIN = 0.
@@ -621,13 +621,13 @@
 !     INFLAGS2(4) is true if ice concentration was ever read during
 !             this simulation
         IF ( INFLAGS2(4).AND.ICE.GT.0 ) THEN            ! VTC added .AND... for consistency
-          VSNL(1:NSPECH) = ICESCALENL * VSNL(1:NSPECH)
-          VDNL(1:NSPECH) = ICESCALENL * VDNL(1:NSPECH)
-          VSLN(1:NSPECH) = ICESCALELN * VSLN(1:NSPECH)
-          VSIN(1:NSPECH) = ICESCALEIN * VSIN(1:NSPECH)
-          VDIN(1:NSPECH) = ICESCALEIN * VDIN(1:NSPECH)
-          VSDS(1:NSPECH) = ICESCALEDS * VSDS(1:NSPECH)
-          VDDS(1:NSPECH) = ICESCALEDS * VDDS(1:NSPECH)
+          VSNL(1:NSPECH) = ICESCALENL * VSNL(1:NSPECH)    ! VTC removing ice scaling for
+          VDNL(1:NSPECH) = ICESCALENL * VDNL(1:NSPECH)    ! nonlinear and wind input.
+          VSLN(1:NSPECH) = ICESCALELN * VSLN(1:NSPECH)    ! also removing for linear input. 
+          VSIN(1:NSPECH) = ICESCALEIN * VSIN(1:NSPECH)    ! 
+          VDIN(1:NSPECH) = ICESCALEIN * VDIN(1:NSPECH)    ! 
+          VSDS(1:NSPECH) = ICESCALEDS * VSDS(1:NSPECH)    ! keep reduced wc dissipation
+          VDDS(1:NSPECH) = ICESCALEDS * VDDS(1:NSPECH)    ! (see Rogers et al 2016)
           VSIC(1:NSPECH) = ICE        * VSIC(1:NSPECH)         ! VTC added 2 lines here
           VDIC(1:NSPECH) = ICE        * VDIC(1:NSPECH)         ! **************
           END IF
