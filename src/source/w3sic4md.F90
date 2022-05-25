@@ -514,16 +514,20 @@
                  -0.00010791*x1sqr*x2 + &
                   0.00031073*x1**3 + 1.5996e-06*x2**3 + 0.090994*x3**3 
        	      KARG1(ik)=min(karg1(ik),0.0)
-              WN_I(ik)  = 10.0**KARG1(ik)
+              ALPHA(ik) = 10.0**KARG1(ik)               ! VTC **********************
+!             WN_I(ik)  = 10.0**KARG1(ik)               ! correction ALPHA vs WN_I *
 !	      if (WN_I(ik).gt.0.9) then
 !	        write(*,*) 'whacky',WN_I(ik),x1,x2,x3
 !              endif 
 	      perfour=x1sqr*x1sqr
 	      if ((x1.gt.5.0) .and. (x1.lt.20.0)) then
-	        WN_I(IK) = WN_I(IK) + amhb/x1sqr+bmhb/perfour
+!	        WN_I(IK) = WN_I(IK) + amhb/x1sqr+bmhb/perfour ! VTC continued
+                ALPHA(IK)= ALPHA(IK)+ amhb/x1sqr+bmhb/perfour ! continued
 	      else if (x1.gt.20.0) then
-	        WN_I(IK) = amhb/x1sqr+bmhb/perfour
+!	        WN_I(IK) = amhb/x1sqr+bmhb/perfour            ! VTC continued
+                ALPHA(IK)= amhb/x1sqr+bmhb/perfour            ! continued
 	      endif 
+              WN_I(ik) = ALPHA(ik) * 0.5                      ! VTC alpha vs wn_i *
 	   enddo
 !           write(*,*) 'Attena',(10.0**KARG1(IK),IK=1,5)
 !           write(*,*) 'Attenb',(WN_I(IK),IK=1,5)

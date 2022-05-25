@@ -659,6 +659,7 @@
 !        IF (IX == WW3DEBUG_NODE) WRITE(*,*) 'TIMINGS 1', DT
         DT     = MAX ( 0.5, DT )                   ! Here we have a hardlimit, which is not too usefull, at least not as a fixed con
 !
+        if (ICE.gt.0.01 .and. ICE.lt.0.95) DT=DTMIN ! VTC require subcycling in partial ice cover
         DTDYN  = DTDYN + DT
         IDT    = 1 + INT ( 0.99*(DTG-DTTOT)/DT ) ! number of iterations
         DT     = (DTG-DTTOT)/REAL(IDT)           ! actualy time step

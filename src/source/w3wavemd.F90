@@ -1353,7 +1353,7 @@
            IF (.NOT. LPDLIB .or. (GTYPE.ne.UNGTYPE)) THEN
              IF (NRQGO.NE.0 ) THEN
                CALL MPI_STARTALL ( NRQGO, IRQGO , IERR_MPI )
-              write(*,*) 'CMB histwr mpi_startall', histwr, NRQGO, IERR_MPI
+!             write(*,*) 'CMB histwr mpi_startall', histwr, NRQGO, IERR_MPI
  
                FLGMPI(0) = .TRUE.
                NRQMAX    = MAX ( NRQMAX , NRQGO )
@@ -1363,7 +1363,7 @@
 ! probably no change since NRQGO2=0 when not mastertask
              IF ((NRQGO2.NE.0 ) .and. (IAPROC .eq. NAPFLD)) THEN
                CALL MPI_STARTALL ( NRQGO2, IRQGO2, IERR_MPI )
-              write(*,*) 'CMB histwr mpi_startall 2', histwr, NRQGO2, IERR_MPI
+!             write(*,*) 'CMB histwr mpi_startall 2', histwr, NRQGO2, IERR_MPI
                FLGMPI(1) = .TRUE.
                NRQMAX    = MAX ( NRQMAX , NRQGO2 )
              END IF
@@ -1385,7 +1385,7 @@
           IF (( FLOUT(4) .AND. NRQRS.NE.0 ) .and. rstwr) THEN
                 IF ( DSEC21(TIME,TONEXT(:,4)).EQ.0. ) THEN
                     CALL MPI_STARTALL ( NRQRS, IRQRS , IERR_MPI )
-                    write(*,*) 'CMB rstwr mpi_startall', rstwr, NRQRS, IERR_MPI
+!                   write(*,*) 'CMB rstwr mpi_startall', rstwr, NRQRS, IERR_MPI
                     FLGMPI(4) = .TRUE.
                     NRQMAX    = MAX ( NRQMAX , NRQRS )
                   END IF
@@ -1431,12 +1431,12 @@
                       IF ( (( J .EQ. 1 ) .OR. ( J .EQ. 7 )) .AND. HISTWR) THEN
                           CALL MPI_WAITALL( NRQGO, IRQGO, STATIO, IERR_MPI )
                           FLGMPI(0) = .FALSE.
-                write(*,*) 'w3wavemd: hist flag 1', j, histwr, time, IERR_MPI
+!               write(*,*) 'w3wavemd: hist flag 1', j, histwr, time, IERR_MPI
                           IF ( IAPROC .EQ. NAPFLD ) THEN 
                               IF ( FLGMPI(1) ) CALL MPI_WAITALL  &
                                  ( NRQGO2, IRQGO2, STATIO, IERR_MPI )
                               FLGMPI(1) = .FALSE.
-                write(*,*) 'w3wavemd: hist flag 2', j, histwr, time, IERR_MPI
+!               write(*,*) 'w3wavemd: hist flag 2', j, histwr, time, IERR_MPI
                               IF ( J .EQ. 1 ) CALL W3IOGO             &  !for master only????
                                  ( 'WRITE', NDS(7), ITEST, IMOD )
                           END IF
