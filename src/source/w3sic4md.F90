@@ -492,26 +492,36 @@
            ! TPI/SIG is period
 
            ! VTC change: removed scattering, replaced with IC4 manually ********
-           ! ic4m4 
-            
-          !Calculate HS
-          DO IK=1, NK
-            EB(IK) = 0.
-            DO ITH=1, NTH
-              EB(IK) = EB(IK) + A(ITH+(IK-1)*NTH)
-            END DO
-          END DO
-          DO IK=1, NK
-            EB(IK) = EB(IK) * DDEN(IK) / CG(IK)
-            EMEAN  = EMEAN + EB(IK)
-          END DO
-          HS = 4.*SQRT( MAX(0.,EMEAN) )
-          ! If Hs < 3 m then do Hs dependent calc, otherwise dH/dx is a constant
-          IF (HS <= 3) THEN
-            WN_I= 5.35E-6 !ICECOEF1 ! from: DHDX=ICECOEF1*HS and WN_I=DHDX/HS ! VTC constant
-          ELSE IF (HS > 3) THEN
-            WN_I= 16.05E-6 / HS !ICECOEF2/HS ! from: DHDX=ICECOEF2 and WN_I=DHDX/HS ! VTC constant
-          END IF
+           ! ic4m5
+
+           ! rename variables for clarity
+           KI1=5.0E-6
+           KI2=7.0E-6  
+           KI3=15.0E-6 
+           KI4=100.0E-6 
+           FC5=0.10    
+           FC6=0.12    
+           FC7=0.16    
+           IF((KI1.EQ.0.0).OR.(KI2.EQ.0.0).OR.(KI3.EQ.0.0).OR. &
+              (KI4.EQ.0.0).OR.(FC5.EQ.0.0).OR.(FC6.EQ.0.0).OR. &
+              (FC7.EQ.0.0))THEN
+              WRITE (NDSE,1001)'ICE PARAMETERS'
+              CALL EXTCDE(201)
+           END IF
+           DO IK=1, NK
+              FREQ=SIG(IK)/TPI
+              ! select ki
+              IF(FREQ.LT.FC5)THEN
+                 WN_I(IK)=KI1
+              ELSEIF(FREQ.LT.FC6)THEN
+                 WN_I(IK)=KI2
+              ELSEIF(FREQ.LT.FC7)THEN
+                 WN_I(IK)=KI3
+              ELSE
+                 WN_I(IK)=KI4
+              ENDIF
+           END DO
+
 
         CASE DEFAULT
           WN_I = ICECOEF1 !Default to IC1: Uniform in k
