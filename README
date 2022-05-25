@@ -2,12 +2,15 @@ Vince Cooper, vcooper@uw.edu
 
 Past changes from other branches include:
 -w3srcemd.F90: Remove timesplitting numerical approach to integrating the S_ice source term.
-
-New changes for this branch include:
 -wave_comp_nuopc.F90: change dtmin to allow subcycling
 -w3sic4md.F90: correction to alpha and WN_I factor of 2
 -w3wavemd.F90: suppress write statements cluttering the log files
 -Not in github: change to cice namelist user_nl_cice to use 'ml' wave solver
 
-Note: VTC original case named cesm23iw_dtice100_test_alpha2ki_ml
+New changes for this branch include:
+-w3srcemd.F90: force subcycling in SIC between 1% and 95%
+
+Note: VTC original case named cesm23iw_dtice100.
+This is the run used as model spin-up in Cooper et al. (2022), Wind waves... paper.
+Run from 2000-2018 with subcycle of 100 seconds.
 

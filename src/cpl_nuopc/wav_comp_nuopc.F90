@@ -946,13 +946,16 @@ contains
 
     ! gx17
    !180.0000       180.0000       180.0000       15.00000 
-
-   ! VTC fix if signal 11 seg fault occurs at line 637 in w3src4md:
-   ! 100     50     100     100 as numbers below
+   
+    ! VTC note to solve signal 11 seg fault, use these 4 times
+    ! to get through problem, then do a CLEAN case.build --clean to 
+    ! get back to the longer timesteps desired for remaining run.
+    ! 100.0000      50.0000       100.0000       100.0000 avoid signal 11
+    !1800.0000     600.0000      1800.0000       100.0000 control subcycl
     dtmax  = 1800.0000 ! LR 
-    dtcfl  = 600.0000      
-    dtcfli = 1800.0000     
-    dtmin  = 100.00000 ! VTC change from 1800
+    dtcfl  =  600.0000
+    dtcfli = 1800.0000
+    dtmin  =  100.00000 ! VTC change from 1800
 
     call mpi_barrier ( mpi_comm, ierr )
 
