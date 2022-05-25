@@ -492,14 +492,26 @@
            ! TPI/SIG is period
 
            ! VTC change: removed scattering, replaced with IC4 manually ********
-           ! ic4m3 
-                             
-           HICE=ICECOEF1 ! For this method, ICECOEF1=ice thickness
-           KARG1  = -0.3203 + 2.058*HICE - 0.9375*(TPI/SIG)
-           KARG2  = -0.4269*HICE**2 + 0.1566*HICE*(TPI/SIG)
-           KARG3  =  0.0006 * (TPI/SIG)**2
-           ALPHA  =  EXP(KARG1 + KARG2 + KARG3)
-           WN_I   =  0.5 * ALPHA
+           ! ic4m4 
+            
+          !Calculate HS
+          DO IK=1, NK
+            EB(IK) = 0.
+            DO ITH=1, NTH
+              EB(IK) = EB(IK) + A(ITH+(IK-1)*NTH)
+            END DO
+          END DO
+          DO IK=1, NK
+            EB(IK) = EB(IK) * DDEN(IK) / CG(IK)
+            EMEAN  = EMEAN + EB(IK)
+          END DO
+          HS = 4.*SQRT( MAX(0.,EMEAN) )
+          ! If Hs < 3 m then do Hs dependent calc, otherwise dH/dx is a constant
+          IF (HS <= 3) THEN
+            WN_I= 5.35E-6 !ICECOEF1 ! from: DHDX=ICECOEF1*HS and WN_I=DHDX/HS ! VTC constant
+          ELSE IF (HS > 3) THEN
+            WN_I= 16.05E-6 / HS !ICECOEF2/HS ! from: DHDX=ICECOEF2 and WN_I=DHDX/HS ! VTC constant
+          END IF
 
         CASE DEFAULT
           WN_I = ICECOEF1 !Default to IC1: Uniform in k
