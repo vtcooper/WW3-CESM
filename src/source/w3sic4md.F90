@@ -490,17 +490,16 @@
            ! ICECOEF1 is thickness 
            ! ICECOEF5 is floe size 
            ! TPI/SIG is period
-           
-           DO IK=1, NK 
 
-!          VTC change: removed scattering, replaced with IC4 manually     **********
-!          IC4M1 Wadhams et al 1988 (see CASE(1) above)
-              x1 = TPI/SIG(ik)   ! period 
-
-              alpha(ik) = EXP(-0.18 * x1 - 7.3)     
-              wn_i(ik)  = 0.5 * alpha(ik)
-
-           END DO
+           ! VTC change: removed scattering, replaced with IC4 manually ********
+           ! ic4m3 
+                             
+           HICE=ICECOEF1 ! For this method, ICECOEF1=ice thickness
+           KARG1  = -0.3203 + 2.058*HICE - 0.9375*(TPI/SIG)
+           KARG2  = -0.4269*HICE**2 + 0.1566*HICE*(TPI/SIG)
+           KARG3  =  0.0006 * (TPI/SIG)**2
+           ALPHA  =  EXP(KARG1 + KARG2 + KARG3)
+           WN_I   =  0.5 * ALPHA
 
         CASE DEFAULT
           WN_I = ICECOEF1 !Default to IC1: Uniform in k
