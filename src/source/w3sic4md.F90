@@ -492,35 +492,14 @@
            ! TPI/SIG is period
 
            ! VTC change: removed scattering, replaced with IC4 manually ********
-           ! ic4m5
+           ! ic4m6
 
-           ! rename variables for clarity
-           KI1=5.0E-6
-           KI2=7.0E-6  
-           KI3=15.0E-6 
-           KI4=100.0E-6 
-           FC5=0.10    
-           FC6=0.12    
-           FC7=0.16    
-           IF((KI1.EQ.0.0).OR.(KI2.EQ.0.0).OR.(KI3.EQ.0.0).OR. &
-              (KI4.EQ.0.0).OR.(FC5.EQ.0.0).OR.(FC6.EQ.0.0).OR. &
-              (FC7.EQ.0.0))THEN
-              WRITE (NDSE,1001)'ICE PARAMETERS'
-              CALL EXTCDE(201)
-           END IF
-           DO IK=1, NK
+           HICE=ICECOEF1 ! For this method, ICECOEF1=ice thickness
+           DO IK=1,NK
               FREQ=SIG(IK)/TPI
-              ! select ki
-              IF(FREQ.LT.FC5)THEN
-                 WN_I(IK)=KI1
-              ELSEIF(FREQ.LT.FC6)THEN
-                 WN_I(IK)=KI2
-              ELSEIF(FREQ.LT.FC7)THEN
-                 WN_I(IK)=KI3
-              ELSE
-                 WN_I(IK)=KI4
-              ENDIF
+              ALPHA(IK)  = 0.2*(FREQ**2.13)*HICE
            END DO
+           WN_I = 0.5 * ALPHA 
 
 
         CASE DEFAULT
